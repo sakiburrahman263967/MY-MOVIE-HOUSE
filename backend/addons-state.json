@@ -1,0 +1,23 @@
+{
+  "addons": [
+    {
+      "id": "cinemeta",
+      "name": "Cinemeta",
+      "url": "https://v3-cinemeta.strem.io/manifest.json",
+      "enabled": true,
+      "builtin": true
+    },
+    {
+      "id": "torrentio",
+      "name": "Torrentio",
+      "url": "https://torrentio.strem.fun/manifest.json",
+      "enabled": true
+    },
+    {
+      "id": "openmovies",
+      "name": "OpenMovies",
+      "url": "https://openmovies.stremio.ru/manifest.json",
+      "enabled": false
+    }
+  ]
+}
