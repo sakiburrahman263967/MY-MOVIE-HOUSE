@@ -1,14 +1,26 @@
 {
-  "version": 2,
-  "outputDirectory": "My-Movie-House-frontend/dist",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "backend": {
+      "root": "backend"
+    },
+    "my-movie-house-frontend": {
+      "root": "My-Movie-House-frontend",
+      "framework": "vite"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/index.js"
+      "destination": {
+        "service": "backend"
+      }
     },
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": {
+        "service": "my-movie-house-frontend"
+      }
     }
   ]
 }

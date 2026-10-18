@@ -2,6 +2,7 @@
   "name": "my-movie-house-backend",
   "author": "Sakibur Rahman",
   "version": "1.0.0",
+  "main": "server.js",
   "type": "module",
   "scripts": {
     "start": "node server.js",
