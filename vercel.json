@@ -2,7 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "services": {
     "backend": {
-      "root": "backend"
+      "root": "backend",
+      "entrypoint": "server.js"
     },
     "my-movie-house-frontend": {
       "root": "My-Movie-House-frontend",
