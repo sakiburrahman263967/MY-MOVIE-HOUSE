@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "outputDirectory": "My-Movie-House-frontend/dist",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

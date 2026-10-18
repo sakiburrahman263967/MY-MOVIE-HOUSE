@@ -560,4 +560,8 @@ app.use((error, _req, res, _next) => {
 });
 
 const port = process.env.PORT || 3001;
-app.listen(port, () => console.log(`My-Movie-House API listening at http://localhost:${port}`));
+if (!process.env.VERCEL) {
+  app.listen(port, () => console.log(`My-Movie-House API listening at http://localhost:${port}`));
+}
+
+export default app;
