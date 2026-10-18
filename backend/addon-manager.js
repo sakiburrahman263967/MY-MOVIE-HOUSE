@@ -1181,7 +1181,7 @@ export class AddonManager {
           episode
         });
         if (csStreams && csStreams.length > 0) {
-          validAddonStreams.unshift(...csStreams);
+          validAddonStreams.push(...csStreams);
         }
       }
     } catch (err) {

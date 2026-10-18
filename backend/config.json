@@ -19,7 +19,7 @@
       "id": "torrentio",
       "name": "Torrentio",
       "url": "https://torrentio.strem.fun/manifest.json",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "openmovies",

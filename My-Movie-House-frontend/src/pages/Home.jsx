@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { api, progress } from '../api.js';
 import ContentRow from '../components/ContentRow.jsx';
 import MovieCard from '../components/MovieCard.jsx';
@@ -7,8 +7,28 @@ import StreamingPlatforms from '../components/StreamingPlatforms.jsx';
 
 export const getCatalogKey = (cat) => `${cat.addonId}:${cat.type}:${cat.id}`;
 
+const isAdultCat = (cat) => {
+  const t = `${cat.addonId} ${cat.addonName} ${cat.name} ${cat.id}`.toLowerCase();
+  return (
+    t.includes('cxxx') ||
+    t.includes('adult') ||
+    t.includes('porn') ||
+    t.includes('xvideo') ||
+    t.includes('xnxx') ||
+    t.includes('jav') ||
+    t.includes('hentai') ||
+    t.includes('cam4') ||
+    t.includes('ptube') ||
+    t.includes('eporner') ||
+    t.includes('xhamster')
+  );
+};
+
 export default function Home() {
-  const [catalogs, setCatalogs] = useState([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentCategory = searchParams.get('cat') || 'all';
+
+  const [allCatalogs, setAllCatalogs] = useState([]);
   const [sliderItems, setSliderItems] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -20,45 +40,19 @@ export default function Home() {
   const dragDeltaX = useRef(0);
   const isDragging = useRef(false);
 
-  // Fast, non-blocking parallel catalog loading ("site aro light koro")
+  // Fast, non-blocking parallel catalog loading
   useEffect(() => {
     let active = true;
 
     api.getCatalogs()
       .then((cats) => {
         if (!active) return;
-        // Filter out catalogs that require mandatory search queries (e.g. search.ai)
         const browseable = (cats || []).filter((cat) => !cat.extraRequired?.includes('search'));
-
-        // Load active home catalog preferences (default: first 12 sections, max 12)
-        let enabledKeys;
-        try {
-          const saved = localStorage.getItem('home_catalog_sections');
-          if (saved) {
-            const parsed = JSON.parse(saved);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              enabledKeys = new Set(parsed);
-            }
-          }
-        } catch {}
-
-        // Filter browseable against enabled keys
-        let selected = browseable.filter((c) => enabledKeys?.has(getCatalogKey(c)));
-
-        // If nothing matched (e.g. fresh install, cleared storage, or stale keys), auto-select top 12
-        if (selected.length === 0) {
-          selected = browseable.slice(0, 12);
-          enabledKeys = new Set(selected.map(getCatalogKey));
-          try {
-            localStorage.setItem('home_catalog_sections', JSON.stringify(Array.from(enabledKeys)));
-          } catch {}
-        }
-
-        setCatalogs(selected);
-        setLoading(false); // Render layout instantly!
+        setAllCatalogs(browseable);
+        setLoading(false);
 
         // Fetch top catalogs for hero slider
-        const targetCatalogs = selected.slice(0, 3);
+        const targetCatalogs = browseable.slice(0, 3);
         Promise.allSettled(
           targetCatalogs.map((cat) => api.getCatalog(cat.addonId, cat.type, cat.id))
         ).then((results) => {
@@ -88,6 +82,31 @@ export default function Home() {
       active = false;
     };
   }, []);
+
+  const displayedCatalogs = useMemo(() => {
+    if (allCatalogs.length === 0) return [];
+
+    if (currentCategory === 'adult') {
+      return allCatalogs.filter(isAdultCat);
+    }
+    if (currentCategory === 'movies') {
+      return allCatalogs.filter((c) => c.type === 'movie' && !isAdultCat(c));
+    }
+    if (currentCategory === 'series') {
+      return allCatalogs.filter((c) => (c.type === 'series' || c.type === 'tv') && !isAdultCat(c));
+    }
+    if (currentCategory === 'cloudstream') {
+      return allCatalogs.filter((c) => c.addonId?.startsWith('cloudstream') && !isAdultCat(c));
+    }
+
+    // Default "all" view: Curated mix of Movies, Series, Adult (Eporner, Xvideos, XNXX, JavGuru) and CloudStream
+    const regularMovies = allCatalogs.filter((c) => c.type === 'movie' && !isAdultCat(c) && !c.addonId?.startsWith('cloudstream')).slice(0, 5);
+    const regularSeries = allCatalogs.filter((c) => (c.type === 'series' || c.type === 'tv') && !isAdultCat(c) && !c.addonId?.startsWith('cloudstream')).slice(0, 4);
+    const adultMix = allCatalogs.filter(isAdultCat).slice(0, 6);
+    const cloudstreamMix = allCatalogs.filter((c) => c.addonId?.startsWith('cloudstream') && !isAdultCat(c)).slice(0, 4);
+
+    return [...regularMovies, ...regularSeries, ...adultMix, ...cloudstreamMix];
+  }, [allCatalogs, currentCategory]);
 
   const prevSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev - 1 + sliderItems.length) % sliderItems.length);
@@ -362,12 +381,41 @@ export default function Home() {
         </section>
       )}
 
+      {/* Category Pills Navigation */}
+      <div className="mb-6 flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+        {[
+          { id: 'all', label: '🍿 All Content', color: 'blue' },
+          { id: 'movies', label: '🎬 Movies', color: 'blue' },
+          { id: 'series', label: '📺 TV Series', color: 'indigo' },
+          { id: 'adult', label: '🔞 Adult (18+)', color: 'rose' },
+          { id: 'cloudstream', label: '⚡ CloudStream & BDIX', color: 'emerald' }
+        ].map((tab) => {
+          const isActive = currentCategory === tab.id;
+          return (
+            <button
+              type="button"
+              key={tab.id}
+              onClick={() => setSearchParams(tab.id === 'all' ? {} : { cat: tab.id })}
+              className={`rounded-full px-4 py-2 text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 ${
+                isActive
+                  ? tab.id === 'adult'
+                    ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/40'
+                    : 'bg-blue-600 text-white shadow-lg shadow-blue-600/40'
+                  : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10'
+              }`}
+            >
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Catalog Content Rows */}
-      {catalogs.map((catalog) => (
+      {displayedCatalogs.map((catalog) => (
         <ContentRow key={`${catalog.addonId}-${catalog.type}-${catalog.id}`} catalog={catalog} />
       ))}
 
-      {!loading && !error && catalogs.length === 0 && (
+      {!loading && !error && displayedCatalogs.length === 0 && (
         <div className="spatial-card rounded-2xl p-8 text-center border border-white/10">
           <p className="text-sm font-bold text-white">No Catalogs Available</p>
           <p className="mt-1.5 text-xs text-slate-400">

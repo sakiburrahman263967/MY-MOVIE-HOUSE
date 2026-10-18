@@ -1104,9 +1104,10 @@ export default function VideoPlayer({
       >
         {isEmbed ? (
           <iframe
-            src={stream.url}
+            src={effectiveUrl || stream?.url}
             title={title}
             className="h-full w-full border-0 bg-black"
+            referrerPolicy="no-referrer"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
             allowFullScreen
           />

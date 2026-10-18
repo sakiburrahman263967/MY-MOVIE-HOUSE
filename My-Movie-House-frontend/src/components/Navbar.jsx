@@ -63,6 +63,17 @@ export default function Navbar() {
             <span>Live TV</span>
           </Link>
           <Link
+            to="/?cat=adult"
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5 ${
+              location.search.includes('cat=adult')
+                ? 'bg-rose-600 text-white shadow-md shadow-rose-600/40'
+                : 'text-white/70 hover:text-rose-300 hover:bg-white/5'
+            }`}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+            <span>Adult 18+</span>
+          </Link>
+          <Link
             to="/settings"
             className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
               isActive('/settings')

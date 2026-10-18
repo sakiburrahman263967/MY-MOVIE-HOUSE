@@ -788,21 +788,20 @@ export class CloudStreamManager {
           });
         }
       } else if (pName.includes('DhakaFlix') || pName.includes('ICC') || pName.includes('RoarZone') || pName.includes('BanglaPlex') || pName.includes('MovieLinkBD') || pName.includes('MLSBD')) {
-        // BDIX & Regional High Speed Server (AutoEmbed CO)
-        if (validId) {
-          streams.push({
-            addonId: `cloudstream-${plugin.id}`,
-            addonName: `[CloudStream] ${pName} (BDIX)`,
-            name: `[BDIX ⚡] ${pName}\n1080p FHD`,
-            title: `${cleanTitle} (${year || 'HD'})\n⚡ BDIX 100Mbps Ultra-Fast Stream\n💾 2.1 GB`,
-            url: isMovie
-              ? `https://autoembed.co/movie/tmdb/${validId}`
-              : `https://autoembed.co/tv/tmdb/${validId}/${season}/${episode}`,
-            quality: '1080p',
-            description: `BDIX High-Speed Mirror • ${plugin.description || 'CloudStream Bangladesh Provider'}`,
-            behaviorHints: { notWebReady: false }
-          });
-        }
+        // BDIX & Regional Fast Server (VidSrc / MultiEmbed)
+        const embedUrl = isMovie
+          ? `https://vidsrc.cc/v2/embed/movie/${tmdbId || validId}`
+          : `https://vidsrc.cc/v2/embed/tv/${tmdbId || validId}/${season}/${episode}`;
+        streams.push({
+          addonId: `cloudstream-${plugin.id}`,
+          addonName: `[CloudStream] ${pName} (BDIX)`,
+          name: `[BDIX ⚡] ${pName}\n1080p FHD`,
+          title: `${cleanTitle} (${year || 'HD'})\n⚡ BDIX High-Speed Stream\n💾 1080p FHD`,
+          url: embedUrl,
+          quality: '1080p',
+          description: `BDIX High-Speed Mirror • ${plugin.description || 'CloudStream Bangladesh Provider'}`,
+          behaviorHints: { notWebReady: false }
+        });
       } else if (pName.includes('TheMoviesFlix') || pName.includes('EmwBD')) {
         // 1080p Dual Audio Server (MultiEmbed)
         streams.push({
@@ -816,52 +815,47 @@ export class CloudStreamManager {
           behaviorHints: { notWebReady: false }
         });
       } else if (pName.includes('Desicinemas') || pName.includes('ShowBox') || pName.includes('SuperStream')) {
-        // Global Multi-Source (2Embed)
-        if (validId) {
-          streams.push({
-            addonId: `cloudstream-${plugin.id}`,
-            addonName: `[CloudStream] ${pName}`,
-            name: `[CS+] ${pName}\n1080p Global`,
-            title: `${cleanTitle} (${year || 'HD'})\n⚡ Multi-Source Global Stream\n💾 2.2 GB`,
-            url: isMovie
-              ? `https://2embed.cc/embed/${validId}`
-              : `https://2embed.cc/embedtv/${validId}&s=${season}&e=${episode}`,
-            quality: '1080p',
-            description: `${pName} • Fast Multi-Source Server`,
-            behaviorHints: { notWebReady: false }
-          });
-        }
+        // Global Multi-Source (VidLink)
+        const vidlinkUrl = isMovie
+          ? `https://vidlink.pro/movie/${tmdbId || validId}`
+          : `https://vidlink.pro/tv/${tmdbId || validId}/${season}/${episode}`;
+        streams.push({
+          addonId: `cloudstream-${plugin.id}`,
+          addonName: `[CloudStream] ${pName}`,
+          name: `[CS+] ${pName}\n1080p Global`,
+          title: `${cleanTitle} (${year || 'HD'})\n⚡ Multi-Source Global Stream\n💾 2.2 GB`,
+          url: vidlinkUrl,
+          quality: '1080p',
+          description: `${pName} • Fast Multi-Source Server`,
+          behaviorHints: { notWebReady: false }
+        });
       } else if (pName.includes('Mp4Moviez') || pName.includes('MoviPK') || pName.includes('9kMovies')) {
-        // Mobile / Direct Play (AutoEmbed CO / MultiEmbed)
+        // Mobile / Fast Play (MultiEmbed)
         streams.push({
           addonId: `cloudstream-${plugin.id}`,
           addonName: `[CloudStream] ${pName}`,
           name: `[CS+] ${pName}\n720p Direct`,
           title: `${cleanTitle}\n💾 850 MB • Direct Fast Play`,
-          url: tmdbId
-            ? (isMovie ? `https://autoembed.co/movie/tmdb/${tmdbId}` : `https://autoembed.co/tv/tmdb/${tmdbId}/${season}/${episode}`)
-            : `https://multiembed.mov/?video_id=${validId || encodeURIComponent(cleanTitle)}&tmdb=1`,
+          url: `https://multiembed.mov/?video_id=${validId || encodeURIComponent(cleanTitle)}&tmdb=1${!isMovie ? `&s=${season}&e=${episode}` : ''}`,
           quality: '720p',
           description: `${pName} • Fast Streaming Mirror`,
           behaviorHints: { notWebReady: false }
         });
       } else {
         // Universal High-Speed Multi-Source Stream for ANY active CloudStream plugin
-        if (validId) {
-          const mirrorUrl = isMovie
-            ? `https://autoembed.co/movie/tmdb/${validId}`
-            : `https://autoembed.co/tv/tmdb/${validId}/${season}/${episode}`;
-          streams.push({
-            addonId: `cloudstream-${plugin.id}`,
-            addonName: `[CloudStream] ${pName}`,
-            name: `[CS+] ${pName}\n1080p HD`,
-            title: `${cleanTitle} (${year || '2026'})\n⚡ Fast Multi-Mirror Stream\n💾 1080p FHD`,
-            url: mirrorUrl,
-            quality: '1080p',
-            description: `${pName} • CloudStream High Speed Mirror`,
-            behaviorHints: { notWebReady: false }
-          });
-        }
+        const mirrorUrl = isMovie
+          ? `https://vidsrc.xyz/embed/movie?${tmdbId ? `tmdb=${tmdbId}` : `imdb=${validId}`}`
+          : `https://vidsrc.xyz/embed/tv?${tmdbId ? `tmdb=${tmdbId}` : `imdb=${validId}`}&season=${season}&episode=${episode}`;
+        streams.push({
+          addonId: `cloudstream-${plugin.id}`,
+          addonName: `[CloudStream] ${pName}`,
+          name: `[CS+] ${pName}\n1080p HD`,
+          title: `${cleanTitle} (${year || '2026'})\n⚡ Fast Multi-Mirror Stream\n💾 1080p FHD`,
+          url: mirrorUrl,
+          quality: '1080p',
+          description: `${pName} • CloudStream High Speed Mirror`,
+          behaviorHints: { notWebReady: false }
+        });
       }
     }
 
