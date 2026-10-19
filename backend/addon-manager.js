@@ -765,48 +765,156 @@ export class AddonManager {
       };
     }
 
-    if (id.startsWith('cs:xnxx:') || id.startsWith('cs:xvideos:')) {
-      const isXnxx = id.startsWith('cs:xnxx:');
-      const prefix = isXnxx ? 'cs:xnxx:' : 'cs:xvideos:';
-      const pageUrl = this._resolveUrlFromId(id, prefix);
+    if (id.startsWith('cs:eporner:')) {
+      const raw = id.replace('cs:eporner:', '');
+      let embedOrUrl = '';
+      try {
+        embedOrUrl = Buffer.from(raw, 'base64url').toString('utf8');
+      } catch {}
+      let videoId = '';
+      const idMatch = embedOrUrl.match(/(?:embed\/|video-|hd-porn\/)([a-zA-Z0-9]+)/i);
+      if (idMatch) videoId = idMatch[1];
+
+      let cleanTitle = 'Eporner Video';
+      let poster = '';
+
+      // Try extracting title from slug if present
+      const slugMatch = embedOrUrl.match(/video-[a-zA-Z0-9]+\/([^/]+)/);
+      if (slugMatch) {
+        cleanTitle = slugMatch[1].replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      }
+
+      if (videoId) {
+        try {
+          const res = await fetchWithTimeout(`https://www.eporner.com/video-${videoId}/`, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+          }, 4000);
+          if (res.ok) {
+            const html = await res.text();
+            const $ = cheerio.load(html);
+            const titleText = $('h1').first().text() || $('title').text();
+            if (titleText) cleanTitle = titleText.replace(/ - EPORNER/i, '').trim();
+            const ogImage = $('meta[property="og:image"]').attr('content') || $('meta[name="twitter:image"]').attr('content');
+            if (ogImage) poster = ogImage;
+          }
+        } catch {}
+      }
+
+      const meta = {
+        id,
+        name: cleanTitle,
+        title: cleanTitle,
+        type: 'movie',
+        poster,
+        background: poster,
+        description: cleanTitle,
+        year: '2026',
+        releaseInfo: 'HD',
+        genres: ['Adult', 'Eporner']
+      };
+      this.customMetaCache.set(id, meta);
+      return meta;
+    }
+
+    if (id.startsWith('cs:jav:')) {
+      const pageUrl = this._resolveUrlFromId(id, 'cs:jav:');
+      let title = 'JAV Video';
+      let poster = '';
       if (pageUrl) {
         try {
           const res = await fetchWithTimeout(pageUrl, {
             headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-          }, 5000);
-          const html = await res.text();
-          const titleMatch = html.match(/<title>([^<]+)<\/title>/)?.[1] || (isXnxx ? 'XNXX Video' : 'Xvideos Video');
-          const posterMatch = html.match(/data-src="([^"]+)"/)?.[1] || html.match(/setThumbUrl\s*\(\s*['"]([^'"]+)['"]\s*\)/)?.[1];
-          const cleanTitle = decodeHtmlEntities(titleMatch.replace(/ - (?:XNXX\.COM|XVIDEOS\.COM)/i, '').trim());
-          const meta = {
-            id,
-            name: cleanTitle,
-            title: cleanTitle,
-            type: 'movie',
-            poster: posterMatch || '',
-            background: posterMatch || '',
-            description: cleanTitle,
-            year: '2026',
-            releaseInfo: 'HD',
-            href: pageUrl,
-            genres: ['Adult', isXnxx ? 'XNXX' : 'Xvideos']
-          };
-          this.customMetaCache.set(id, meta);
-          this._persistCustomMeta();
-          return meta;
-        } catch (err) {
-          console.warn('Meta fetch error:', err.message);
+          }, 4000);
+          if (res.ok) {
+            const html = await res.text();
+            const titleMatch = html.match(/<title>([^<]+)<\/title>/)?.[1];
+            if (titleMatch) title = titleMatch.replace(/ - JAV.*$/i, '').trim();
+            const posterMatch = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i)?.[1];
+            if (posterMatch) poster = posterMatch;
+          }
+        } catch {}
+      }
+      return {
+        id,
+        name: title,
+        title,
+        type: 'movie',
+        poster,
+        background: poster,
+        description: title,
+        year: '2026',
+        releaseInfo: 'JAV HD',
+        genres: ['Adult', 'JAV']
+      };
+    }
+
+    if (id.startsWith('cs:xnxx:') || id.startsWith('cs:xvideos:')) {
+      const isXnxx = id.startsWith('cs:xnxx:');
+      const prefix = isXnxx ? 'cs:xnxx:' : 'cs:xvideos:';
+      const pageUrl = this._resolveUrlFromId(id, prefix);
+      let title = isXnxx ? 'XNXX Video' : 'Xvideos Video';
+      let poster = '';
+      if (pageUrl) {
+        try {
+          const res = await fetchWithTimeout(pageUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+          }, 4000);
+          if (res.ok) {
+            const html = await res.text();
+            const titleMatch = html.match(/<title>([^<]+)<\/title>/)?.[1];
+            if (titleMatch) {
+              title = decodeHtmlEntities(titleMatch.replace(/ - (?:XNXX\.COM|XVIDEOS\.COM)/i, '').trim());
+            }
+            const posterMatch = html.match(/data-src="([^"]+)"/)?.[1] ||
+              html.match(/setThumbUrl\s*\(\s*['"]([^'"]+)['"]\s*\)/)?.[1] ||
+              html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i)?.[1];
+            if (posterMatch) poster = posterMatch;
+          }
+        } catch {}
+      }
+      const meta = {
+        id,
+        name: title,
+        title,
+        type: 'movie',
+        poster,
+        background: poster,
+        description: title,
+        year: '2026',
+        releaseInfo: 'HD',
+        href: pageUrl,
+        genres: ['Adult', isXnxx ? 'XNXX' : 'Xvideos']
+      };
+      this.customMetaCache.set(id, meta);
+      return meta;
+    }
+
+    let fallbackTitle = 'Adult Video';
+    let fallbackPoster = '';
+    try {
+      const parts = id.split(':');
+      if (parts.length >= 3) {
+        const decoded = Buffer.from(parts[2], 'base64url').toString('utf8');
+        const slug = decoded.split('/').filter(Boolean).pop() || '';
+        if (slug) {
+          fallbackTitle = slug.replace(/[-_]/g, ' ').replace(/\.html?/i, '').replace(/\b\w/g, (c) => c.toUpperCase());
         }
       }
-    }
+    } catch {}
 
     return {
       id,
-      name: 'Video',
-      title: 'Video',
+      name: fallbackTitle,
+      title: fallbackTitle,
       type: 'movie',
-      poster: '',
-      genres: ['Adult']
+      poster: fallbackPoster,
+      background: fallbackPoster,
+      description: fallbackTitle,
+      year: '2026',
+      releaseInfo: 'HD',
+      genres: ['Adult', 'CloudStream']
     };
   }
 

@@ -46,7 +46,18 @@ export const api = {
   getStreams: (type, id) => request(`/api/streams/${encodeURIComponent(type)}/${encodeURIComponent(id)}`),
   resolveDirectStream: (url) => request(`/api/resolve-direct-stream?url=${encodeURIComponent(url)}`),
   search: (q) => request(`/api/search?${queryString({ q })}`),
-  getAddons: () => request('/api/addons'),
+  getAddons: async () => {
+    const list = await request('/api/addons');
+    try {
+      const removedIds = JSON.parse(localStorage.getItem('mmh_removed_addons') || '[]');
+      const toggledStates = JSON.parse(localStorage.getItem('mmh_toggled_addons') || '{}');
+      return (list || [])
+        .filter((a) => !removedIds.includes(a.id))
+        .map((a) => (toggledStates[a.id] !== undefined ? { ...a, enabled: toggledStates[a.id] } : a));
+    } catch {
+      return list || [];
+    }
+  },
   addAddon: (url, name) => {
     memoryCache.clear();
     return request('/api/addons', {
@@ -56,11 +67,26 @@ export const api = {
   },
   removeAddon: (id) => {
     memoryCache.clear();
-    return request(`/api/addons/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    try {
+      const removedIds = JSON.parse(localStorage.getItem('mmh_removed_addons') || '[]');
+      if (!removedIds.includes(id)) {
+        removedIds.push(id);
+        localStorage.setItem('mmh_removed_addons', JSON.stringify(removedIds));
+      }
+    } catch {}
+    return request(`/api/addons/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => true);
   },
-  toggleAddon: (id) => {
+  toggleAddon: async (id) => {
     memoryCache.clear();
-    return request(`/api/addons/${encodeURIComponent(id)}/toggle`, { method: 'PATCH' });
+    try {
+      const toggledStates = JSON.parse(localStorage.getItem('mmh_toggled_addons') || '{}');
+      const curList = await request('/api/addons').catch(() => []);
+      const item = curList.find((a) => a.id === id);
+      const currentEnabled = toggledStates[id] !== undefined ? toggledStates[id] : (item?.enabled ?? true);
+      toggledStates[id] = !currentEnabled;
+      localStorage.setItem('mmh_toggled_addons', JSON.stringify(toggledStates));
+    } catch {}
+    return request(`/api/addons/${encodeURIComponent(id)}/toggle`, { method: 'PATCH' }).catch(() => true);
   },
   getConfig: () => request('/api/config'),
   saveConfig: (data) => {
@@ -104,7 +130,20 @@ export const api = {
     return request(`/api/cloudstream/repos/${encodeURIComponent(repoId)}/disable-all`, { method: 'PATCH' });
   },
   getSeasonEpisodes: (id, seasonNumber) => request(`/api/meta/series/${encodeURIComponent(id)}/season/${seasonNumber}`),
-  getIptvPlaylists: () => request('/api/iptv/playlists'),
+  getIptvPlaylists: async () => {
+    const res = await request('/api/iptv/playlists').catch(() => ({ playlists: [] }));
+    const list = res?.playlists || [];
+    try {
+      const removedIds = JSON.parse(localStorage.getItem('mmh_removed_iptv') || '[]');
+      const toggledStates = JSON.parse(localStorage.getItem('mmh_toggled_iptv') || '{}');
+      const filtered = list
+        .filter((p) => !removedIds.includes(p.id))
+        .map((p) => (toggledStates[p.id] !== undefined ? { ...p, enabled: toggledStates[p.id] } : p));
+      return { playlists: filtered };
+    } catch {
+      return { playlists: list };
+    }
+  },
   addIptvPlaylist: (data) => {
     memoryCache.clear();
     return request('/api/iptv/playlists', {
@@ -114,11 +153,26 @@ export const api = {
   },
   removeIptvPlaylist: (id) => {
     memoryCache.clear();
-    return request(`/api/iptv/playlists/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    try {
+      const removedIds = JSON.parse(localStorage.getItem('mmh_removed_iptv') || '[]');
+      if (!removedIds.includes(id)) {
+        removedIds.push(id);
+        localStorage.setItem('mmh_removed_iptv', JSON.stringify(removedIds));
+      }
+    } catch {}
+    return request(`/api/iptv/playlists/${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => true);
   },
-  toggleIptvPlaylist: (id) => {
+  toggleIptvPlaylist: async (id) => {
     memoryCache.clear();
-    return request(`/api/iptv/playlists/${encodeURIComponent(id)}/toggle`, { method: 'PATCH' });
+    try {
+      const toggledStates = JSON.parse(localStorage.getItem('mmh_toggled_iptv') || '{}');
+      const res = await request('/api/iptv/playlists').catch(() => ({ playlists: [] }));
+      const item = (res?.playlists || []).find((p) => p.id === id);
+      const current = toggledStates[id] !== undefined ? toggledStates[id] : (item?.enabled ?? true);
+      toggledStates[id] = !current;
+      localStorage.setItem('mmh_toggled_iptv', JSON.stringify(toggledStates));
+    } catch {}
+    return request(`/api/iptv/playlists/${encodeURIComponent(id)}/toggle`, { method: 'PATCH' }).catch(() => true);
   },
   getIptvChannels: (extra = {}) => request(`/api/iptv/channels?${queryString(extra)}`),
   getIptvCategories: () => request('/api/iptv/categories'),

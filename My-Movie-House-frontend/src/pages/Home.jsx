@@ -16,11 +16,15 @@ const isAdultCat = (cat) => {
     t.includes('xvideo') ||
     t.includes('xnxx') ||
     t.includes('jav') ||
+    t.includes('superjav') ||
     t.includes('hentai') ||
     t.includes('cam4') ||
     t.includes('ptube') ||
     t.includes('eporner') ||
-    t.includes('xhamster')
+    t.includes('xhamster') ||
+    t.includes('perverzija') ||
+    t.includes('actionview') ||
+    t.includes('desisins')
   );
 };
 

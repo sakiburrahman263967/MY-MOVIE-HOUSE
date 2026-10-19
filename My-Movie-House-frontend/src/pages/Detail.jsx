@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api, library } from '../api.js';
-import StreamModal from '../components/StreamModal.jsx';
+import VideoPlayer from '../components/VideoPlayer.jsx';
 import MovieCard from '../components/MovieCard.jsx';
 
 export default function Detail() {
@@ -96,15 +96,40 @@ export default function Detail() {
   }
 
   if (error || !meta) {
+    const fallbackTitle = id?.startsWith('cs:') ? id.split(':').pop() : (id || 'Video');
     return (
       <div className="mx-auto max-w-xl px-4 py-24 text-center">
         <div className="spatial-card rounded-3xl p-8 border border-rose-500/30 text-rose-300">
           <p className="text-base font-bold">{error || 'Details not found for this title.'}</p>
-          <p className="mt-2 text-xs text-white/60">Please verify your addon connections or search for another movie.</p>
-          <Link to="/" className="btn-spatial-blue mt-5 inline-block rounded-xl px-5 py-2 text-xs font-bold">
-            Back to Home
-          </Link>
+          <p className="mt-2 text-xs text-white/60">
+            You can reload this page or directly start streaming sources.
+          </p>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={() => window.location.reload()}
+              className="btn-spatial-blue rounded-xl px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-600/30"
+            >
+              🔄 Try Again / Reload Page
+            </button>
+            <button
+              onClick={() => setShowStreams(true)}
+              className="rounded-xl bg-emerald-600 hover:bg-emerald-500 px-5 py-2.5 text-xs font-bold text-white transition shadow-lg shadow-emerald-600/30"
+            >
+              ▶ Play Stream Directly
+            </button>
+            <Link to="/" className="btn-glass rounded-xl px-4 py-2.5 text-xs font-semibold text-white/80">
+              Back to Home
+            </Link>
+          </div>
         </div>
+        {showStreams && (
+          <VideoPlayer
+            type={type}
+            id={id}
+            title={fallbackTitle}
+            onClose={() => setShowStreams(false)}
+          />
+        )}
       </div>
     );
   }
@@ -430,13 +455,13 @@ export default function Detail() {
         )}
       </main>
 
-      {/* ─── Stream Modal ─── */}
+      {/* ─── Direct In-Player Streaming & Resource Scanner ─── */}
       {showStreams && (
-        <StreamModal
+        <VideoPlayer
           type={type}
           id={activeEpisode ? `${id}:${activeEpisode.season}:${activeEpisode.episode}` : id}
           title={activeEpisode ? `${title} - S${activeEpisode.season}E${activeEpisode.episode}: ${activeEpisode.name}` : title}
-          poster={meta.poster}
+          poster={meta?.poster}
           onClose={() => {
             setShowStreams(false);
             setActiveEpisode(null);

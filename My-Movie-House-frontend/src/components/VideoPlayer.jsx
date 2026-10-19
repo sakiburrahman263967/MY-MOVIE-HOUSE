@@ -90,8 +90,8 @@ function parseSrt(srtText) {
 }
 
 export default function VideoPlayer({
-  stream,
-  allStreams = [],
+  stream: initialStream = null,
+  allStreams: initialAllStreams = [],
   onSelectStream,
   title,
   type,
@@ -104,6 +104,21 @@ export default function VideoPlayer({
   const hlsRef = useRef(null);
   const fileInputRef = useRef(null);
   const seekbarRef = useRef(null);
+
+  const [internalStream, setInternalStream] = useState(initialStream);
+  const [internalStreamsList, setInternalStreamsList] = useState(initialAllStreams);
+  const [isScanning, setIsScanning] = useState(!initialStream && Boolean(id));
+
+  useEffect(() => {
+    if (initialStream) setInternalStream(initialStream);
+  }, [initialStream]);
+
+  useEffect(() => {
+    if (initialAllStreams && initialAllStreams.length > 0) setInternalStreamsList(initialAllStreams);
+  }, [initialAllStreams]);
+
+  const stream = internalStream;
+  const allStreams = internalStreamsList;
 
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -194,6 +209,43 @@ export default function VideoPlayer({
     return () => { active = false; };
   }, [stream?.url, showOsd]);
 
+  // Stream auto-fetch & real-time resource scanner if opened directly
+  useEffect(() => {
+    if (initialStream) return;
+    if (!id) return;
+
+    let active = true;
+    setIsScanning(true);
+    setError('');
+
+    api.getStreams(type, id)
+      .then((data) => {
+        if (!active) return;
+        const valid = (data || []).filter((s) => (
+          s &&
+          (s.url || s.externalUrl) &&
+          !s.externalUrl?.includes('donate') &&
+          !s.name?.toLowerCase().includes('support the project')
+        ));
+        setInternalStreamsList(valid);
+        if (valid.length > 0) {
+          setInternalStream(valid[0]);
+          const info = parseStreamInfo(valid[0]);
+          showOsd(`⚡ ${valid.length} Live Sources Found • Playing ${info.serverName}`);
+        } else {
+          setError('No live streaming sources found for this title. Please check your addons in Settings.');
+        }
+      })
+      .catch((err) => {
+        if (active) setError(err.message || 'Error scanning live sources.');
+      })
+      .finally(() => {
+        if (active) setIsScanning(false);
+      });
+
+    return () => { active = false; };
+  }, [type, id, initialStream, showOsd]);
+
   const rawUrl = directUrl || stream?.url;
   const effectiveUrl = (rawUrl && rawUrl.startsWith('/api/')) ? `${API_BASE}${rawUrl}` : rawUrl;
   const isEmbed = !directUrl && isEmbedUrl(stream?.url);
@@ -211,6 +263,15 @@ export default function VideoPlayer({
       setDirectUrl(proxied);
       showOsd('⚡ Routing through Stream Proxy...');
       return;
+    }
+    if (allStreams.length > 1) {
+      const curIdx = allStreams.findIndex((s) => s.url === stream?.url);
+      const nextStream = allStreams[(curIdx + 1) % allStreams.length];
+      if (nextStream && nextStream !== stream) {
+        showOsd(`Auto-switching to ${parseStreamInfo(nextStream).serverName}...`);
+        handleSwitchServer(nextStream);
+        return;
+      }
     }
     setError('Unable to play this direct stream. Please select another server from the top menu.');
   };
@@ -633,11 +694,12 @@ export default function VideoPlayer({
 
   // Switch Stream Server
   const handleSwitchServer = (newStream) => {
+    setInternalStream(newStream);
     if (onSelectStream) {
       onSelectStream(newStream);
-      const info = parseStreamInfo(newStream);
-      showOsd(`Switched to: ${info.serverName} (${info.resolution}${info.size ? ' • ' + info.size : ''})`);
     }
+    const info = parseStreamInfo(newStream);
+    showOsd(`Switched to: ${info.serverName} (${info.resolution}${info.size ? ' • ' + info.size : ''})`);
     setShowServerMenu(false);
   };
 
@@ -657,10 +719,18 @@ export default function VideoPlayer({
     showOsd('Opening in Desktop PotPlayer...');
   };
 
+  // Global drag listener to ensure seekbar drag never gets stuck
+  useEffect(() => {
+    const handleGlobalMouseUp = () => setIsDraggingSeek(false);
+    window.addEventListener('mouseup', handleGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', handleGlobalMouseUp);
+  }, []);
+
   // Keyboard Shortcuts (Space, Arrows, C, X, Z, D, A, S, E, R, W, L, P, F, Esc)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      const activeTag = document.activeElement?.tagName;
+      if (['INPUT', 'TEXTAREA'].includes(activeTag) || ['INPUT', 'TEXTAREA'].includes(e.target?.tagName)) return;
 
       switch (e.key) {
         case ' ':
@@ -816,9 +886,11 @@ export default function VideoPlayer({
     if (e.target.closest?.('.overflow-y-auto, .overflow-auto, [data-scrollable="true"], .scrollable-container')) {
       return;
     }
-    e.preventDefault();
-    if (e.deltaY < 0) adjustVolume(0.05);
-    else adjustVolume(-0.05);
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX || 0) && Math.abs(e.deltaY) > 5) {
+      e.preventDefault();
+      if (e.deltaY < 0) adjustVolume(0.05);
+      else adjustVolume(-0.05);
+    }
   };
 
   // Seekbar Click & Drag
@@ -1165,6 +1237,38 @@ export default function VideoPlayer({
           </div>
         )}
 
+        {/* Live Resource Scanner Overlay */}
+        {isScanning && (
+          <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-[#070b14]/95 p-6 backdrop-blur-xl animate-fadeIn text-center">
+            <div className="relative mb-5">
+              <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin" />
+              <div className="absolute inset-0 grid place-items-center text-xl sm:text-2xl animate-pulse">
+                ⚡
+              </div>
+            </div>
+            <h2 className="text-sm sm:text-base md:text-lg font-black text-white tracking-wide">
+              Scanning Live Streaming Sources...
+            </h2>
+            <p className="mt-2 text-xs text-amber-300 font-semibold animate-pulse max-w-md">
+              Hunting live streams & size details across MovieLinkBD (BDIX), HDHub4u, CineFreak, PenguPlay, Sootio...
+            </p>
+            <div className="mt-5 flex flex-wrap justify-center gap-2 max-w-md">
+              <span className="rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-3 py-1 border border-emerald-500/30">
+                🇧🇩 MovieLinkBD BDIX
+              </span>
+              <span className="rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold px-3 py-1 border border-amber-500/30">
+                ⚡ HDHub4u (HubCloud)
+              </span>
+              <span className="rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-bold px-3 py-1 border border-blue-500/30">
+                🎬 CineFreak & UHD
+              </span>
+              <span className="rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-bold px-3 py-1 border border-indigo-500/30">
+                🐧 PenguPlay & Sootio
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Stream Error Display */}
         {error && (
           <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-black/85 p-6 text-center animate-fadeIn">
@@ -1354,6 +1458,7 @@ export default function VideoPlayer({
             <div className="flex items-center gap-1.5 ml-1">
               <button
                 onClick={() => setIsMuted((prev) => !prev)}
+                onKeyDown={(e) => e.stopPropagation()}
                 title="Mute/Unmute (M)"
                 className="grid h-8 w-8 place-items-center rounded-lg bg-white/10 text-white/80 hover:bg-white/20 hover:text-white transition"
               >
@@ -1364,13 +1469,23 @@ export default function VideoPlayer({
                 )}
               </button>
 
-              <div className="flex items-center gap-1.5 w-16 sm:w-24">
+              <div className="flex items-center gap-1.5 w-16 sm:w-24" onKeyDown={(e) => e.stopPropagation()}>
                 <input
                   type="range"
                   min="0"
                   max="1"
                   step="0.05"
                   value={isMuted ? 0 : volume}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      adjustVolume(-0.05);
+                    } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      adjustVolume(0.05);
+                    }
+                  }}
                   onChange={(e) => {
                     const val = parseFloat(e.target.value);
                     setVolume(val);
