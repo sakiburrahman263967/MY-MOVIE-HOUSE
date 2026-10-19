@@ -44,16 +44,9 @@
       }
     },
     {
-      "source": "/(.*\\.[a-zA-Z0-9]+)",
-      "destination": {
-        "service": "my-movie-house-frontend"
-      }
-    },
-    {
       "source": "/(.*)",
       "destination": {
-        "service": "my-movie-house-frontend",
-        "path": "/"
+        "service": "my-movie-house-frontend"
       }
     }
   ]
