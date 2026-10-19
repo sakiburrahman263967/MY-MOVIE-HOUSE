@@ -37,16 +37,34 @@ export const DEFAULT_ADDONS = [
     builtin: true
   },
   {
-    id: 'torrentio',
-    name: 'Torrentio',
-    url: 'https://torrentio.strem.fun/manifest.json',
+    id: 'sootio',
+    name: '[HS+] Sootio Direct Streams',
+    url: 'https://sooti.info/%7B%22DebridServices%22%3A%5B%7B%22provider%22%3A%22httpstreaming%22%2C%22http4khdhub%22%3Atrue%2C%22httpHDHub4u%22%3Atrue%2C%22httpUHDMovies%22%3Atrue%2C%22httpMoviesDrive%22%3Atrue%2C%22httpMKVCinemas%22%3Atrue%2C%22httpMalluMv%22%3Atrue%2C%22httpCineDoze%22%3Atrue%2C%22httpVixSrc%22%3Atrue%2C%22httpMoviesMod%22%3Atrue%2C%22httpMoviesLeech%22%3Atrue%2C%22httpAnimeFlix%22%3Atrue%2C%22http111477%22%3Afalse%2C%22httpXDMovies%22%3Afalse%2C%22httpPixeldrain%22%3Atrue%2C%22httpMkvBase%22%3Atrue%2C%22httpVadapav%22%3Afalse%2C%22enableProxy%22%3Afalse%2C%22proxyUrl%22%3A%22%22%2C%22proxyPassword%22%3A%22%22%7D%5D%2C%22Languages%22%3A%5B%5D%2C%22Resolutions%22%3A%5B%221080p%22%2C%22720p%22%2C%22480p%22%5D%2C%22Scrapers%22%3A%5B%221337x%22%2C%22knaben%22%2C%22torrents-csv%22%2C%22rarbg%22%2C%22extto%22%2C%22limetorrents%22%5D%2C%22IndexerScrapers%22%3A%5B%22stremthru%22%5D%2C%22ScrapersConfigured%22%3Atrue%2C%22minSize%22%3A0%2C%22maxSize%22%3A10%2C%22ShowCatalog%22%3Atrue%2C%22ProxyApplyAll%22%3Afalse%2C%22DebridProvider%22%3A%22httpstreaming%22%7D/manifest.json',
     enabled: true
   },
   {
-    id: 'openmovies',
-    name: 'OpenMovies',
-    url: 'https://openmovies.stremio.ru/manifest.json',
-    enabled: false
+    id: 'hdhub4u',
+    name: 'HDHub4u Direct Streams',
+    url: 'https://hdhub.thevolecitor.qzz.io/eyJ0b3Jib3giOiJ1bnNldCIsInF1YWxpdGllcyI6IjIxNjBwLDEwODBwLDcyMHAiLCJzb3J0IjoiZGVzYyJ9/manifest.json',
+    enabled: true
+  },
+  {
+    id: 'penguplay',
+    name: 'PenguPlay Direct Streams',
+    url: 'https://pengu.uk/%7B%22auth_token%22%3A%22aob9jrv4e3YEABGwmp1ouV0Fdmb9xwhsaU4tlW8KRLs%22%7D/manifest.json',
+    enabled: true
+  },
+  {
+    id: 'cinefreak',
+    name: 'CineFreak & Bangla Tanvir',
+    url: 'https://cstremio.mehedihtanvir.me/manifest.json',
+    enabled: true
+  },
+  {
+    id: 'webstreamrmbg',
+    name: 'WebStreamr MBG',
+    url: 'https://87d6a6ef6b58-webstreamrmbg.baby-beamup.club/%7B%22multi%22%3A%22on%22%2C%22hi%22%3A%22on%22%2C%22excludeResolution_2160p%22%3A%22on%22%2C%22excludeResolution_1440p%22%3A%22on%22%7D/manifest.json',
+    enabled: true
   }
 ];
 
@@ -1169,33 +1187,53 @@ export class AddonManager {
     }
 
     // If id is tmdb:..., resolve to IMDb ID for stream lookup
-    let streamId = id;
+    let streamId = String(id);
     let seasonNum = null;
     let episodeNum = null;
 
-    if (String(id).startsWith('tmdb:')) {
-      const parts = String(id).split(':');
-      const baseTmdb = parts[1];
+    let baseTmdb = null;
+    if (streamId.startsWith('tmdb:')) {
+      const parts = streamId.split(':');
+      baseTmdb = parts[1];
       if (parts.length >= 4) {
         seasonNum = parts[2];
         episodeNum = parts[3];
       }
+    } else if (/^\d+$/.test(streamId)) {
+      baseTmdb = streamId;
+    }
+
+    if (baseTmdb) {
       const imdb = await resolveImdbId(type, baseTmdb);
       if (imdb) {
         streamId = (seasonNum && episodeNum) ? `${imdb}:${seasonNum}:${episodeNum}` : imdb;
       }
-    } else if (String(id).startsWith('tt')) {
-      streamId = id;
     }
 
-    const enabled = this.addons.filter((addon) => addon.enabled && addon.id !== 'tmdb-builtin');
+    // If still not an IMDb ID (tt...), try to resolve from metadata
+    if (!streamId.startsWith('tt')) {
+      try {
+        const meta = await this.getMeta(type, id);
+        const resolvedImdb = meta?.imdb_id || meta?.imdbId;
+        if (resolvedImdb) {
+          streamId = (seasonNum && episodeNum) ? `${resolvedImdb}:${seasonNum}:${episodeNum}` : resolvedImdb;
+        }
+      } catch {}
+    }
+
+    const enabled = this.addons.filter((addon) => addon.enabled && addon.id !== 'tmdb-builtin' && addon.id !== 'torrentio');
     const results = await Promise.allSettled(enabled.map(async (addon) => {
       const manifest = await this.getManifest(addon);
       if (!manifest.resources.some((resource) => resourceName(resource) === 'stream')) return [];
       const response = await fetchWithTimeout(
         `${manifest.baseUrl}/stream/${encodeURIComponent(type)}/${encodeURIComponent(streamId)}.json`,
-        { headers: { accept: 'application/json' } },
-        6000
+        {
+          headers: {
+            'Accept': 'application/json, text/plain, */*',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+          }
+        },
+        7000
       );
       if (!response.ok) throw new Error(`Stream request returned HTTP ${response.status}`);
       const streams = (await response.json()).streams || [];
@@ -1204,26 +1242,40 @@ export class AddonManager {
 
     const rawStreams = results.flatMap((result) => result.status === 'fulfilled' ? result.value : []);
 
-    // Also support Torrent infoHash streams by providing magnet links
-    for (const s of rawStreams) {
-      if (s?.infoHash && !s.url) {
-        const titleClean = s.title || s.name || 'Torrent Stream';
-        const magnet = `magnet:?xt=urn:btih:${s.infoHash}&dn=${encodeURIComponent(titleClean)}`;
-        s.url = magnet;
-        s.externalUrl = magnet;
-        s.isTorrent = true;
-      }
-    }
+    // COMPLETELY PURGE ALL TORRENT & MAGNET STREAMS
+    // User requirement: "torrent server bad daw ekebare" (Drop all torrent servers).
+    // Browsers cannot play torrents without debrid torrent cache. Direct streams only!
+    const isTorrentStream = (s) => (
+      s?.isTorrent ||
+      s?.infoHash ||
+      (typeof s?.url === 'string' && s.url.startsWith('magnet:')) ||
+      (typeof s?.externalUrl === 'string' && s.externalUrl.startsWith('magnet:')) ||
+      s?.name?.toLowerCase().includes('torrentio') ||
+      s?.addonName?.toLowerCase().includes('torrentio')
+    );
 
-    // Filter out donation / support links that are not media streams
+    // Filter out torrents, magnets, and donation/spam links
     const validAddonStreams = rawStreams.filter((s) => {
       if (!s) return false;
+      if (isTorrentStream(s)) return false;
       if (!s.url && !s.externalUrl) return false;
-      if (s.externalUrl && (s.externalUrl.includes('donate') || s.externalUrl.includes('support') || s.name?.includes('support'))) {
+      const fullText = `${s.name || ''} ${s.title || ''} ${s.externalUrl || ''}`.toLowerCase();
+      if (fullText.includes('donate') || fullText.includes('support the project') || fullText.includes('tap to donate')) {
         return false;
       }
       return true;
     }).map((s) => {
+      // Extract file size and quality like Bous extension
+      const fullText = `${s.name || ''} ${s.title || ''} ${s.description || ''}`;
+      const sizeMatch = fullText.match(/(\d+(?:\.\d+)?\s*(?:GB|MB|GiB|MiB))/i);
+      if (sizeMatch && !s.size) {
+        s.size = sizeMatch[1].toUpperCase();
+      }
+      const qMatch = fullText.match(/(4K|2160p|1080p|720p|480p)/i);
+      if (qMatch && !s.quality) {
+        s.quality = qMatch[1].toUpperCase();
+      }
+
       // If stream requires proxy headers (like Referer or Cookie for Cinejoy, MovieBox, etc.)
       if (s.url && s.behaviorHints?.proxyHeaders?.request) {
         const headersJson = JSON.stringify(s.behaviorHints.proxyHeaders.request);
@@ -1295,6 +1347,15 @@ export class AddonManager {
     } catch (err) {
       // Non-fatal if cloudstream scraper encounters network issue
     }
+
+    // Sort streams: Direct playable streams (HLS, MP4, HTTP streaming) first
+    validAddonStreams.sort((a, b) => {
+      const aIsDirect = Boolean(a.url && (a.url.includes('.m3u8') || a.url.includes('.mp4') || a.url.includes('/api/proxy/stream') || a.url.includes('httpstreaming') || a.url.includes('pengu.uk') || a.url.includes('sooti.info') || a.url.includes('thevolecitor')));
+      const bIsDirect = Boolean(b.url && (b.url.includes('.m3u8') || b.url.includes('.mp4') || b.url.includes('/api/proxy/stream') || b.url.includes('httpstreaming') || b.url.includes('pengu.uk') || b.url.includes('sooti.info') || b.url.includes('thevolecitor')));
+      if (aIsDirect && !bIsDirect) return -1;
+      if (!aIsDirect && bIsDirect) return 1;
+      return 0;
+    });
 
     return validAddonStreams;
   }
