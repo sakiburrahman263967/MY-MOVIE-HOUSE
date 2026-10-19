@@ -1276,6 +1276,14 @@ export class AddonManager {
         s.quality = qMatch[1].toUpperCase();
       }
 
+      // Filter out micro-fragment fake streams (e.g. PenguPlay DASH chunks of 1-7 MB for a full movie)
+      if (type === 'movie' && s.size) {
+        const mbMatch = s.size.match(/([\d.]+)\s*MB/i);
+        if (mbMatch && parseFloat(mbMatch[1]) < 100) {
+          return null; // Skip fragments under 100 MB for movies
+        }
+      }
+
       // If stream requires proxy headers (like Referer or Cookie for Cinejoy, MovieBox, etc.)
       if (s.url && s.behaviorHints?.proxyHeaders?.request) {
         const headersJson = JSON.stringify(s.behaviorHints.proxyHeaders.request);
@@ -1288,7 +1296,7 @@ export class AddonManager {
         };
       }
       return s;
-    });
+    }).filter(Boolean);
 
     // Also query active CloudStream providers (e.g. BDIX, TheMoviesFlix, HDHub4u, etc.)
     try {

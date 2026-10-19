@@ -560,6 +560,303 @@ export class CloudStreamManager {
     return streams;
   }
 
+  // --- Utility: Unlock PasteURL / PasteTot (Redowan-CloudStream Extractor) ---
+  async unlockPasteUrl(url) {
+    const links = [];
+    if (!url || typeof url !== 'string') return links;
+    try {
+      const pageUrl = url.startsWith('http') ? url : `https://${url}`;
+      const res = await fetch(pageUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        timeout: 6000
+      });
+      if (!res.ok) return links;
+      const html = await res.text();
+      const $ = cheerio.load(html);
+
+      const formParams = {};
+      $('form input[name]').each((i, el) => {
+        formParams[$(el).attr('name')] = $(el).attr('value');
+      });
+
+      let unlockedHtml = html;
+      if (Object.keys(formParams).length > 0) {
+        const body = new URLSearchParams(formParams);
+        const postRes = await fetch(pageUrl, {
+          method: 'POST',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Referer': pageUrl,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body,
+          timeout: 6000
+        });
+        if (postRes.ok) {
+          unlockedHtml = await postRes.text();
+        }
+      }
+
+      const $u = cheerio.load(unlockedHtml);
+      $u('a[href]').each((i, el) => {
+        const href = $u(el).attr('href')?.trim();
+        const text = $u(el).text().trim();
+        if (href && href.startsWith('http') && !href.includes('pasteurl') && !href.includes('pastetot')) {
+          links.push({ text, href });
+        }
+      });
+    } catch {}
+    return links;
+  }
+
+  // --- Scraper: BanglaPlex (Redowan-CloudStream Provider) ---
+  async scrapeBanglaPlex(title, year = '', isMovie = true) {
+    const results = [];
+    try {
+      const domains = await this.getLiveDomains();
+      const domain = domains.banglaplex || 'https://banglaplex.biz';
+      const cleanTitle = title.replace(/[^\w\s]/gi, ' ').trim();
+      const searchUrl = `${domain}/search?q=${encodeURIComponent(cleanTitle)}`;
+
+      const searchRes = await fetch(searchUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Referer': `${domain}/`
+        },
+        timeout: 6000
+      });
+      if (!searchRes.ok) return results;
+
+      const html = await searchRes.text();
+      const $ = cheerio.load(html);
+      const items = [];
+      $('a[href*="/watch/"]').each((i, el) => {
+        const href = $(el).attr('href');
+        const itemTitle = $(el).text().trim() || $(el).attr('title')?.trim();
+        if (href && itemTitle && !items.some(x => x.href === href)) {
+          items.push({ title: itemTitle, href });
+        }
+      });
+
+      if (items.length === 0) return results;
+
+      const targetPost = items[0];
+      const pageRes = await fetch(targetPost.href, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Referer': `${domain}/`
+        },
+        timeout: 6000
+      });
+      if (!pageRes.ok) return results;
+
+      const pageHtml = await pageRes.text();
+      const $p = cheerio.load(pageHtml);
+
+      const pasteLinks = [];
+      $p('a[href]').each((i, el) => {
+        const href = $p(el).attr('href');
+        const text = $p(el).text().trim();
+        if (href && (href.includes('pasteurl') || href.includes('pastetot') || href.includes('/view/'))) {
+          const sizeMatch = text.match(/([\d.]+\s*(?:GB|MB))/i);
+          const qMatch = text.match(/(\d{3,4}p)/i);
+          pasteLinks.push({
+            href,
+            text,
+            size: sizeMatch ? sizeMatch[1].toUpperCase() : '',
+            quality: qMatch ? qMatch[1] : '1080p'
+          });
+        }
+      });
+
+      for (const pl of pasteLinks.slice(0, 3)) {
+        const unlocked = await this.unlockPasteUrl(pl.href);
+        for (const ul of unlocked) {
+          if (ul.href.includes('pixeldrain.com')) {
+            const direct = this.extractPixeldrain(ul.href);
+            if (direct) {
+              results.push({
+                addonId: 'cloudstream-banglaplex',
+                addonName: '[CloudStream] BanglaPlex (BDIX)',
+                name: `[BanglaPlex] Pixeldrain ${pl.quality}`,
+                title: `${targetPost.title}\n⚡ BanglaPlex Pixeldrain High Speed\n💾 ${pl.size || pl.quality}`,
+                url: direct,
+                quality: pl.quality,
+                size: pl.size,
+                description: `BanglaPlex • Pixeldrain Direct • ${pl.size}`,
+                behaviorHints: { notWebReady: false }
+              });
+            }
+          } else {
+            results.push({
+              addonId: 'cloudstream-banglaplex',
+              addonName: '[CloudStream] BanglaPlex (BDIX)',
+              name: `[BanglaPlex] Direct ${pl.quality}`,
+              title: `${targetPost.title}\n⚡ BanglaPlex High Speed Stream\n💾 ${pl.size || pl.quality}`,
+              url: ul.href,
+              quality: pl.quality,
+              size: pl.size,
+              description: `BanglaPlex • Cloud Mirror • ${pl.size}`,
+              behaviorHints: { notWebReady: false }
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('BanglaPlex scraper notice:', err.message);
+    }
+    return results;
+  }
+
+  // --- Scraper: 9kMovies (Redowan-CloudStream Provider) ---
+  async scrape9kMovies(title, year = '', isMovie = true) {
+    const results = [];
+    try {
+      const cleanTitle = title.replace(/[^\w\s]/gi, ' ').trim();
+      const domain = 'https://9kmovies.int.in';
+      const searchUrl = `${domain}/search/${encodeURIComponent(cleanTitle)}`;
+
+      const searchRes = await fetch(searchUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        timeout: 6000
+      });
+      if (!searchRes.ok) return results;
+
+      const html = await searchRes.text();
+      const $ = cheerio.load(html);
+      const items = [];
+      $('figcaption a, .thumb a').each((i, el) => {
+        const href = $(el).attr('href');
+        const itemTitle = $(el).text().trim();
+        if (href && itemTitle && !items.some(x => x.href === href)) {
+          items.push({ title: itemTitle, href });
+        }
+      });
+
+      if (items.length === 0) return results;
+
+      const targetPost = items[0];
+      const pageRes = await fetch(targetPost.href, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        timeout: 6000
+      });
+      if (!pageRes.ok) return results;
+
+      const pageHtml = await pageRes.text();
+      const $p = cheerio.load(pageHtml);
+
+      $p('a[href]').each((i, el) => {
+        const href = $p(el).attr('href');
+        const text = $p(el).text().trim();
+        if (href && (text.match(/480p|720p|1080p|2160p|Download|GDFlix|HubCloud|G-Drive/i) || href.includes('uptobhai') || href.includes('hubcloud') || href.includes('pixeldrain'))) {
+          const qMatch = text.match(/(\d{3,4}p)/i) || targetPost.title.match(/(\d{3,4}p)/i);
+          const quality = qMatch ? qMatch[1] : '1080p';
+          const sizeMatch = text.match(/([\d.]+\s*(?:GB|MB))/i) || targetPost.title.match(/([\d.]+\s*(?:GB|MB))/i);
+          const size = sizeMatch ? sizeMatch[1].toUpperCase() : '';
+
+          if (href.includes('pixeldrain.com')) {
+            const direct = this.extractPixeldrain(href);
+            if (direct) {
+              results.push({
+                addonId: 'cloudstream-9kmovies',
+                addonName: '[CloudStream] 9kMovies',
+                name: `[9kMovies] Pixeldrain ${quality}`,
+                title: `${targetPost.title}\n⚡ 9kMovies Pixeldrain High Speed\n💾 ${size || quality}`,
+                url: direct,
+                quality,
+                size,
+                description: `9kMovies • Pixeldrain Direct • ${size}`,
+                behaviorHints: { notWebReady: false }
+              });
+            }
+          } else {
+            results.push({
+              addonId: 'cloudstream-9kmovies',
+              addonName: '[CloudStream] 9kMovies',
+              name: `[9kMovies] ${quality} Fast Stream`,
+              title: `${targetPost.title}\n⚡ 9kMovies Dual Audio Stream\n💾 ${size || quality}`,
+              url: href,
+              quality,
+              size,
+              description: `9kMovies • Dual Audio • ${size || quality}`,
+              behaviorHints: { notWebReady: false }
+            });
+          }
+        }
+      });
+    } catch (err) {
+      console.warn('9kMovies scraper notice:', err.message);
+    }
+    return results.slice(0, 5);
+  }
+
+  // --- Scraper: TheMoviesFlix (Redowan-CloudStream Provider) ---
+  async scrapeTheMoviesFlix(title, year = '', isMovie = true) {
+    const results = [];
+    try {
+      const cleanTitle = title.replace(/[^\w\s]/gi, ' ').trim();
+      const domain = 'https://themoviesflix.co';
+      const searchUrl = `${domain}/?s=${encodeURIComponent(cleanTitle)}`;
+
+      const searchRes = await fetch(searchUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        timeout: 6000
+      });
+      if (!searchRes.ok) return results;
+
+      const html = await searchRes.text();
+      const $ = cheerio.load(html);
+      const items = [];
+      $('.latestPost a, .title a').each((i, el) => {
+        const href = $(el).attr('href');
+        const itemTitle = $(el).text().trim();
+        if (href && itemTitle && !items.some(x => x.href === href)) {
+          items.push({ title: itemTitle, href });
+        }
+      });
+
+      if (items.length === 0) return results;
+
+      const targetPost = items[0];
+      const pageRes = await fetch(targetPost.href, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+        timeout: 6000
+      });
+      if (!pageRes.ok) return results;
+
+      const pageHtml = await pageRes.text();
+      const $p = cheerio.load(pageHtml);
+
+      $p('a.maxbutton, a.btn, a[href*="fastcloud"], a[href*="gdflix"]').each((i, el) => {
+        const href = $p(el).attr('href');
+        const text = $p(el).text().trim();
+        if (href) {
+          const qMatch = text.match(/(\d{3,4}p)/i) || targetPost.title.match(/(\d{3,4}p)/i);
+          const quality = qMatch ? qMatch[1] : '1080p';
+          const sizeMatch = text.match(/([\d.]+\s*(?:GB|MB))/i) || targetPost.title.match(/([\d.]+\s*(?:GB|MB))/i);
+          const size = sizeMatch ? sizeMatch[1].toUpperCase() : '';
+
+          results.push({
+            addonId: 'cloudstream-themoviesflix',
+            addonName: '[CloudStream] TheMoviesFlix',
+            name: `[TheMoviesFlix] ${quality} Fast Cloud`,
+            title: `${targetPost.title}\n⚡ TheMoviesFlix High-Speed Stream\n💾 ${size || quality}`,
+            url: href,
+            quality,
+            size,
+            description: `TheMoviesFlix • Fast Cloud • ${size || quality}`,
+            behaviorHints: { notWebReady: false }
+          });
+        }
+      });
+    } catch (err) {
+      console.warn('TheMoviesFlix scraper notice:', err.message);
+    }
+    return results.slice(0, 5);
+  }
+
   // --- Scraper: HDHub4u Live Content Search & Link Resolver ---
   async scrapeHDHub4u(title, year = '', isMovie = true, season = 1, episode = 1) {
     const results = [];
@@ -735,9 +1032,12 @@ export class CloudStreamManager {
 
     const streams = [];
 
-    // 1. Live Scrapers Execution (HDHub4u, MoviesMod, Cinefreak)
+    // 1. Live Scrapers Execution (BanglaPlex, 9kMovies, TheMoviesFlix, HDHub4u, MoviesMod)
     try {
       const liveScraperPromises = [
+        this.scrapeBanglaPlex(cleanTitle, year, isMovie),
+        this.scrape9kMovies(cleanTitle, year, isMovie),
+        this.scrapeTheMoviesFlix(cleanTitle, year, isMovie),
         this.scrapeHDHub4u(cleanTitle, year, isMovie, season, episode),
         this.scrapeMoviesMod(cleanTitle, year, isMovie)
       ];
