@@ -53,7 +53,7 @@
       "source": "/(.*)",
       "destination": {
         "service": "my-movie-house-frontend",
-        "path": "/index.html"
+        "path": "/"
       }
     }
   ]
