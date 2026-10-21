@@ -819,6 +819,7 @@ app.get('/api/transcode/stream', async (req, res) => {
     if (!res.headersSent) res.end();
   });
 });
+const port = process.env.PORT || 3001;
 if (!process.env.VERCEL) {
   app.listen(port, () => console.log(`My-Movie-House API listening at http://localhost:${port}`));
 }
