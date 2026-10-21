@@ -747,8 +747,55 @@ app.use((error, _req, res, _next) => {
 
 const MAX_CONCURRENT_TRANSCODES = 2;
 let activeTranscodes = 0;
+const ffprobeCache = new Map(); // url -> {data, ts}
+const FFPROBE_TTL = 10 * 60 * 1000;
 
-// GET /api/transcode/stream?url=... Transcode MKV audio (AC3/EAC3/DTS) to AAC
+function isH264Codec(codec = '') {
+  const c = codec.toLowerCase();
+  return c.includes('h264') || c.includes('avc') || c.includes('avc1');
+}
+
+async function probeSource(url) {
+  const key = url;
+  const cached = ffprobeCache.get(key);
+  if (cached && Date.now() - cached.ts < FFPROBE_TTL) return cached.data;
+  return new Promise((resolve) => {
+    try {
+      const args = ['-v', 'quiet', '-print_format', 'json', '-show_streams', '-show_format', url];
+      const proc = spawn('ffprobe', args, { timeout: 15000 });
+      let out = '';
+      let err = '';
+      proc.stdout.on('data', (d) => { out += d.toString(); });
+      proc.stderr.on('data', (d) => { err += d.toString(); });
+      const t = setTimeout(() => { try { proc.kill('SIGKILL'); } catch {} }, 15000);
+      proc.on('close', () => {
+        clearTimeout(t);
+        try {
+          const json = JSON.parse(out || '{}');
+          const streams = Array.isArray(json.streams) ? json.streams : [];
+          const v = streams.find(s => s.codec_type === 'video') || {};
+          const a = streams.find(s => s.codec_type === 'audio') || {};
+          const data = {
+            videoCodec: v.codec_name || v.codec_tag_string || '',
+            audioCodec: a.codec_name || a.codec_tag_string || '',
+            container: json.format?.format_name || '',
+            width: v.width || 0,
+            height: v.height || 0
+          };
+          ffprobeCache.set(key, { data, ts: Date.now() });
+          resolve(data);
+        } catch {
+          resolve({ videoCodec: '', audioCodec: '', container: '', width: 0, height: 0 });
+        }
+      });
+      proc.on('error', () => { clearTimeout(t); resolve({ videoCodec: '', audioCodec: '', container: '', width: 0, height: 0 }); });
+    } catch {
+      resolve({ videoCodec: '', audioCodec: '', container: '', width: 0, height: 0 });
+    }
+  });
+}
+
+// GET /api/transcode/stream?url=... Transcode HEVC/x265 to H.264 or convert audio as needed
 app.get('/api/transcode/stream', async (req, res) => {
   const rawUrl = typeof req.query.url === 'string' ? req.query.url.trim() : '';
   if (!rawUrl) return res.status(400).json({ error: 'Missing url parameter' });
@@ -775,25 +822,29 @@ app.get('/api/transcode/stream', async (req, res) => {
   res.setHeader('Content-Type', 'video/mp4');
   res.setHeader('Accept-Ranges', 'none');
 
+  const probe = await probeSource(rawUrl);
+  const videoIsH264 = isH264Codec(probe.videoCodec);
   const args = [
     '-hide_banner',
     '-loglevel', 'error',
-    '-i', rawUrl,
-    '-c:v', 'copy',
-    '-c:a', 'aac',
-    '-b:a', '192k',
-    '-ac', '2',
-    '-movflags', 'frag_keyframe+empty_moov+default_base_moof',
-    '-f', 'mp4',
-    'pipe:1'
+    '-i', rawUrl
   ];
+  if (videoIsH264) {
+    args.push('-c:v', 'copy');
+  } else {
+    args.push('-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-pix_fmt', 'yuv420p');
+  }
+  args.push('-c:a', 'aac', '-b:a', '192k', '-ac', '2', '-movflags', 'frag_keyframe+empty_moov+default_base_moof', '-f', 'mp4', 'pipe:1');
 
   let ffmpeg;
   try {
     ffmpeg = spawn('ffmpeg', args);
   } catch (err) {
     activeTranscodes -= 1;
-    return res.status(500).json({ error: 'ffmpeg unavailable. Choose an MP4/AAC source instead.' });
+    if (!res.headersSent) {
+      return res.status(500).json({ error: 'ffmpeg not available. Choose another source instead.' });
+    }
+    return;
   }
 
   const killProc = () => {
@@ -809,7 +860,7 @@ app.get('/api/transcode/stream', async (req, res) => {
   ffmpeg.on('error', (err) => {
     activeTranscodes -= 1;
     if (!res.headersSent) {
-      res.status(500).json({ error: 'ffmpeg unavailable. Choose an MP4/AAC source instead.' });
+      res.status(500).json({ error: 'ffmpeg not available. Choose another source instead.' });
     }
   });
 

@@ -2,7 +2,7 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install ffmpeg for MKV audio transcoding (AC3/EAC3/DTS -> AAC)
+# Install ffmpeg/ffprobe for transcoding (HEVC/x265 -> H.264) and audio conversion
 RUN apk add --no-cache ffmpeg
 
 # Copy package files and install dependencies
