@@ -148,7 +148,7 @@
     "cloudstream-MLSBDProvider:movie:cs_MLSBDProvider_movies",
     "cloudstream-MovieBoxProviderIN:movie:cs_MovieBoxProviderIN_movies"
   ],
-  "updatedAt": "2026-10-19T03:51:25.648Z",
+  "updatedAt": "2026-10-20T18:20:13.545Z",
   "cloudstreamRepos": [
     {
       "id": "cs-repo-redowan",
@@ -3689,11 +3689,11 @@
           ],
           "iconUrl": "https://cricfy.pro/wp-content/uploads/2024/11/cropped-cricfytv-2.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/CricifyProvider.cs3",
-          "version": 71,
+          "version": 73,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 117026,
+          "fileSize": 117310,
           "enabled": true
         },
         {
@@ -3838,11 +3838,11 @@
           ],
           "iconUrl": "https://www.livxow.site/logo.jpg",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/LivXowProvider.cs3",
-          "version": 20,
+          "version": 22,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 127205,
+          "fileSize": 127417,
           "enabled": false
         },
         {
@@ -3991,11 +3991,11 @@
           ],
           "iconUrl": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/refs/heads/master/Logos/PlayFyTvProvider/playfy-tv-4.webp",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/PlayFyProvider.cs3",
-          "version": 14,
+          "version": 16,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 106982,
+          "fileSize": 107306,
           "enabled": false
         },
         {
@@ -4009,11 +4009,11 @@
           ],
           "iconUrl": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/refs/heads/master/Logos/PlayZTVProvider/logo.jpg",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/PlayZTVProvider.cs3",
-          "version": 42,
+          "version": 44,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 117275,
+          "fileSize": 117498,
           "enabled": true
         },
         {
@@ -4067,11 +4067,11 @@
           ],
           "iconUrl": "https://sktechtv.org/wp-content/uploads/2026/05/sktechtv.webp",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/SKTechProvider.cs3",
-          "version": 58,
+          "version": 60,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 125231,
+          "fileSize": 125456,
           "enabled": false
         },
         {
@@ -4085,11 +4085,11 @@
           ],
           "iconUrl": "https://sportzxlive.com/wp-content/uploads/2026/04/cropped-logo-1-2048x1611-1-1024x806.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/SportzxProvider.cs3",
-          "version": 26,
+          "version": 28,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 123166,
+          "fileSize": 123413,
           "enabled": false
         },
         {

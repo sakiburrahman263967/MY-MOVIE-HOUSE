@@ -1,33 +1,12 @@
 import { useEffect, useState, useMemo } from 'react';
 import { api } from '../api.js';
 import VideoPlayer from './VideoPlayer.jsx';
+import { parseStreamDetails } from '../utils/streamParser.js';
 
 const labelFor = (stream) => stream.name || stream.title || stream.behaviorHints?.filename || stream.addonName || 'Stream';
 
 function parseDetails(stream) {
-  const text = `${stream.name || ''} ${stream.title || ''} ${stream.description || ''}`;
-  
-  // Resolution
-  let resolution = '1080p';
-  if (/2160p|4k|uhd/i.test(text)) resolution = '4K UHD';
-  else if (/1080p|fhd/i.test(text)) resolution = '1080p FHD';
-  else if (/720p|hd\b/i.test(text)) resolution = '720p HD';
-  else if (/480p|sd/i.test(text)) resolution = '480p SD';
-
-  // Size
-  const sizeMatch = text.match(/([\d.]+\s*(?:GB|MB))/i);
-  const size = sizeMatch ? sizeMatch[1] : (stream.size || '');
-
-  // Audio / Dual
-  const isDual = /dual\s*audio|hindi\s*\+\s*eng|multi/i.test(text);
-
-  // Server / Source name
-  let serverName = stream.addonName || 'Stream Server';
-  if (stream.addonName?.includes('CloudStream')) {
-    serverName = stream.addonName.replace('[CloudStream] ', '');
-  }
-
-  return { resolution, size, isDual, serverName };
+  return parseStreamDetails(stream);
 }
 
 export default function StreamModal({ type, id, title, poster, onClose }) {

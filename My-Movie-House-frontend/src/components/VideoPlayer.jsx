@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Hls from 'hls.js';
 import { progress, api, API_BASE } from '../api.js';
+import { parseStreamDetails } from '../utils/streamParser.js';
 
 // Format seconds into HH:MM:SS or MM:SS
 function formatTime(seconds) {
@@ -16,24 +17,7 @@ function formatTime(seconds) {
 
 // Extract size, resolution, and details from stream metadata
 export function parseStreamInfo(s) {
-  if (!s) return { size: null, resolution: 'HD', serverName: 'Direct' };
-  const fullText = `${s.name || ''} ${s.title || ''} ${s.description || ''} ${s.behaviorHints?.filename || ''}`;
-  
-  // Extract file size: e.g. 2.45 GB, 750 MB, 1.2 GiB
-  const sizeMatch = fullText.match(/(\d+(?:\.\d+)?\s*(?:GB|MB|GiB|MiB))/i);
-  const size = sizeMatch ? sizeMatch[1].toUpperCase() : null;
-
-  // Extract resolution: 4K, 2160p, 1080p, 720p, 480p, HDR
-  const resMatch = fullText.match(/(4K|2160p|1080p|720p|480p|HDR10\+|HDR|DV|UHD)/i);
-  const resolution = resMatch ? resMatch[1].toUpperCase() : 'HD';
-
-  // Extract codec / sound: e.g. DDP5.1, Atmos, AAC, HEVC, H.264
-  const soundMatch = fullText.match(/(DDP5\.1|Atmos|5\.1|7\.1|AAC|DTS|Dolby)/i);
-  const sound = soundMatch ? soundMatch[1] : null;
-
-  const serverName = s.addonName || s.name?.split('\n')[0] || 'Server';
-
-  return { size, resolution, sound, serverName, fullText };
+  return parseStreamDetails(s);
 }
 
 export function isEmbedUrl(url) {
@@ -127,6 +111,8 @@ export default function VideoPlayer({
   const [buffered, setBuffered] = useState(0);
   const [volume, setVolume] = useState(1); // 0.0 to 1.0 (Clean native sound)
   const [isMuted, setIsMuted] = useState(false);
+  const volumeRef = useRef(volume);
+  const isMutedRef = useRef(isMuted);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPip, setIsPip] = useState(false);
@@ -156,12 +142,30 @@ export default function VideoPlayer({
 
   // Subtitles (Internal + External)
   const [internalSubtitles, setInternalSubtitles] = useState([]);
+  const [addonSubtitles, setAddonSubtitles] = useState([]);
   const [currentSubtitleTrack, setCurrentSubtitleTrack] = useState(-1); // -1 = Off
   const [customSubtitles, setCustomSubtitles] = useState([]);
   const [activeCueText, setActiveCueText] = useState('');
   const [subtitleEnabled, setSubtitleEnabled] = useState(true);
   const [subtitleOffset, setSubtitleOffset] = useState(0);
   const [subtitleSize, setSubtitleSize] = useState('normal');
+
+  // Load external addon subtitles
+  useEffect(() => {
+    if (!id) return;
+    let active = true;
+    api.getSubtitles(type, id)
+      .then((data) => {
+        if (active && Array.isArray(data?.subtitles)) {
+          setAddonSubtitles(data.subtitles.map((s, idx) => ({
+            ...s,
+            id: s.id ? `addon-sub-${s.id}` : `addon-sub-${idx}`
+          })));
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [type, id]);
 
   // Quality / Resolution Selector
   const [qualityLevels, setQualityLevels] = useState([]);
@@ -185,6 +189,8 @@ export default function VideoPlayer({
   const [error, setError] = useState('');
   const [directUrl, setDirectUrl] = useState(null);
   const [isResolvingDirect, setIsResolvingDirect] = useState(false);
+  const failedUrlsRef = useRef(new Set());
+  const stallTimerRef = useRef(null);
 
   // Attempt to resolve direct .m3u8/.mp4 stream from embed URL
   useEffect(() => {
@@ -209,18 +215,14 @@ export default function VideoPlayer({
     return () => { active = false; };
   }, [stream?.url, showOsd]);
 
-  // Stream auto-fetch & real-time resource scanner if opened directly
-  useEffect(() => {
-    if (initialStream) return;
+  // Standalone fetch: only when opened without pre-fetched streams from Detail.jsx
+  const fetchStandaloneStreams = useCallback(() => {
     if (!id) return;
-
-    let active = true;
     setIsScanning(true);
     setError('');
 
     api.getStreams(type, id)
       .then((data) => {
-        if (!active) return;
         const valid = (data || []).filter((s) => (
           s &&
           (s.url || s.externalUrl) &&
@@ -237,43 +239,87 @@ export default function VideoPlayer({
         }
       })
       .catch((err) => {
-        if (active) setError(err.message || 'Error scanning live sources.');
+        setError(err.message || 'Error scanning live sources.');
       })
       .finally(() => {
-        if (active) setIsScanning(false);
+        setIsScanning(false);
       });
+  }, [id, type, showOsd]);
 
-    return () => { active = false; };
-  }, [type, id, initialStream, showOsd]);
+  useEffect(() => {
+    if ((initialAllStreams && initialAllStreams.length > 0) || initialStream) return;
+    fetchStandaloneStreams();
+  }, [initialAllStreams, initialStream, fetchStandaloneStreams]);
 
   const rawUrl = directUrl || stream?.url;
   const effectiveUrl = (rawUrl && rawUrl.startsWith('/api/')) ? `${API_BASE}${rawUrl}` : rawUrl;
   const isEmbed = !directUrl && isEmbedUrl(stream?.url);
   const activeStreamInfo = parseStreamInfo(stream);
 
-  const handleVideoError = () => {
+  // Switch Stream Server & remember chosen quality
+  const handleSwitchServer = useCallback((newStream) => {
+    setInternalStream(newStream);
+    if (onSelectStream) {
+      onSelectStream(newStream);
+    }
+    const info = parseStreamInfo(newStream);
+    if (info?.quality) {
+      try {
+        localStorage.setItem('mmh_preferred_quality', info.quality);
+      } catch {}
+    }
+    showOsd(`Switched to: ${info.serverName} (${info.resolution}${info.size ? ' • ' + info.size : ''})`);
+    setShowServerMenu(false);
+  }, [onSelectStream, showOsd]);
+
+  const handleVideoError = useCallback(() => {
+    if (stallTimerRef.current) {
+      clearTimeout(stallTimerRef.current);
+      stallTimerRef.current = null;
+    }
+
     if (directUrl && directUrl !== stream?.url) {
+      failedUrlsRef.current.add(directUrl);
       setDirectUrl(null);
-      showOsd('Direct stream failed, trying fallback...');
+      showOsd('Direct stream failed, trying standard stream URL...');
       return;
     }
+
     const currentSrc = effectiveUrl || stream?.url;
     if (currentSrc && !currentSrc.includes('/api/proxy/stream') && !isEmbedUrl(currentSrc)) {
       const proxied = `${API_BASE}/api/proxy/stream?url=${encodeURIComponent(currentSrc)}`;
-      setDirectUrl(proxied);
-      showOsd('⚡ Routing through Stream Proxy...');
-      return;
-    }
-    if (allStreams.length > 1) {
-      const curIdx = allStreams.findIndex((s) => s.url === stream?.url);
-      const nextStream = allStreams[(curIdx + 1) % allStreams.length];
-      if (nextStream && nextStream !== stream) {
-        showOsd(`Auto-switching to ${parseStreamInfo(nextStream).serverName}...`);
-        handleSwitchServer(nextStream);
+      if (!failedUrlsRef.current.has(proxied)) {
+        failedUrlsRef.current.add(currentSrc);
+        setDirectUrl(proxied);
+        showOsd('⚡ Routing stream through proxy...');
         return;
       }
     }
-    setError('Unable to play this direct stream. Please select another server from the top menu.');
+
+    if (stream?.url) failedUrlsRef.current.add(stream.url);
+    if (directUrl) failedUrlsRef.current.add(directUrl);
+
+    // Skip all failed streams and auto-switch to next working stream
+    const candidateStreams = allStreams.filter((s) => s?.url && !failedUrlsRef.current.has(s.url));
+    if (candidateStreams.length > 0) {
+      const nextStream = candidateStreams[0];
+      const nextInfo = parseStreamInfo(nextStream);
+      showOsd(`⚡ Stream failed. Auto-switching to ${nextInfo.serverName} (${nextInfo.resolution})...`);
+      handleSwitchServer(nextStream);
+      return;
+    }
+
+    setError('All available streams failed to play. Please select another server or click Retry.');
+  }, [directUrl, stream?.url, effectiveUrl, allStreams, showOsd, handleSwitchServer]);
+
+  const handleRetryPlayback = () => {
+    failedUrlsRef.current.clear();
+    setError('');
+    if (allStreams.length > 0) {
+      handleSwitchServer(allStreams[0]);
+    } else if (id) {
+      fetchStandaloneStreams();
+    }
   };
 
   const controlsTimeoutRef = useRef(null);
@@ -294,6 +340,12 @@ export default function VideoPlayer({
     }
   };
 
+  // Keep volume/mute refs in sync so stream init never re-runs on volume changes
+  useEffect(() => {
+    volumeRef.current = volume;
+    isMutedRef.current = isMuted;
+  }, [volume, isMuted]);
+
   // Initialize Stream (HLS or Direct URL) - PURE NATIVE AUDIO
   useEffect(() => {
     if (isEmbed) {
@@ -311,9 +363,24 @@ export default function VideoPlayer({
     setQualityLevels([]);
     setCurrentQuality(-1);
 
-    // Ensure audio plays directly through browser native sound engine (never silenced)
-    video.muted = false;
-    video.volume = volume;
+    // Apply current volume/mute through refs (state changes are handled by the volume effect below)
+    video.muted = isMutedRef.current;
+    video.volume = isMutedRef.current ? 0 : volumeRef.current;
+
+    if (stallTimerRef.current) {
+      clearTimeout(stallTimerRef.current);
+      stallTimerRef.current = null;
+    }
+
+    if (!isEmbed && streamUrl) {
+      stallTimerRef.current = setTimeout(() => {
+        const v = videoRef.current;
+        if (v && !v.paused && (v.currentTime === 0 || v.readyState < 2)) {
+          showOsd('⚠️ Playback stalled (8s without progress). Auto-switching server...');
+          handleVideoError();
+        }
+      }, 8000);
+    }
 
     if (isHls && Hls.isSupported()) {
       const hls = new Hls({
@@ -410,10 +477,14 @@ export default function VideoPlayer({
     video.play().then(() => setIsPlaying(true)).catch(() => {});
 
     return () => {
+      if (stallTimerRef.current) {
+        clearTimeout(stallTimerRef.current);
+        stallTimerRef.current = null;
+      }
       hlsRef.current?.destroy();
       hlsRef.current = null;
     };
-  }, [effectiveUrl, isEmbed, volume]);
+  }, [effectiveUrl, isEmbed, handleVideoError, showOsd]);
 
   // Volume & Mute Update
   useEffect(() => {
@@ -456,6 +527,11 @@ export default function VideoPlayer({
     if (!video) return;
     const cur = video.currentTime;
     setCurrentTime(cur);
+
+    if (cur > 0 && stallTimerRef.current) {
+      clearTimeout(stallTimerRef.current);
+      stallTimerRef.current = null;
+    }
 
     if (video.buffered.length > 0) {
       setBuffered(video.buffered.end(video.buffered.length - 1));
@@ -669,6 +745,24 @@ export default function VideoPlayer({
       showOsd('Subtitles: OFF');
     } else if (trackId === 'upload') {
       fileInputRef.current?.click();
+    } else if (typeof trackId === 'string' && trackId.startsWith('addon-sub-')) {
+      const sub = addonSubtitles.find((s) => s.id === trackId);
+      if (sub && sub.url) {
+        if (hlsRef.current) hlsRef.current.subtitleTrack = -1;
+        setCurrentSubtitleTrack(trackId);
+        showOsd(`Loading Subtitle: ${sub.name}...`);
+        fetch(sub.url)
+          .then((res) => res.text())
+          .then((text) => {
+            const parsed = parseSrt(text);
+            setCustomSubtitles(parsed);
+            setSubtitleEnabled(true);
+            showOsd(`Subtitles: ${sub.name} (${sub.lang})`);
+          })
+          .catch(() => {
+            showOsd('Failed to load online subtitle');
+          });
+      }
     } else {
       if (hlsRef.current) {
         hlsRef.current.subtitleTrack = trackId;
@@ -692,16 +786,6 @@ export default function VideoPlayer({
     setShowQualityMenu(false);
   };
 
-  // Switch Stream Server
-  const handleSwitchServer = (newStream) => {
-    setInternalStream(newStream);
-    if (onSelectStream) {
-      onSelectStream(newStream);
-    }
-    const info = parseStreamInfo(newStream);
-    showOsd(`Switched to: ${info.serverName} (${info.resolution}${info.size ? ' • ' + info.size : ''})`);
-    setShowServerMenu(false);
-  };
 
   // Reset Video Filters
   const resetFilters = () => {
@@ -1189,6 +1273,13 @@ export default function VideoPlayer({
             playsInline
             autoPlay
             onTimeUpdate={handleTimeUpdate}
+            onPlaying={() => {
+              setIsPlaying(true);
+              if (stallTimerRef.current) {
+                clearTimeout(stallTimerRef.current);
+                stallTimerRef.current = null;
+              }
+            }}
             onLoadedMetadata={() => {
               const v = videoRef.current;
               if (v) {
@@ -1285,13 +1376,22 @@ export default function VideoPlayer({
               <p className="text-base font-bold text-white mb-1">Stream Error</p>
               <p className="text-xs text-rose-300 mb-4 pr-6">{error}</p>
               <div className="flex flex-wrap justify-center gap-2">
+                <button
+                  onClick={handleRetryPlayback}
+                  className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-black hover:bg-amber-400 transition shadow-md flex items-center gap-1.5"
+                >
+                  <span>🔄</span> Retry Streams
+                </button>
                 {allStreams.length > 1 && (
                   <button
                     onClick={() => {
-                      const curIdx = allStreams.findIndex((s) => s.url === stream.url);
-                      const nextStream = allStreams[(curIdx + 1) % allStreams.length];
                       setError('');
-                      if (onSelectStream) onSelectStream(nextStream);
+                      const unfailed = allStreams.filter((s) => s?.url && !failedUrlsRef.current.has(s.url));
+                      if (unfailed.length > 0) {
+                        handleSwitchServer(unfailed[0]);
+                      } else {
+                        setShowServerMenu(true);
+                      }
                     }}
                     className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-500 transition shadow-md flex items-center gap-1.5"
                   >
@@ -1308,9 +1408,9 @@ export default function VideoPlayer({
                 )}
                 <button
                   onClick={launchDesktopPotPlayer}
-                  className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-black hover:bg-amber-400 transition"
+                  className="rounded-xl bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 border border-white/20 transition"
                 >
-                  Open in Desktop PotPlayer
+                  Desktop PotPlayer
                 </button>
               </div>
             </div>
@@ -1768,6 +1868,31 @@ export default function VideoPlayer({
                         {currentSubtitleTrack === track.id && subtitleEnabled && <span>✓</span>}
                       </button>
                     ))}
+
+                    {/* Online Addon Subtitle Tracks */}
+                    {addonSubtitles.length > 0 && (
+                      <div className="pt-1.5 border-t border-white/10">
+                        <span className="text-[10px] text-amber-300/80 font-bold px-1 uppercase tracking-wider block mb-1">
+                          Online Subtitles ({addonSubtitles.length})
+                        </span>
+                        <div className="max-h-36 overflow-y-auto space-y-1 pr-1">
+                          {addonSubtitles.map((sub) => (
+                            <button
+                              key={sub.id}
+                              onClick={() => handleSelectSubtitleTrack(sub.id)}
+                              className={`w-full rounded-lg px-2 py-1 text-left flex items-center justify-between text-[11px] transition ${
+                                currentSubtitleTrack === sub.id && subtitleEnabled
+                                  ? 'bg-amber-500 text-black font-bold'
+                                  : 'hover:bg-white/10 text-white/80'
+                              }`}
+                            >
+                              <span className="truncate pr-2">{sub.name || sub.lang} ({sub.lang})</span>
+                              {currentSubtitleTrack === sub.id && subtitleEnabled && <span>✓</span>}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Load Custom Subtitle File */}
                     <div className="pt-2 border-t border-white/10">

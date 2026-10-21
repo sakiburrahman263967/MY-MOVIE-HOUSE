@@ -18,6 +18,7 @@ export default function Detail() {
   const [availableStreams, setAvailableStreams] = useState([]);
   const [streamsLoading, setStreamsLoading] = useState(false);
   const [selectedStream, setSelectedStream] = useState(null);
+  const [addonStatuses, setAddonStatuses] = useState([]);
   const [similarItems, setSimilarItems] = useState([]);
   const [selectedActor, setSelectedActor] = useState(null);
   const [actorCredits, setActorCredits] = useState(null);
@@ -64,29 +65,94 @@ export default function Detail() {
   useEffect(() => {
     let active = true;
     setStreamsLoading(true);
+    setAvailableStreams([]);
+    setSelectedStream(null);
+    setAddonStatuses([]);
+
     const streamTargetId = activeEpisode ? `${id}:${activeEpisode.season}:${activeEpisode.episode}` : id;
-    api.getStreams(type, streamTargetId)
-      .then((data) => {
+    const preferredQuality = (typeof localStorage !== 'undefined' && localStorage.getItem('mmh_preferred_quality')) || '';
+
+    const pickBestStream = (streamList) => {
+      if (!streamList || streamList.length === 0) return null;
+      if (preferredQuality) {
+        const match = streamList.find((s) => {
+          const q = String(s.quality || '').toLowerCase();
+          return q === preferredQuality.toLowerCase();
+        });
+        if (match) return match;
+      }
+      return streamList[0];
+    };
+
+    const cleanup = api.getStreamsLive(type, streamTargetId, {
+      onAddonStreams: (chunk) => {
         if (!active) return;
-        const valid = (data || []).filter((s) => (
-          s &&
-          (s.url || s.externalUrl) &&
-          !s.isTorrent &&
-          !s.infoHash &&
-          !s.url?.startsWith('magnet:') &&
-          !s.externalUrl?.startsWith('magnet:') &&
-          !s.externalUrl?.includes('donate') &&
-          !s.name?.toLowerCase().includes('support the project')
-        ));
-        setAvailableStreams(valid);
-      })
-      .catch(() => {
-        if (active) setAvailableStreams([]);
-      })
-      .finally(() => {
-        if (active) setStreamsLoading(false);
-      });
-    return () => { active = false; };
+        setAddonStatuses((prev) => {
+          const filtered = prev.filter((a) => a.addonId !== chunk.addonId);
+          return [...filtered, {
+            addonId: chunk.addonId,
+            addonName: chunk.addonName,
+            status: chunk.status,
+            latency: chunk.latency,
+            count: chunk.count || 0
+          }];
+        });
+
+        if (Array.isArray(chunk.streams) && chunk.streams.length > 0) {
+          setAvailableStreams((prev) => {
+            const map = new Map();
+            for (const s of prev) {
+              const key = s.url || s.externalUrl;
+              if (key) map.set(key, s);
+            }
+            for (const s of chunk.streams) {
+              const key = s.url || s.externalUrl;
+              if (key && !map.has(key)) map.set(key, s);
+            }
+            const combined = Array.from(map.values());
+            setSelectedStream((current) => current || pickBestStream(combined));
+            return combined;
+          });
+        }
+      },
+      onDone: (data) => {
+        if (!active) return;
+        setStreamsLoading(false);
+        if (Array.isArray(data?.streams) && data.streams.length > 0) {
+          setAvailableStreams(data.streams);
+          setSelectedStream((current) => current || pickBestStream(data.streams));
+        }
+      },
+      onError: () => {
+        if (!active) return;
+        // Fallback to standard getStreams if SSE fails
+        api.getStreams(type, streamTargetId)
+          .then((data) => {
+            if (!active) return;
+            const valid = (data || []).filter((s) => (
+              s &&
+              (s.url || s.externalUrl) &&
+              !s.isTorrent &&
+              !s.infoHash &&
+              !s.url?.startsWith('magnet:') &&
+              !s.externalUrl?.startsWith('magnet:') &&
+              !s.externalUrl?.includes('donate') &&
+              !s.name?.toLowerCase().includes('support the project')
+            ));
+            setAvailableStreams(valid);
+            setSelectedStream((current) => current || pickBestStream(valid));
+          })
+          .catch(() => {})
+          .finally(() => {
+            if (active) setStreamsLoading(false);
+          });
+      }
+    });
+
+    return () => {
+      active = false;
+      cleanup?.();
+    };
   }, [type, id, activeEpisode]);
 
   useEffect(() => setSaved(library.has(id)), [id]);
@@ -449,6 +515,39 @@ export default function Detail() {
                   )}
                 </div>
               </div>
+
+              {/* Live Per-Addon Status Indicators */}
+              {addonStatuses.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                  {addonStatuses.map((a) => (
+                    <span
+                      key={a.addonId}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold border ${
+                        a.status === 'ok'
+                          ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                          : a.status === 'failed'
+                          ? 'bg-rose-500/10 text-rose-300 border-rose-500/30'
+                          : 'bg-amber-500/10 text-amber-300 border-amber-500/30 animate-pulse'
+                      }`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          a.status === 'ok' ? 'bg-emerald-400' : a.status === 'failed' ? 'bg-rose-400' : 'bg-amber-400 animate-ping'
+                        }`}
+                      />
+                      <span>{a.addonName}</span>
+                      {typeof a.latency === 'number' && a.latency > 0 && (
+                        <span className="opacity-60 text-[9px] font-mono">{a.latency}ms</span>
+                      )}
+                      {a.count > 0 && (
+                        <span className="rounded bg-black/40 px-1 py-0.2 text-[9px] font-mono text-emerald-400 font-bold">
+                          {a.count}
+                        </span>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              )}
 
               {streamsLoading ? (
                 <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-4 text-center">

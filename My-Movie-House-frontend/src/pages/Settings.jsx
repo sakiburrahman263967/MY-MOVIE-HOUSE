@@ -103,6 +103,8 @@ const PRESET_CS_REPOS = [
 
 export default function Settings() {
   const [addons, setAddons] = useState([]);
+  const [addonsHealth, setAddonsHealth] = useState({});
+  const [refreshingAddons, setRefreshingAddons] = useState(false);
   const [url, setUrl] = useState('');
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(true);
@@ -304,8 +306,37 @@ export default function Settings() {
   };
 
   const refresh = () => api.getAddons().then(setAddons);
+
+  const fetchHealth = useCallback(async () => {
+    try {
+      const res = await api.getAddonsHealth();
+      if (Array.isArray(res?.health)) {
+        const map = {};
+        for (const h of res.health) {
+          map[h.id] = h;
+        }
+        setAddonsHealth(map);
+      }
+    } catch {}
+  }, []);
+
+  const handleRefreshAddons = async () => {
+    setRefreshingAddons(true);
+    try {
+      await api.refreshAddons();
+      const updatedList = await api.getAddons();
+      setAddons(updatedList || []);
+      await fetchHealth();
+    } catch (err) {
+      console.warn('Failed to refresh addons:', err);
+    } finally {
+      setRefreshingAddons(false);
+    }
+  };
+
   useEffect(() => {
     refresh().catch((r) => setError(r.message)).finally(() => setLoading(false));
+    fetchHealth();
     refreshCsRepos();
     refreshIptv();
     fetchAllCatalogs();
@@ -1926,11 +1957,21 @@ export default function Settings() {
       {/*  INSTALLED ADDONS LIST                        */}
       {/* ══════════════════════════════════════════════ */}
       <section>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
             <span className="h-4 w-1.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
             <h2 className="text-lg sm:text-xl font-bold text-white">Installed Addons ({addons.length})</h2>
           </div>
+          <button
+            type="button"
+            onClick={handleRefreshAddons}
+            disabled={refreshingAddons}
+            className="btn-glass flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold text-white hover:bg-white/15 disabled:opacity-50"
+            title="Ping and refresh all addon manifests"
+          >
+            <span className={refreshingAddons ? 'animate-spin' : ''}>🔄</span>
+            <span>{refreshingAddons ? 'Pinging Addons...' : 'Refresh Addons'}</span>
+          </button>
         </div>
 
         {loading ? (
@@ -1960,6 +2001,19 @@ export default function Settings() {
                     }`}>
                       {addon.enabled ? '● Active' : '○ Disabled'}
                     </span>
+                    {/* Addon Health Badge */}
+                    {addonsHealth[addon.id] && (
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-mono font-bold border flex items-center gap-1 ${
+                        addonsHealth[addon.id].status === 'ok'
+                          ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                          : 'bg-rose-500/10 text-rose-300 border-rose-500/30'
+                      }`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${
+                          addonsHealth[addon.id].status === 'ok' ? 'bg-emerald-400' : 'bg-rose-400'
+                        }`} />
+                        <span>{addonsHealth[addon.id].status === 'ok' ? `${addonsHealth[addon.id].latency}ms` : 'Offline'}</span>
+                      </span>
+                    )}
                   </div>
                   <p className="mt-2 break-all text-xs font-mono text-slate-300 bg-white/5 border border-white/10 rounded-lg p-2 max-w-xl">
                     {addon.url}

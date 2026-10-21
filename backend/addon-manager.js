@@ -104,6 +104,161 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = 4500) => {
   }
 };
 
+const MANIFEST_TTL = 6 * 60 * 60 * 1000; // 6 hours
+
+export function addonSupportsStream(manifest, type, id) {
+  if (!manifest || !Array.isArray(manifest.resources)) return false;
+  const streamRes = manifest.resources.find((r) => resourceName(r) === 'stream');
+  if (!streamRes) return false;
+
+  const supportedTypes = (typeof streamRes === 'object' && Array.isArray(streamRes.types))
+    ? streamRes.types
+    : (Array.isArray(manifest.types) ? manifest.types : null);
+  if (supportedTypes && supportedTypes.length > 0 && !supportedTypes.includes(type)) {
+    return false;
+  }
+
+  const idPrefixes = (typeof streamRes === 'object' && Array.isArray(streamRes.idPrefixes))
+    ? streamRes.idPrefixes
+    : (Array.isArray(manifest.idPrefixes) ? manifest.idPrefixes : null);
+  if (idPrefixes && idPrefixes.length > 0) {
+    const rawId = String(id || '');
+    const matches = idPrefixes.some((prefix) => rawId.startsWith(prefix));
+    if (!matches) return false;
+  }
+
+  return true;
+}
+
+export function isEmbedStreamUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  const lower = url.toLowerCase();
+  if (lower.includes('.mp4') || lower.includes('.m3u8') || lower.includes('/api/proxy/stream')) return false;
+  return (
+    lower.includes('/embed/') ||
+    lower.includes('/embed') ||
+    lower.includes('/searcho/') ||
+    lower.includes('autoembed.') ||
+    lower.includes('multiembed.') ||
+    lower.includes('smashystream.') ||
+    lower.includes('vidsrc.') ||
+    lower.includes('2embed.') ||
+    lower.includes('embed.su') ||
+    lower.includes('superembed.') ||
+    lower.includes('player.php') ||
+    lower.includes('playere.php') ||
+    lower.includes('embed.html')
+  );
+}
+
+export function isDirectPlayable(stream) {
+  if (!stream || !stream.url) return false;
+  if (stream.behaviorHints?.notWebReady === true) return false;
+  if (isEmbedStreamUrl(stream.url)) return false;
+  const url = String(stream.url).toLowerCase();
+  return url.includes('.m3u8') || url.includes('.mp4') || url.includes('/api/proxy/stream') || !url.includes('http');
+}
+
+export function parseStreamDetails(stream, fallbackAddonName = '', latency = 0) {
+  if (!stream) return null;
+  const fullText = `${stream.name || ''} ${stream.title || ''} ${stream.description || ''} ${stream.behaviorHints?.filename || ''}`.trim();
+
+  let quality = stream.quality;
+  if (!quality) {
+    const qMatch = fullText.match(/(4K|2160p|1440p|1080p|720p|480p|360p|UHD|FHD|HD\b|SD\b)/i);
+    quality = qMatch ? qMatch[1].toUpperCase() : 'HD';
+  }
+
+  let size = stream.size;
+  if (!size) {
+    const sizeMatch = fullText.match(/(\d+(?:\.\d+)?\s*(?:GB|MB|GiB|MiB))/i);
+    size = sizeMatch ? sizeMatch[1].toUpperCase() : null;
+  }
+
+  let sound = stream.sound;
+  if (!sound) {
+    const soundMatch = fullText.match(/(DDP5\.1|Atmos|Dolby\s*Digital|5\.1|7\.1|AAC|DTS-HD|DTS|Dolby)/i);
+    sound = soundMatch ? soundMatch[1] : null;
+  }
+
+  let language = stream.language;
+  if (!language) {
+    if (/dual\s*audio/i.test(fullText)) language = 'Dual Audio';
+    else if (/multi\s*(?:audio|lang)?/i.test(fullText)) language = 'Multi Audio';
+    else if (/hindi\s*\+\s*eng/i.test(fullText)) language = 'Hindi + Eng';
+    else if (/bengali|bangla/i.test(fullText)) language = 'Bengali';
+    else if (/hindi/i.test(fullText)) language = 'Hindi';
+    else if (/english/i.test(fullText)) language = 'English';
+  }
+
+  let serverName = stream.serverName || stream.addonName || fallbackAddonName || stream.name?.split('\n')[0] || 'Stream Server';
+  if (serverName.includes('[CloudStream]')) {
+    serverName = serverName.replace('[CloudStream] ', '').trim();
+  }
+
+  return {
+    ...stream,
+    quality,
+    size,
+    sound,
+    language,
+    serverName,
+    latency: typeof stream.latency === 'number' ? stream.latency : (latency || 0)
+  };
+}
+
+export function scoreStream(stream) {
+  let score = 0;
+
+  if (isDirectPlayable(stream)) {
+    score += 100000;
+  } else if (!stream.behaviorHints?.notWebReady) {
+    score += 30000;
+  }
+
+  const quality = String(stream.quality || '').toUpperCase();
+  if (/2160P|4K|UHD/.test(quality)) score += 21600;
+  else if (/1440P|2K/.test(quality)) score += 14400;
+  else if (/1080P|FHD/.test(quality)) score += 10800;
+  else if (/720P|HD/.test(quality)) score += 7200;
+  else if (/480P|SD/.test(quality)) score += 4800;
+  else if (/360P/.test(quality)) score += 3600;
+
+  if (stream.size) {
+    const m = String(stream.size).match(/([\d.]+)\s*(GB|MB|GIB|MIB)/i);
+    if (m) {
+      const val = parseFloat(m[1]);
+      const unit = m[2].toUpperCase();
+      const mb = unit.startsWith('G') ? val * 1024 : val;
+      score += Math.min(Math.round(mb), 15000);
+    }
+  }
+
+  const latency = typeof stream.latency === 'number' ? stream.latency : 2000;
+  score += Math.max(0, Math.round((5000 - latency) / 2));
+
+  return score;
+}
+
+export function deduplicateStreams(streams) {
+  const seenUrls = new Map();
+  for (const s of streams) {
+    const key = (s.url || s.externalUrl || '').trim();
+    if (!key) continue;
+    const currentScore = scoreStream(s);
+    if (!seenUrls.has(key)) {
+      seenUrls.set(key, { stream: s, score: currentScore });
+    } else {
+      const existing = seenUrls.get(key);
+      if (currentScore > existing.score) {
+        seenUrls.set(key, { stream: s, score: currentScore });
+      }
+    }
+  }
+  return Array.from(seenUrls.values()).map((v) => v.stream);
+}
+
+
 function loadPersistedConfig() {
   // 1. Try modern config.json
   try {
@@ -233,7 +388,7 @@ export class AddonManager {
       builtin: false
     };
     this.addons.push(entry);
-    if (addon.manifest) this.manifestCache.set(entry.id, addon.manifest);
+    if (addon.manifest) this.manifestCache.set(entry.id, { manifest: addon.manifest, timestamp: Date.now() });
     this.clearCaches();
     this._persist();
     return { ...entry };
@@ -259,9 +414,17 @@ export class AddonManager {
   }
 
   clearCaches() {
+    this.manifestCache.clear();
     this.catalogCache.clear();
     this.allCatalogsCache = null;
     this.allCatalogsCacheTime = 0;
+  }
+
+  async refreshAddons() {
+    this.clearCaches();
+    const enabled = this.addons.filter((a) => a.enabled && a.id !== 'tmdb-builtin');
+    await Promise.allSettled(enabled.map((a) => this.getManifest(a)));
+    return this.list();
   }
 
   async getManifest(addon) {
@@ -276,18 +439,31 @@ export class AddonManager {
       };
     }
 
-    if (this.manifestCache.has(addon.id)) return this.manifestCache.get(addon.id);
-
-    const response = await fetchWithTimeout(addon.url, { headers: { accept: 'application/json' } }, 4500);
-    if (!response.ok) throw new Error(`Addon manifest returned HTTP ${response.status}`);
-    const manifest = await response.json();
-    if (!manifest || typeof manifest !== 'object' || !Array.isArray(manifest.resources)) {
-      throw new Error('Invalid Stremio addon manifest');
+    const cachedEntry = this.manifestCache.get(addon.id);
+    const now = Date.now();
+    if (cachedEntry?.manifest && (now - (cachedEntry.timestamp || 0) < MANIFEST_TTL)) {
+      return cachedEntry.manifest;
     }
 
-    const enriched = { ...manifest, baseUrl: getBaseUrl(addon.url) };
-    this.manifestCache.set(addon.id, enriched);
-    return enriched;
+    try {
+      const response = await fetchWithTimeout(addon.url, { headers: { accept: 'application/json' } }, 4500);
+      if (!response.ok) throw new Error(`Addon manifest returned HTTP ${response.status}`);
+      const manifest = await response.json();
+      if (!manifest || typeof manifest !== 'object' || !Array.isArray(manifest.resources)) {
+        throw new Error('Invalid Stremio addon manifest');
+      }
+
+      const enriched = { ...manifest, baseUrl: getBaseUrl(addon.url) };
+      this.manifestCache.set(addon.id, { manifest: enriched, timestamp: now });
+      return enriched;
+    } catch (err) {
+      // Stale-on-error fallback
+      if (cachedEntry?.manifest) {
+        console.warn(`Manifest refresh failed for ${addon.id}, using stale cached manifest:`, err.message);
+        return cachedEntry.manifest;
+      }
+      throw err;
+    }
   }
 
   async getAllCatalogs() {
@@ -1174,19 +1350,26 @@ export class AddonManager {
     return await fetchTmdbMeta(type, id);
   }
 
-  async getStreams(type, id) {
+  async getStreamsLive(type, id, onChunk = () => {}) {
     // 0. If IPTV channel
     if (String(id).startsWith('iptv:')) {
       const iptvStream = iptvManager.getChannelStream(id);
-      return iptvStream ? [iptvStream] : [];
+      const parsed = iptvStream ? [parseStreamDetails(iptvStream, 'IPTV', 10)] : [];
+      onChunk({ addonId: 'iptv', addonName: 'Live IPTV', status: 'ok', latency: 10, count: parsed.length, streams: parsed });
+      onChunk({ event: 'done', total: parsed.length, streams: parsed });
+      return parsed;
     }
 
     // 1. If custom scraped CloudStream id (cs:...)
     if (String(id).startsWith('cs:')) {
-      return await this.getCustomStreams(type, id);
+      const customStreams = await this.getCustomStreams(type, id);
+      const parsed = (customStreams || []).map((s) => parseStreamDetails(s, s.addonName || 'CloudStream', 10));
+      onChunk({ addonId: 'custom-cs', addonName: 'CloudStream Adult', status: 'ok', latency: 10, count: parsed.length, streams: parsed });
+      onChunk({ event: 'done', total: parsed.length, streams: parsed });
+      return parsed;
     }
 
-    // If id is tmdb:..., resolve to IMDb ID for stream lookup
+    // Resolve IDs
     let streamId = String(id);
     let seasonNum = null;
     let episodeNum = null;
@@ -1210,7 +1393,6 @@ export class AddonManager {
       }
     }
 
-    // If still not an IMDb ID (tt...), try to resolve from metadata
     if (!streamId.startsWith('tt')) {
       try {
         const meta = await this.getMeta(type, id);
@@ -1221,30 +1403,6 @@ export class AddonManager {
       } catch {}
     }
 
-    const enabled = this.addons.filter((addon) => addon.enabled && addon.id !== 'tmdb-builtin' && addon.id !== 'torrentio');
-    const results = await Promise.allSettled(enabled.map(async (addon) => {
-      const manifest = await this.getManifest(addon);
-      if (!manifest.resources.some((resource) => resourceName(resource) === 'stream')) return [];
-      const response = await fetchWithTimeout(
-        `${manifest.baseUrl}/stream/${encodeURIComponent(type)}/${encodeURIComponent(streamId)}.json`,
-        {
-          headers: {
-            'Accept': 'application/json, text/plain, */*',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-          }
-        },
-        7000
-      );
-      if (!response.ok) throw new Error(`Stream request returned HTTP ${response.status}`);
-      const streams = (await response.json()).streams || [];
-      return streams.map((stream) => ({ ...stream, addonName: addon.name, addonId: addon.id }));
-    }));
-
-    const rawStreams = results.flatMap((result) => result.status === 'fulfilled' ? result.value : []);
-
-    // COMPLETELY PURGE ALL TORRENT & MAGNET STREAMS
-    // User requirement: "torrent server bad daw ekebare" (Drop all torrent servers).
-    // Browsers cannot play torrents without debrid torrent cache. Direct streams only!
     const isTorrentStream = (s) => (
       s?.isTorrent ||
       s?.infoHash ||
@@ -1254,117 +1412,267 @@ export class AddonManager {
       s?.addonName?.toLowerCase().includes('torrentio')
     );
 
-    // Filter out torrents, magnets, and donation/spam links
-    const validAddonStreams = rawStreams.filter((s) => {
-      if (!s) return false;
-      if (isTorrentStream(s)) return false;
-      if (!s.url && !s.externalUrl) return false;
-      const fullText = `${s.name || ''} ${s.title || ''} ${s.externalUrl || ''}`.toLowerCase();
-      if (fullText.includes('donate') || fullText.includes('support the project') || fullText.includes('tap to donate')) {
-        return false;
-      }
-      return true;
-    }).map((s) => {
-      // Extract file size and quality like Bous extension
-      const fullText = `${s.name || ''} ${s.title || ''} ${s.description || ''}`;
-      const sizeMatch = fullText.match(/(\d+(?:\.\d+)?\s*(?:GB|MB|GiB|MiB))/i);
-      if (sizeMatch && !s.size) {
-        s.size = sizeMatch[1].toUpperCase();
-      }
-      const qMatch = fullText.match(/(4K|2160p|1080p|720p|480p)/i);
-      if (qMatch && !s.quality) {
-        s.quality = qMatch[1].toUpperCase();
-      }
+    const allAccumulatedStreams = [];
 
-      // Filter out micro-fragment fake streams (e.g. PenguPlay DASH chunks of 1-7 MB for a full movie)
-      if (type === 'movie' && s.size) {
-        const mbMatch = s.size.match(/([\d.]+)\s*MB/i);
-        if (mbMatch && parseFloat(mbMatch[1]) < 100) {
-          return null; // Skip fragments under 100 MB for movies
-        }
-      }
+    const enabled = this.addons.filter((addon) => addon.enabled && addon.id !== 'tmdb-builtin' && addon.id !== 'torrentio');
 
-      // If stream requires proxy headers (like Referer or Cookie for Cinejoy, MovieBox, etc.)
-      if (s.url && s.behaviorHints?.proxyHeaders?.request) {
-        const headersJson = JSON.stringify(s.behaviorHints.proxyHeaders.request);
-        const proxiedUrl = `/api/proxy/stream?url=${encodeURIComponent(s.url)}&headers=${encodeURIComponent(headersJson)}`;
-        return {
-          ...s,
-          rawUrl: s.url,
-          url: proxiedUrl,
-          proxied: true
-        };
-      }
-      return s;
-    }).filter(Boolean);
-
-    // Also query active CloudStream providers (e.g. BDIX, TheMoviesFlix, HDHub4u, etc.)
-    try {
-      const meta = await this.getMeta(type, id);
-      if (meta?.name) {
-        let tmdbId = meta.tmdbId ? String(meta.tmdbId) : '';
-        let imdbId = meta.imdb_id || meta.imdbId || '';
-        let season = 1;
-        let episode = 1;
-
-        const idStr = String(id);
-        const parts = idStr.split(':');
-        if (idStr.startsWith('tmdb:')) {
-          tmdbId = parts[1];
-          if (parts.length >= 4) {
-            season = parseInt(parts[2], 10) || 1;
-            episode = parseInt(parts[3], 10) || 1;
-          }
-        } else if (idStr.startsWith('tt')) {
-          imdbId = parts[0];
-          if (parts.length >= 3) {
-            season = parseInt(parts[1], 10) || 1;
-            episode = parseInt(parts[2], 10) || 1;
-          }
-        } else if (/^\d+$/.test(idStr)) {
-          tmdbId = idStr;
+    const addonPromises = enabled.map(async (addon) => {
+      const startTime = Date.now();
+      try {
+        const manifest = await this.getManifest(addon);
+        if (!addonSupportsStream(manifest, type, streamId) && !addonSupportsStream(manifest, type, id)) {
+          return [];
         }
 
-        // If neither tmdbId nor imdbId is available, search TMDB by title
-        if (!tmdbId && !imdbId) {
-          const tmdbSearch = await searchTmdbId(meta.name, type);
-          if (tmdbSearch?.tmdbId) {
-            tmdbId = tmdbSearch.tmdbId;
-          }
+        const response = await fetchWithTimeout(
+          `${manifest.baseUrl}/stream/${encodeURIComponent(type)}/${encodeURIComponent(streamId)}.json`,
+          {
+            headers: {
+              'Accept': 'application/json, text/plain, */*',
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+          },
+          7000
+        );
+
+        const latency = Date.now() - startTime;
+        if (!response.ok) {
+          onChunk({ addonId: addon.id, addonName: addon.name, status: 'failed', latency, count: 0, streams: [] });
+          return [];
         }
 
-        // If we have tmdbId but not imdbId, try to resolve imdbId
-        if (!imdbId && tmdbId) {
-          try {
-            const resolved = await resolveImdbId(type, tmdbId);
-            if (resolved) imdbId = resolved;
-          } catch {}
-        }
+        const data = await response.json();
+        const rawList = Array.isArray(data?.streams) ? data.streams : [];
+        const validList = rawList
+          .filter((s) => {
+            if (!s) return false;
+            if (isTorrentStream(s)) return false;
+            if (!s.url && !s.externalUrl) return false;
+            const fullText = `${s.name || ''} ${s.title || ''} ${s.externalUrl || ''}`.toLowerCase();
+            if (fullText.includes('donate') || fullText.includes('support the project') || fullText.includes('tap to donate')) {
+              return false;
+            }
+            return true;
+          })
+          .map((s) => {
+            let streamObj = { ...s, addonName: addon.name, addonId: addon.id };
+            if (streamObj.url && streamObj.behaviorHints?.proxyHeaders?.request) {
+              const headersJson = JSON.stringify(streamObj.behaviorHints.proxyHeaders.request);
+              streamObj.rawUrl = streamObj.url;
+              streamObj.url = `/api/proxy/stream?url=${encodeURIComponent(streamObj.url)}&headers=${encodeURIComponent(headersJson)}`;
+              streamObj.proxied = true;
+            }
+            return parseStreamDetails(streamObj, addon.name, latency);
+          })
+          .filter((s) => {
+            if (!s) return false;
+            if (type === 'movie' && s.size) {
+              const mbMatch = s.size.match(/([\d.]+)\s*MB/i);
+              if (mbMatch && parseFloat(mbMatch[1]) < 100) return false;
+            }
+            return true;
+          });
 
-        const csStreams = await cloudstreamManager.getStreams(meta.name, meta.year, type, {
-          id,
-          tmdbId,
-          imdbId,
-          season,
-          episode
-        });
-        if (csStreams && csStreams.length > 0) {
-          validAddonStreams.push(...csStreams);
-        }
+        allAccumulatedStreams.push(...validList);
+        onChunk({ addonId: addon.id, addonName: addon.name, status: 'ok', latency, count: validList.length, streams: validList });
+        return validList;
+      } catch (err) {
+        const latency = Date.now() - startTime;
+        onChunk({ addonId: addon.id, addonName: addon.name, status: 'failed', latency, count: 0, streams: [], error: err.message });
+        return [];
       }
-    } catch (err) {
-      // Non-fatal if cloudstream scraper encounters network issue
-    }
-
-    // Sort streams: Direct playable streams (HLS, MP4, HTTP streaming) first
-    validAddonStreams.sort((a, b) => {
-      const aIsDirect = Boolean(a.url && (a.url.includes('.m3u8') || a.url.includes('.mp4') || a.url.includes('/api/proxy/stream') || a.url.includes('httpstreaming') || a.url.includes('pengu.uk') || a.url.includes('sooti.info') || a.url.includes('thevolecitor')));
-      const bIsDirect = Boolean(b.url && (b.url.includes('.m3u8') || b.url.includes('.mp4') || b.url.includes('/api/proxy/stream') || b.url.includes('httpstreaming') || b.url.includes('pengu.uk') || b.url.includes('sooti.info') || b.url.includes('thevolecitor')));
-      if (aIsDirect && !bIsDirect) return -1;
-      if (!aIsDirect && bIsDirect) return 1;
-      return 0;
     });
 
-    return validAddonStreams;
+    const cloudstreamPromise = (async () => {
+      const startTime = Date.now();
+      try {
+        const meta = await this.getMeta(type, id);
+        if (meta?.name) {
+          let tmdbId = meta.tmdbId ? String(meta.tmdbId) : '';
+          let imdbId = meta.imdb_id || meta.imdbId || '';
+          let season = 1;
+          let episode = 1;
+
+          const idStr = String(id);
+          const parts = idStr.split(':');
+          if (idStr.startsWith('tmdb:')) {
+            tmdbId = parts[1];
+            if (parts.length >= 4) {
+              season = parseInt(parts[2], 10) || 1;
+              episode = parseInt(parts[3], 10) || 1;
+            }
+          } else if (idStr.startsWith('tt')) {
+            imdbId = parts[0];
+            if (parts.length >= 3) {
+              season = parseInt(parts[1], 10) || 1;
+              episode = parseInt(parts[2], 10) || 1;
+            }
+          } else if (/^\d+$/.test(idStr)) {
+            tmdbId = idStr;
+          }
+
+          if (!tmdbId && !imdbId) {
+            const tmdbSearch = await searchTmdbId(meta.name, type);
+            if (tmdbSearch?.tmdbId) tmdbId = tmdbSearch.tmdbId;
+          }
+
+          if (!imdbId && tmdbId) {
+            try {
+              const resolved = await resolveImdbId(type, tmdbId);
+              if (resolved) imdbId = resolved;
+            } catch {}
+          }
+
+          const csStreams = await cloudstreamManager.getStreams(meta.name, meta.year, type, {
+            id,
+            tmdbId,
+            imdbId,
+            season,
+            episode
+          });
+
+          const latency = Date.now() - startTime;
+          const parsed = (csStreams || []).map((s) => parseStreamDetails(s, s.addonName || 'CloudStream', latency));
+          allAccumulatedStreams.push(...parsed);
+          onChunk({ addonId: 'cloudstream-hub', addonName: 'CloudStream Hub', status: 'ok', latency, count: parsed.length, streams: parsed });
+          return parsed;
+        }
+      } catch (err) {
+        const latency = Date.now() - startTime;
+        onChunk({ addonId: 'cloudstream-hub', addonName: 'CloudStream Hub', status: 'failed', latency, count: 0, streams: [] });
+      }
+      return [];
+    })();
+
+    await Promise.allSettled([...addonPromises, cloudstreamPromise]);
+
+    const deduplicated = deduplicateStreams(allAccumulatedStreams);
+    deduplicated.sort((a, b) => scoreStream(b) - scoreStream(a));
+
+    onChunk({ event: 'done', total: deduplicated.length, streams: deduplicated });
+    return deduplicated;
+  }
+
+  async getStreams(type, id) {
+    return await this.getStreamsLive(type, id);
+  }
+
+  async getSubtitles(type, id) {
+    let targetId = String(id);
+    let seasonNum = null;
+    let episodeNum = null;
+
+    let baseTmdb = null;
+    if (targetId.startsWith('tmdb:')) {
+      const parts = targetId.split(':');
+      baseTmdb = parts[1];
+      if (parts.length >= 4) {
+        seasonNum = parts[2];
+        episodeNum = parts[3];
+      }
+    } else if (/^\d+$/.test(targetId)) {
+      baseTmdb = targetId;
+    }
+
+    if (baseTmdb) {
+      const imdb = await resolveImdbId(type, baseTmdb);
+      if (imdb) {
+        targetId = (seasonNum && episodeNum) ? `${imdb}:${seasonNum}:${episodeNum}` : imdb;
+      }
+    }
+
+    if (!targetId.startsWith('tt')) {
+      try {
+        const meta = await this.getMeta(type, id);
+        const resolvedImdb = meta?.imdb_id || meta?.imdbId;
+        if (resolvedImdb) {
+          targetId = (seasonNum && episodeNum) ? `${resolvedImdb}:${seasonNum}:${episodeNum}` : resolvedImdb;
+        }
+      } catch {}
+    }
+
+    const enabled = this.addons.filter((addon) => addon.enabled && addon.id !== 'tmdb-builtin');
+    const results = await Promise.allSettled(enabled.map(async (addon) => {
+      try {
+        const manifest = await this.getManifest(addon);
+        if (!manifest.resources?.some((r) => resourceName(r) === 'subtitles')) return [];
+        const res = await fetchWithTimeout(
+          `${manifest.baseUrl}/subtitles/${encodeURIComponent(type)}/${encodeURIComponent(targetId)}.json`,
+          { headers: { accept: 'application/json' } },
+          5000
+        );
+        if (!res.ok) return [];
+        const data = await res.json();
+        const subs = Array.isArray(data?.subtitles) ? data.subtitles : [];
+        return subs.map((sub, idx) => ({
+          id: sub.id || `${addon.id}-sub-${idx}`,
+          url: sub.url,
+          lang: sub.lang || sub.language || 'eng',
+          name: sub.name || sub.label || sub.lang || `Track ${idx + 1}`,
+          addonName: addon.name
+        }));
+      } catch {
+        return [];
+      }
+    }));
+
+    return results.flatMap((r) => r.status === 'fulfilled' ? r.value : []);
+  }
+
+  async getHealth() {
+    const now = Date.now();
+    if (this._healthCache && (now - this._healthCacheTime < 60000)) {
+      return this._healthCache;
+    }
+
+    const enabled = this.addons.filter((addon) => addon.enabled);
+    const healthResults = await Promise.all(enabled.map(async (addon) => {
+      if (addon.id === 'tmdb-builtin') {
+        return {
+          id: addon.id,
+          name: addon.name,
+          status: 'ok',
+          latency: 5,
+          enabled: true
+        };
+      }
+
+      const start = Date.now();
+      try {
+        const res = await fetchWithTimeout(addon.url, { headers: { accept: 'application/json' } }, 4000);
+        const latency = Date.now() - start;
+        if (res.ok) {
+          return {
+            id: addon.id,
+            name: addon.name,
+            status: 'ok',
+            latency,
+            enabled: true
+          };
+        } else {
+          return {
+            id: addon.id,
+            name: addon.name,
+            status: 'failed',
+            latency,
+            error: `HTTP ${res.status}`,
+            enabled: true
+          };
+        }
+      } catch (err) {
+        return {
+          id: addon.id,
+          name: addon.name,
+          status: 'failed',
+          latency: Date.now() - start,
+          error: err.message,
+          enabled: true
+        };
+      }
+    }));
+
+    this._healthCache = healthResults;
+    this._healthCacheTime = now;
+    return healthResults;
   }
 }

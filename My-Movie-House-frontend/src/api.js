@@ -5,7 +5,8 @@ const memoryCache = new Map();
 const request = async (path, options = {}) => {
   const isGet = !options.method || options.method.toUpperCase() === 'GET';
   const fullUrl = path.startsWith('http') ? path : `${API_BASE}${path}`;
-  if (isGet && memoryCache.has(fullUrl)) {
+  const shouldCache = isGet && !path.includes('/api/streams') && !path.includes('/live') && !path.includes('/health');
+  if (shouldCache && memoryCache.has(fullUrl)) {
     return memoryCache.get(fullUrl);
   }
 
@@ -16,7 +17,7 @@ const request = async (path, options = {}) => {
   const data = await response.json().catch(() => null);
   if (!response.ok) throw new Error(data?.error || 'The request could not be completed.');
 
-  if (isGet && data) {
+  if (shouldCache && data) {
     memoryCache.set(fullUrl, data);
   }
 
@@ -44,7 +45,48 @@ export const api = {
   getSimilar: (type, id) => request(`/api/meta/${encodeURIComponent(type)}/${encodeURIComponent(id)}/similar`),
   getPersonCredits: (nameOrId) => request(`/api/person/${encodeURIComponent(nameOrId)}/credits`),
   getStreams: (type, id) => request(`/api/streams/${encodeURIComponent(type)}/${encodeURIComponent(id)}`),
+  getStreamsLive: (type, id, { onAddonStreams, onDone, onError } = {}) => {
+    const fullUrl = `${API_BASE}/api/streams/${encodeURIComponent(type)}/${encodeURIComponent(id)}/live`;
+    const es = new EventSource(fullUrl);
+    es.addEventListener('addon_streams', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        onAddonStreams?.(data);
+      } catch (err) {
+        console.error('SSE parse error:', err);
+      }
+    });
+    es.addEventListener('done', (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        onDone?.(data);
+      } catch {
+        onDone?.({ done: true });
+      }
+      es.close();
+    });
+    es.addEventListener('error', (event) => {
+      try {
+        const data = event.data ? JSON.parse(event.data) : null;
+        onError?.(data || new Error('Stream connection closed.'));
+      } catch {
+        onError?.(event);
+      }
+      es.close();
+    });
+    return () => {
+      try {
+        es.close();
+      } catch {}
+    };
+  },
   resolveDirectStream: (url) => request(`/api/resolve-direct-stream?url=${encodeURIComponent(url)}`),
+  getSubtitles: (type, id) => request(`/api/subtitles/${encodeURIComponent(type)}/${encodeURIComponent(id)}`),
+  getAddonsHealth: () => request('/api/addons/health'),
+  refreshAddons: () => {
+    memoryCache.clear();
+    return request('/api/addons/refresh', { method: 'POST' });
+  },
   search: (q) => request(`/api/search?${queryString({ q })}`),
   getAddons: async () => {
     const list = await request('/api/addons');

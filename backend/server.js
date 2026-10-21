@@ -117,11 +117,69 @@ app.get('/api/meta/:type/:id', async (req, res, next) => {
   }
 });
 
+app.get('/api/addons/health', async (_req, res, next) => {
+  try {
+    const health = await addonManager.getHealth();
+    res.json({ health });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/subtitles/:type/:id', async (req, res, next) => {
+  try {
+    const subs = await addonManager.getSubtitles(req.params.type, req.params.id);
+    res.json({ subtitles: subs || [] });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/addons/refresh', async (_req, res, next) => {
+  try {
+    const list = await addonManager.refreshAddons();
+    res.json(list);
+  } catch (error) {
+    next(error);
+  }
+});
+
 app.get('/api/streams/:type/:id', async (req, res, next) => {
   try {
     res.json(await addonManager.getStreams(req.params.type, req.params.id));
   } catch (error) {
     next(error);
+  }
+});
+
+app.get('/api/streams/:type/:id/live', async (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache, no-transform');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
+
+  let closed = false;
+  req.on('close', () => {
+    closed = true;
+  });
+
+  try {
+    await addonManager.getStreamsLive(req.params.type, req.params.id, (chunk) => {
+      if (closed) return;
+      if (chunk.event === 'done') {
+        res.write(`event: done\ndata: ${JSON.stringify(chunk)}\n\n`);
+      } else {
+        res.write(`event: addon_streams\ndata: ${JSON.stringify(chunk)}\n\n`);
+      }
+    });
+  } catch (error) {
+    if (!closed) {
+      res.write(`event: error\ndata: ${JSON.stringify({ error: error.message })}\n\n`);
+    }
+  } finally {
+    if (!closed) {
+      res.end();
+    }
   }
 });
 
@@ -249,9 +307,43 @@ app.get('/api/iptv/stream/:id', (req, res) => {
   res.json(stream);
 });
 
+// SSRF Protection: Block private, localhost, and link-local IP addresses
+function isPrivateOrBlockedHost(hostname) {
+  if (!hostname) return true;
+  const h = hostname.toLowerCase().trim();
+  if (h === 'localhost' || h.endsWith('.localhost') || h === '127.0.0.1' || h === '::1' || h === '0.0.0.0') {
+    return true;
+  }
+  if (h === '169.254.169.254' || h.startsWith('169.254.')) {
+    return true;
+  }
+  const ipv4Match = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4Match) {
+    const a = parseInt(ipv4Match[1], 10);
+    const b = parseInt(ipv4Match[2], 10);
+    if (a === 10) return true;
+    if (a === 127) return true;
+    if (a === 169 && b === 254) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 0) return true;
+  }
+  if (h.startsWith('fe80:') || h.startsWith('fc') || h.startsWith('fd') || h === '::') {
+    return true;
+  }
+  return false;
+}
+
 // Stream Proxy for streams requiring custom headers (Referer, Origin, Cookie) or cross-origin playback
 app.all('/api/proxy/stream', async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const configuredOrigin = process.env.FRONTEND_ORIGIN || process.env.ALLOWED_ORIGIN || 'http://localhost:5173';
+  const reqOrigin = req.headers.origin;
+  const allowOrigin = (reqOrigin && (reqOrigin === configuredOrigin || configuredOrigin === '*'))
+    ? reqOrigin
+    : configuredOrigin;
+
+  res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', '*');
 
@@ -259,8 +351,10 @@ app.all('/api/proxy/stream', async (req, res) => {
     return res.status(204).end();
   }
 
-  const targetUrl = req.query.url;
-  if (!targetUrl) return res.status(400).send('Missing url parameter');
+  const rawTargetUrl = req.query.url;
+  if (!rawTargetUrl || typeof rawTargetUrl !== 'string') {
+    return res.status(400).send('Missing url parameter');
+  }
 
   let customHeaders = {};
   if (req.query.headers) {
@@ -285,12 +379,50 @@ app.all('/api/proxy/stream', async (req, res) => {
   });
 
   try {
-    const upstreamRes = await fetch(targetUrl, {
-      method: req.method === 'HEAD' ? 'HEAD' : 'GET',
-      headers: reqHeaders,
-      redirect: 'follow',
-      signal: abortController.signal
-    });
+    let currentUrl = rawTargetUrl.trim();
+    let redirects = 0;
+    const maxRedirects = 5;
+    let upstreamRes = null;
+
+    while (redirects <= maxRedirects) {
+      let parsed;
+      try {
+        parsed = new URL(currentUrl);
+      } catch {
+        return res.status(400).json({ error: 'Invalid URL format' });
+      }
+
+      if (!['http:', 'https:'].includes(parsed.protocol)) {
+        return res.status(400).json({ error: 'Invalid protocol. Only HTTP and HTTPS are allowed.' });
+      }
+
+      if (isPrivateOrBlockedHost(parsed.hostname)) {
+        return res.status(403).json({ error: 'Access to private or link-local address is forbidden (SSRF protection).' });
+      }
+
+      upstreamRes = await fetch(currentUrl, {
+        method: req.method === 'HEAD' ? 'HEAD' : 'GET',
+        headers: reqHeaders,
+        redirect: 'manual',
+        signal: abortController.signal
+      });
+
+      if ([301, 302, 303, 307, 308].includes(upstreamRes.status)) {
+        const location = upstreamRes.headers.get('location');
+        if (!location) break;
+        currentUrl = new URL(location, currentUrl).toString();
+        redirects++;
+        if (redirects > maxRedirects) {
+          return res.status(502).json({ error: 'Too many redirects (limit 5 exceeded).' });
+        }
+        continue;
+      }
+      break;
+    }
+
+    if (!upstreamRes) {
+      return res.status(502).json({ error: 'Failed to connect to upstream stream.' });
+    }
 
     res.status(upstreamRes.status);
     const passHeaders = ['content-length', 'content-range', 'accept-ranges', 'cache-control'];
@@ -304,11 +436,11 @@ app.all('/api/proxy/stream', async (req, res) => {
 
     // Clean & standardize Content-Type for HTML5 video players
     const rawCt = (upstreamRes.headers.get('content-type') || '').toLowerCase();
-    if (rawCt.includes('video/mp4') || targetUrl.toLowerCase().includes('.mp4')) {
+    if (rawCt.includes('video/mp4') || currentUrl.toLowerCase().includes('.mp4')) {
       res.setHeader('Content-Type', 'video/mp4');
-    } else if (rawCt.includes('mpegurl') || targetUrl.toLowerCase().includes('.m3u8')) {
+    } else if (rawCt.includes('mpegurl') || currentUrl.toLowerCase().includes('.m3u8')) {
       res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
-    } else if (rawCt.includes('video/webm') || targetUrl.toLowerCase().includes('.webm')) {
+    } else if (rawCt.includes('video/webm') || currentUrl.toLowerCase().includes('.webm')) {
       res.setHeader('Content-Type', 'video/webm');
     } else if (rawCt) {
       res.setHeader('Content-Type', rawCt.split(',')[0].trim());
