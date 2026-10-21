@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import Hls from 'hls.js';
 import { progress, api, API_BASE } from '../api.js';
 import { parseStreamDetails } from '../utils/streamParser.js';
+// Subtitle/shortcut ideas inspired by addyosmani/webvlc (MIT) — minimal borrow only.
 
 // Format seconds into HH:MM:SS or MM:SS
 function formatTime(seconds) {
@@ -73,6 +74,106 @@ function parseSrt(srtText) {
   return cues;
 }
 
+// ASS/SSA subtitle parser (inspired by WebVLC patterns, MIT licensed)
+// Strips basic formatting tags and converts to simple cues
+function parseAss(assText) {
+  const normalized = assText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = normalized.split('\n');
+  const cues = [];
+  let formatMap = {};
+  let inEvents = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line || line.startsWith(';')) continue;
+    if (line.startsWith('[Events]')) {
+      inEvents = true;
+      continue;
+    }
+    if (line.startsWith('[') && !line.startsWith('[Events]')) {
+      inEvents = false;
+      continue;
+    }
+    if (inEvents && line.toLowerCase().startsWith('format:')) {
+      const parts = line.split(':')[1].split(',');
+      parts.forEach((p, idx) => {
+        formatMap[p.trim().toLowerCase()] = idx;
+      });
+      continue;
+    }
+    if (inEvents && line.toLowerCase().startsWith('dialogue:')) {
+      const parts = line.split(':')[1].split(',');
+      const startIdx = formatMap['start'];
+      const endIdx = formatMap['end'];
+      const textIdx = formatMap['text'];
+      if (startIdx === undefined || endIdx === undefined || textIdx === undefined) continue;
+
+      const parseAssTime = (t) => {
+        const match = t.match(/(\d+):(\d+):(\d+)\.(\d+)/);
+        if (!match) return 0;
+        return parseInt(match[1]) * 3600 + parseInt(match[2]) * 60 + parseInt(match[3]) + parseInt(match[4]) / 100;
+      };
+
+      const start = parseAssTime(parts[startIdx]);
+      const end = parseAssTime(parts[endIdx]);
+      let text = parts.slice(textIdx).join(','); // text might contain commas
+      // Strip ASS tags like {\...}
+      text = text.replace(/\{[^}]*\}/g, '');
+      // Convert \N and \n to newlines
+      text = text.replace(/\\N/g, '\n').replace(/\\n/g, '\n');
+      if (text.trim()) {
+        cues.push({ start, end, text: text.trim() });
+      }
+    }
+  }
+  return cues;
+}
+
+// MicroDVD/SUB subtitle parser
+function parseSub(subText) {
+  const normalized = subText.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = normalized.split('\n');
+  const cues = [];
+  const fps = 25; // default fps
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const match = line.match(/\{(\d+)\}\{(\d+)\}(.+)/);
+    if (match) {
+      const start = parseInt(match[1]) / fps;
+      const end = parseInt(match[2]) / fps;
+      let text = match[3];
+      text = text.replace(/\|/g, '\n');
+      text = text.replace(/<[^>]*>/g, '');
+      if (text.trim()) {
+        cues.push({ start, end, text: text.trim() });
+      }
+    }
+  }
+  return cues;
+}
+
+// Auto-detect and parse subtitle format
+function parseSubtitleText(text, filename = '') {
+  const lower = filename.toLowerCase();
+  if (lower.endsWith('.ass') || lower.endsWith('.ssa')) {
+    return parseAss(text);
+  }
+  if (lower.endsWith('.sub')) {
+    return parseSub(text);
+  }
+  // Try to detect by content
+  if (text.includes('[Script Info]') || text.includes('[V4 Styles]') || text.includes('Dialogue:')) {
+    return parseAss(text);
+  }
+  if (text.match(/\{\d+\}\{\d+\}/)) {
+    return parseSub(text);
+  }
+  // Default to SRT/VTT
+  return parseSrt(text);
+}
+
 export default function VideoPlayer({
   stream: initialStream = null,
   allStreams: initialAllStreams = [],
@@ -121,6 +222,11 @@ export default function VideoPlayer({
   const [isDraggingSeek, setIsDraggingSeek] = useState(false);
   const [hoverSeekTime, setHoverSeekTime] = useState(null);
   const [hoverSeekPos, setHoverSeekPos] = useState(0);
+
+  // Transcoding for MKV audio (AC3/EAC3/DTS)
+  const [isTranscoding, setIsTranscoding] = useState(false);
+  const [transcodeUrl, setTranscodeUrl] = useState(null);
+  const savedTimeRef = useRef(0);
 
   // Popover menus state
   const [showServerMenu, setShowServerMenu] = useState(false);
@@ -251,7 +357,7 @@ export default function VideoPlayer({
     fetchStandaloneStreams();
   }, [initialAllStreams, initialStream, fetchStandaloneStreams]);
 
-  const rawUrl = directUrl || stream?.url;
+  const rawUrl = directUrl || transcodeUrl || stream?.url;
   const effectiveUrl = (rawUrl && rawUrl.startsWith('/api/')) ? `${API_BASE}${rawUrl}` : rawUrl;
   const isEmbed = !directUrl && isEmbedUrl(stream?.url);
   const activeStreamInfo = parseStreamInfo(stream);
@@ -322,7 +428,27 @@ export default function VideoPlayer({
     }
   };
 
-  const controlsTimeoutRef = useRef(null);
+  // Add transcode handler
+  const handleFixAudioTranscode = useCallback(() => {
+    const video = videoRef.current;
+    if (!video || !stream?.url) {
+      showOsd('No source available for transcoding');
+      return;
+    }
+    savedTimeRef.current = video.currentTime || 0;
+    setIsTranscoding(true);
+    const targetUrl = stream.url.startsWith('/api/') ? `${API_BASE}${stream.url}` : stream.url;
+    fetch(`${API_BASE}/api/transcode/stream?url=${encodeURIComponent(targetUrl)}`, { method: 'HEAD' })
+      .then((res) => {
+        if (!res.ok) throw new Error('transcode not available');
+        setTranscodeUrl(`${API_BASE}/api/transcode/stream?url=${encodeURIComponent(targetUrl)}`);
+        showOsd('Transcoding audio (AC3/EAC3/DTS → AAC)...');
+      })
+      .catch(() => {
+        setIsTranscoding(false);
+        showOsd('ffmpeg unavailable - choose an MP4/AAC source instead');
+      });
+  }, [stream?.url, showOsd]);
 
   // Auto-hide controls timer
   const handleMouseMove = () => {
@@ -345,6 +471,15 @@ export default function VideoPlayer({
     volumeRef.current = volume;
     isMutedRef.current = isMuted;
   }, [volume, isMuted]);
+
+  // Show current speed in OSD when it changes
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.playbackRate = playbackRate;
+    }
+    // Don't spam OSD on mount
+  }, [playbackRate]);
 
   // Initialize Stream (HLS or Direct URL) - PURE NATIVE AUDIO
   useEffect(() => {
@@ -614,7 +749,7 @@ export default function VideoPlayer({
   const changeSpeed = (rate) => {
     const video = videoRef.current;
     if (!video) return;
-    const clamped = Math.max(0.25, Math.min(3.0, parseFloat(rate.toFixed(2))));
+    const clamped = Math.max(0.25, Math.min(4.0, parseFloat(rate.toFixed(2))));
     video.playbackRate = clamped;
     setPlaybackRate(clamped);
     showOsd(`Speed: ${clamped}x`);
@@ -711,7 +846,7 @@ export default function VideoPlayer({
       try {
         const text = event.target?.result;
         if (typeof text === 'string') {
-          const parsed = parseSrt(text);
+          const parsed = parseSubtitleText(text, file.name);
           setCustomSubtitles(parsed);
           setSubtitleEnabled(true);
           showOsd(`Subtitles Loaded: ${file.name}`);
@@ -754,7 +889,7 @@ export default function VideoPlayer({
         fetch(sub.url)
           .then((res) => res.text())
           .then((text) => {
-            const parsed = parseSrt(text);
+            const parsed = parseSubtitleText(text, sub.name || sub.url);
             setCustomSubtitles(parsed);
             setSubtitleEnabled(true);
             showOsd(`Subtitles: ${sub.name} (${sub.lang})`);
@@ -889,11 +1024,11 @@ export default function VideoPlayer({
           break;
         case '[':
           e.preventDefault();
-          setPointA();
+          changeSpeed(playbackRate - 0.25);
           break;
         case ']':
           e.preventDefault();
-          setPointB();
+          changeSpeed(playbackRate + 0.25);
           break;
         case '\\':
           e.preventDefault();
@@ -929,6 +1064,26 @@ export default function VideoPlayer({
             showOsd(!prev ? 'Subtitles: ON' : 'Subtitles: OFF');
             return !prev;
           });
+          break;
+        case 'n':
+        case 'N':
+          e.preventDefault();
+          {
+            const candidateStreams = allStreams.filter((s) => s?.url && !failedUrlsRef.current.has(s.url));
+            if (candidateStreams.length > 1) {
+              const idx = candidateStreams.findIndex((s) => s?.url === stream?.url);
+              const next = candidateStreams[(idx + 1 + candidateStreams.length) % candidateStreams.length];
+              const nextInfo = parseStreamInfo(next);
+              showOsd(`Next source: ${nextInfo.serverName} (${nextInfo.resolution})`);
+              handleSwitchServer(next);
+            } else if (candidateStreams.length === 1 && candidateStreams[0]?.url !== stream?.url) {
+              const nextInfo = parseStreamInfo(candidateStreams[0]);
+              showOsd(`Next source: ${nextInfo.serverName} (${nextInfo.resolution})`);
+              handleSwitchServer(candidateStreams[0]);
+            } else {
+              showOsd('No other sources available');
+            }
+          }
           break;
         case 'p':
         case 'P':
@@ -1029,12 +1184,12 @@ export default function VideoPlayer({
       onDrop={(e) => {
         e.preventDefault();
         const file = e.dataTransfer.files?.[0];
-        if (file && (file.name.endsWith('.srt') || file.name.endsWith('.vtt'))) {
+        if (file && (file.name.endsWith('.srt') || file.name.endsWith('.vtt') || file.name.endsWith('.ass') || file.name.endsWith('.ssa') || file.name.endsWith('.sub'))) {
           const reader = new FileReader();
           reader.onload = (event) => {
             const text = event.target?.result;
             if (typeof text === 'string') {
-              const parsed = parseSrt(text);
+              const parsed = parseSubtitleText(text, file.name);
               setCustomSubtitles(parsed);
               setSubtitleEnabled(true);
               showOsd(`Subtitles Loaded: ${file.name}`);
@@ -1050,7 +1205,7 @@ export default function VideoPlayer({
       <input
         ref={fileInputRef}
         type="file"
-        accept=".srt,.vtt,.sub"
+        accept=".srt,.vtt,.sub,.ass,.ssa"
         onChange={handleSubtitleUpload}
         className="hidden"
       />
@@ -1102,6 +1257,12 @@ export default function VideoPlayer({
               )}
               <span>•</span>
               <span className="text-amber-400 font-bold">{activeStreamInfo.resolution}</span>
+              {playbackRate !== 1 && (
+                <>
+                  <span>•</span>
+                  <span className="text-cyan-400 font-bold">{playbackRate}x</span>
+                </>
+              )}
               {activeStreamInfo.size && (
                 <>
                   <span>•</span>
@@ -1396,6 +1557,14 @@ export default function VideoPlayer({
                     className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-500 transition shadow-md flex items-center gap-1.5"
                   >
                     <span>⏭</span> Try Next Server
+                  </button>
+                )}
+                {(stream?.url?.toLowerCase().includes('.mkv') || audioTracks.length === 0) && stream?.url && (
+                  <button
+                    onClick={handleFixAudioTranscode}
+                    className="rounded-xl bg-orange-500 px-4 py-2 text-xs font-bold text-black hover:bg-orange-400 transition shadow-md"
+                  >
+                    Fix audio (transcode)
                   </button>
                 )}
                 {allStreams.length > 1 && (

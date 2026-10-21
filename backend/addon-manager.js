@@ -15,6 +15,12 @@ import {
 } from './tmdb.js';
 import { cloudstreamManager } from './cloudstream-manager.js';
 import { iptvManager } from './iptv-manager.js';
+import {
+  isProviderId,
+  getProviderMeta,
+  getProviderStreams,
+  getProviderSubtitles,
+} from './providers/index.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CONFIG_FILE = join(__dirname, 'config.json');
@@ -1306,6 +1312,14 @@ export class AddonManager {
       return await this.getCustomMeta(type, id);
     }
 
+    // 1b. Provider-scoped ids from the MovieBox-TUI port (mb: / dr:...)
+    if (isProviderId(id)) {
+      try {
+        const providerMeta = await getProviderMeta(type, id);
+        if (providerMeta) return providerMeta;
+      } catch {}
+    }
+
     // 2. If TMDB id
     if (String(id).startsWith('tmdb:')) {
       return await fetchTmdbMeta(type, id);
@@ -1374,6 +1388,16 @@ export class AddonManager {
     let seasonNum = null;
     let episodeNum = null;
 
+    // Shared meta lookup — ID resolution, cloudstream fan-out and the
+    // MovieBox-TUI provider fan-out all reuse this single in-flight promise.
+    const metaForId = (async () => {
+      try {
+        return await this.getMeta(type, id);
+      } catch {
+        return null;
+      }
+    })();
+
     let baseTmdb = null;
     if (streamId.startsWith('tmdb:')) {
       const parts = streamId.split(':');
@@ -1395,7 +1419,7 @@ export class AddonManager {
 
     if (!streamId.startsWith('tt')) {
       try {
-        const meta = await this.getMeta(type, id);
+        const meta = await metaForId;
         const resolvedImdb = meta?.imdb_id || meta?.imdbId;
         if (resolvedImdb) {
           streamId = (seasonNum && episodeNum) ? `${resolvedImdb}:${seasonNum}:${episodeNum}` : resolvedImdb;
@@ -1486,7 +1510,7 @@ export class AddonManager {
     const cloudstreamPromise = (async () => {
       const startTime = Date.now();
       try {
-        const meta = await this.getMeta(type, id);
+        const meta = await metaForId;
         if (meta?.name) {
           let tmdbId = meta.tmdbId ? String(meta.tmdbId) : '';
           let imdbId = meta.imdb_id || meta.imdbId || '';
@@ -1544,7 +1568,31 @@ export class AddonManager {
       return [];
     })();
 
-    await Promise.allSettled([...addonPromises, cloudstreamPromise]);
+    // MovieBox-TUI provider fan-out (MovieBox + Dramachi). Handles provider
+    // ids (mb:/dr:) natively and does a title+year lookup for tmdb/imdb ids;
+    // deadline-bounded internally so it can't stall the aggregate flow.
+    const providerPromise = (async () => {
+      const startTime = Date.now();
+      let chunkEmitted = false;
+      try {
+        const meta = await metaForId;
+        const streams = await getProviderStreams({ type, id, meta, deadline: startTime + 14000 });
+        const latency = Date.now() - startTime;
+        const parsed = (streams || [])
+          .map((s) => parseStreamDetails(s, s.addonName || 'MovieBox Sources', latency))
+          .filter(Boolean);
+        allAccumulatedStreams.push(...parsed);
+        chunkEmitted = true;
+        onChunk({ addonId: 'moviebox-tui', addonName: 'MovieBox Sources', status: 'ok', latency, count: parsed.length, streams: parsed });
+      } catch (err) {
+        const latency = Date.now() - startTime;
+        if (!chunkEmitted) {
+          onChunk({ addonId: 'moviebox-tui', addonName: 'MovieBox Sources', status: 'failed', latency, count: 0, streams: [], error: err?.message });
+        }
+      }
+    })();
+
+    await Promise.allSettled([...addonPromises, cloudstreamPromise, providerPromise]);
 
     const deduplicated = deduplicateStreams(allAccumulatedStreams);
     deduplicated.sort((a, b) => scoreStream(b) - scoreStream(a));
@@ -1616,7 +1664,21 @@ export class AddonManager {
       }
     }));
 
-    return results.flatMap((r) => r.status === 'fulfilled' ? r.value : []);
+    const addonSubs = results.flatMap((r) => r.status === 'fulfilled' ? r.value : []);
+
+    // Provider captions (MovieBox-TUI port): direct for mb: ids; for regular
+    // tmdb/imdb ids only when addons returned nothing (keeps API traffic low).
+    if (isProviderId(id) || addonSubs.length === 0) {
+      try {
+        const meta = isProviderId(id) ? null : await this.getMeta(type, id);
+        const providerSubs = await getProviderSubtitles({ type, id, meta, deadline: Date.now() + 12000 });
+        if (Array.isArray(providerSubs) && providerSubs.length > 0) {
+          addonSubs.push(...providerSubs);
+        }
+      } catch {}
+    }
+
+    return addonSubs;
   }
 
   async getHealth() {

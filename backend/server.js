@@ -2,11 +2,15 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import { Readable } from 'stream';
+import { spawn } from 'child_process';
 import { AddonManager } from './addon-manager.js';
 import { fetchPlatformContent, resolveImdbId, validateTmdbKey, fetchTmdbSeasonEpisodes, searchTmdbId, fetchTmdbSimilar, fetchPersonCredits } from './tmdb.js';
 import { cloudstreamManager } from './cloudstream-manager.js';
 import { iptvManager } from './iptv-manager.js';
 import { isSupabaseConfigured } from './supabase.js';
+import { searchProviders } from './providers/index.js';
+import { isStreamToken, resolveStreamToken } from './providers/stream-tokens.js';
+import { ensureFreshMovieBoxUrl } from './providers/moviebox.js';
 
 // Global crash protection
 process.on('uncaughtException', (err) => {
@@ -129,7 +133,16 @@ app.get('/api/addons/health', async (_req, res, next) => {
 app.get('/api/subtitles/:type/:id', async (req, res, next) => {
   try {
     const subs = await addonManager.getSubtitles(req.params.type, req.params.id);
-    res.json({ subtitles: subs || [] });
+    // Player fetches subtitle URLs as-is (no base prefix), so provider proxy
+    // paths must come back absolute. Respect x-forwarded-proto behind proxies.
+    const forwardedProto = String(req.get('x-forwarded-proto') || '').split(',')[0].trim();
+    const base = `${forwardedProto || req.protocol}://${req.get('host')}`;
+    const normalized = (subs || []).map((sub) => (
+      sub?.url && typeof sub.url === 'string' && sub.url.startsWith('/api/')
+        ? { ...sub, url: `${base}${sub.url}` }
+        : sub
+    ));
+    res.json({ subtitles: normalized });
   } catch (error) {
     next(error);
   }
@@ -335,7 +348,10 @@ function isPrivateOrBlockedHost(hostname) {
 }
 
 // Stream Proxy for streams requiring custom headers (Referer, Origin, Cookie) or cross-origin playback
-app.all('/api/proxy/stream', async (req, res) => {
+// Opaque provider tokens (MovieBox-TUI port) are resolved server-side here:
+// `?url=<uuid>` looks up the real signed upstream URL + headers from the
+// in-memory store, so nothing sensitive reaches the browser or logs.
+const streamProxyHandler = async (req, res) => {
   const configuredOrigin = process.env.FRONTEND_ORIGIN || process.env.ALLOWED_ORIGIN || 'http://localhost:5173';
   const reqOrigin = req.headers.origin;
   const allowOrigin = (reqOrigin && (reqOrigin === configuredOrigin || configuredOrigin === '*'))
@@ -356,12 +372,33 @@ app.all('/api/proxy/stream', async (req, res) => {
     return res.status(400).send('Missing url parameter');
   }
 
+  let targetUrl = rawTargetUrl;
+  let tokenHeaders = {};
+  let tokenMeta = null;
+  if (isStreamToken(rawTargetUrl)) {
+    const resolved = resolveStreamToken(rawTargetUrl);
+    if (!resolved) {
+      return res.status(410).send('Stream token expired or invalid');
+    }
+    targetUrl = resolved.url;
+    tokenHeaders = resolved.headers;
+    tokenMeta = resolved.meta;
+  }
+
+  if (tokenMeta?.subjectId && tokenMeta?.resourceId) {
+    // MovieBox detector links are signed and time-limited (?sign=&t=): refresh
+    // them shortly before expiry so long playback sessions never hit a stale
+    // URL (port of refresh_moviebox_source, debounced inside the provider).
+    targetUrl = await ensureFreshMovieBoxUrl(targetUrl, tokenMeta, { deadline: Date.now() + 6000 });
+  }
+
   let customHeaders = {};
   if (req.query.headers) {
     try {
       customHeaders = JSON.parse(req.query.headers);
     } catch {}
   }
+  customHeaders = { ...customHeaders, ...tokenHeaders };
 
   const reqHeaders = {
     ...customHeaders,
@@ -379,7 +416,7 @@ app.all('/api/proxy/stream', async (req, res) => {
   });
 
   try {
-    let currentUrl = rawTargetUrl.trim();
+    let currentUrl = targetUrl.trim();
     let redirects = 0;
     const maxRedirects = 5;
     let upstreamRes = null;
@@ -462,15 +499,28 @@ app.all('/api/proxy/stream', async (req, res) => {
     }
   } catch (err) {
     if (!res.headersSent && err.name !== 'AbortError') {
-      res.status(502).json({ error: 'Proxy error: ' + err.message });
+      // Token-resolved targets are signed/credentialed — never echo their URLs.
+      const detail = Object.keys(tokenHeaders).length > 0
+        ? 'upstream fetch failed'
+        : err.message;
+      res.status(502).json({ error: 'Proxy error: ' + detail });
     }
   }
-});
+};
+
+app.all('/api/proxy/stream', streamProxyHandler);
+// Extension-suffixed variant so the player's extension/HLS detection
+// (split('?')[0].endsWith('.m3u8')) works for proxied token URLs.
+app.all('/api/proxy/stream.:ext', streamProxyHandler);
 
 app.get('/api/search', async (req, res, next) => {
   const query = typeof req.query.q === 'string' ? req.query.q.trim() : '';
   if (!query) return res.json([]);
   try {
+    // MovieBox-TUI providers (MovieBox + Dramachi) search in parallel with
+    // addon catalogs; failures degrade to catalog-only results.
+    const providerPromise = searchProviders(query).catch(() => []);
+
     const catalogs = await addonManager.getAllCatalogs();
     const matchingCatalogs = catalogs.filter((catalog) => (
       catalog.extra?.some((entry) => entry.name === 'search')
@@ -484,6 +534,10 @@ app.get('/api/search', async (req, res, next) => {
       for (const item of result.value) {
         if (item?.id && !unique.has(item.id)) unique.set(item.id, item);
       }
+    }
+    const providerItems = await providerPromise;
+    for (const item of providerItems) {
+      if (item?.id && !unique.has(item.id)) unique.set(item.id, item);
     }
     return res.json([...unique.values()]);
   } catch (error) {
@@ -691,7 +745,80 @@ app.use((error, _req, res, _next) => {
   res.status(502).json({ error: error.message || 'The request could not be processed.' });
 });
 
-const port = process.env.PORT || 3001;
+const MAX_CONCURRENT_TRANSCODES = 2;
+let activeTranscodes = 0;
+
+// GET /api/transcode/stream?url=... Transcode MKV audio (AC3/EAC3/DTS) to AAC
+app.get('/api/transcode/stream', async (req, res) => {
+  const rawUrl = typeof req.query.url === 'string' ? req.query.url.trim() : '';
+  if (!rawUrl) return res.status(400).json({ error: 'Missing url parameter' });
+
+  let target;
+  try {
+    target = new URL(rawUrl);
+  } catch {
+    return res.status(400).json({ error: 'Invalid URL' });
+  }
+  if (!['http:', 'https:'].includes(target.protocol)) return res.status(400).json({ error: 'Only http/https allowed' });
+  if (isPrivateOrBlockedHost(target.hostname)) return res.status(403).json({ error: 'Access to private or link-local address forbidden' });
+
+  if (activeTranscodes >= MAX_CONCURRENT_TRANSCODES) {
+    return res.status(503).json({ error: 'Too many concurrent transcodes. Try again later.' });
+  }
+
+  activeTranscodes += 1;
+  const configuredOrigin = process.env.FRONTEND_ORIGIN || process.env.ALLOWED_ORIGIN || 'http://localhost:5173';
+  const reqOrigin = req.headers.origin;
+  const allowOrigin = (reqOrigin && (reqOrigin === configuredOrigin || configuredOrigin === '*')) ? reqOrigin : configuredOrigin;
+  res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Content-Type', 'video/mp4');
+  res.setHeader('Accept-Ranges', 'none');
+
+  const args = [
+    '-hide_banner',
+    '-loglevel', 'error',
+    '-i', rawUrl,
+    '-c:v', 'copy',
+    '-c:a', 'aac',
+    '-b:a', '192k',
+    '-ac', '2',
+    '-movflags', 'frag_keyframe+empty_moov+default_base_moof',
+    '-f', 'mp4',
+    'pipe:1'
+  ];
+
+  let ffmpeg;
+  try {
+    ffmpeg = spawn('ffmpeg', args);
+  } catch (err) {
+    activeTranscodes -= 1;
+    return res.status(500).json({ error: 'ffmpeg unavailable. Choose an MP4/AAC source instead.' });
+  }
+
+  const killProc = () => {
+    if (ffmpeg && !ffmpeg.killed) {
+      try { ffmpeg.kill('SIGKILL'); } catch {}
+    }
+  };
+
+  req.on('close', killProc);
+  ffmpeg.stdout.pipe(res);
+  ffmpeg.stderr.on('data', () => {});
+
+  ffmpeg.on('error', (err) => {
+    activeTranscodes -= 1;
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'ffmpeg unavailable. Choose an MP4/AAC source instead.' });
+    }
+  });
+
+  ffmpeg.on('close', () => {
+    activeTranscodes = Math.max(0, activeTranscodes - 1);
+    req.removeListener('close', killProc);
+    if (!res.headersSent) res.end();
+  });
+});
 if (!process.env.VERCEL) {
   app.listen(port, () => console.log(`My-Movie-House API listening at http://localhost:${port}`));
 }

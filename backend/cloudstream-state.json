@@ -1,388 +1,6 @@
 {
   "cloudstreamRepos": [
     {
-      "id": "cs-repo-redowan",
-      "name": "Redowan's BDIX repository",
-      "description": "Redowan's BDIX repository",
-      "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/master/repo.json",
-      "enabled": true,
-      "builtin": true,
-      "plugins": [
-        {
-          "id": "9kMovies",
-          "name": "9kMovies",
-          "internalName": "9kMovies",
-          "description": "Bangla & Hindi Movies",
-          "language": "hi",
-          "tvTypes": [
-            "Movie",
-            "TvSeries",
-            "NSFW"
-          ],
-          "iconUrl": "https://9kmovies.llc/wp-content/uploads/2026/06/9kmovies-logo1.png",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/9kMovies.cs3",
-          "version": 11,
-          "authors": [
-            "Redowan"
-          ],
-          "fileSize": 16446,
-          "enabled": true
-        },
-        {
-          "id": "BanglaPlex",
-          "name": "BanglaPlex",
-          "internalName": "BanglaPlex",
-          "description": "BanglaPlex Movies & Web Series",
-          "language": "bn",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://banglaplex.biz/uploads/system_logo/favicon_61916a9838d38.png",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BanglaPlex.cs3",
-          "version": 1,
-          "authors": [
-            "Redowan"
-          ],
-          "fileSize": 35067,
-          "enabled": true
-        },
-        {
-          "id": "BdixBdipTV",
-          "name": "BdixBdipTV",
-          "internalName": "BdixBdipTV",
-          "description": "BDIX Live Tv in Bangladesh",
-          "language": "bn",
-          "tvTypes": [
-            "Live"
-          ],
-          "iconUrl": "http://tv.bdiptv.net/assets/images/Live1.jpeg",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixBdipTV.cs3",
-          "version": 10,
-          "authors": [
-            "Redowan"
-          ],
-          "fileSize": 16863,
-          "enabled": true
-        },
-        {
-          "id": "BdixCircleftp",
-          "name": "BdixCircleftp",
-          "internalName": "BdixCircleftp",
-          "description": "Only works in Bangladesh. Works even in internet Shutdown",
-          "language": "bn",
-          "tvTypes": [
-            "Movie",
-            "TvSeries",
-            "Anime",
-            "AnimeMovie",
-            "OVA",
-            "Cartoon",
-            "AsianDrama",
-            "Others",
-            "Documentary"
-          ],
-          "iconUrl": "http://new.circleftp.net/static/media/logo.fce2c9029060a10687b8.png",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixCircleftp.cs3",
-          "version": 27,
-          "authors": [
-            "Redowan"
-          ],
-          "fileSize": 22123,
-          "enabled": true
-        },
-        {
-          "id": "BdixCloudTV",
-          "name": "BdixCloudTV",
-          "internalName": "BdixCloudTV",
-          "description": "BDIX Live Tv in Bangladesh",
-          "language": "bn",
-          "tvTypes": [
-            "Live"
-          ],
-          "iconUrl": "http://172.19.178.180/assets/logos/Cloudtv.png",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixCloudTV.cs3",
-          "version": 6,
-          "authors": [
-            "Redowan"
-          ],
-          "fileSize": 17223,
-          "enabled": true
-        },
-        {
-          "id": "BdixDflix",
-          "name": "BdixDflix",
-          "internalName": "BdixDflix",
-          "description": "Discovery BDIX Provider",
-          "language": "bn",
-          "tvTypes": [
-            "Movie",
-            "TvSeries",
-            "Anime",
-            "AnimeMovie",
-            "OVA",
-            "Cartoon",
-            "AsianDrama",
-            "Others",
-            "Documentary"
-          ],
-          "iconUrl": "https://dflix.discoveryftp.net/assets/images/icon.png",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixDflix.cs3",
-          "version": 10,
-          "authors": [
-            "Redowan"
-          ],
-          "fileSize": 19036,
-          "enabled": true
-        },
-        {
-          "id": "BdixDhakaFlix",
-          "name": "BdixDhakaFlix",
-          "internalName": "BdixDhakaFlix",
-          "description": "Dhaka Flix BDIX Provider",
-          "language": "bn",
-          "tvTypes": [
-            "Movie",
-            "TvSeries",
-            "Anime",
-            "AnimeMovie",
-            "OVA",
-            "Cartoon",
-            "AsianDrama",
-            "Others",
-            "Documentary"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/refs/heads/master/BdixDhakaFlix/icon.jpg",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixDhakaFlix.cs3",
-          "version": 8,
-          "authors": [
-            "Redowan"
-          ],
-          "fileSize": 34317,
-          "enabled": true
-        },
-        {
-          "id": "BdixICCFtp",
-          "name": "BdixICCFtp",
-          "internalName": "BdixICCFtp",
-          "description": "ICC BDIX Provider",
-          "language": "bn",
-          "tvTypes": [
-            "Movie",
-            "TvSeries",
-            "Anime",
-            "AnimeMovie",
-            "OVA",
-            "Cartoon",
-            "AsianDrama",
-            "Others",
-            "Documentary"
-          ],
-          "iconUrl": "http://10.16.100.244/images/logo-purple.svg",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixICCFtp.cs3",
-          "version": 3,
-          "authors": [
-            "Redowan"
-          ],
-          "fileSize": 15539,
-          "enabled": true
-        },
-        {
-          "id": "BdixMyMovieBazarTV",
-          "name": "BdixMyMovieBazarTV",
-          "internalName": "BdixMyMovieBazarTV",
-          "description": "BDIX Live Tv in Bangladesh",
-          "language": "bn",
-          "tvTypes": [
-            "Live"
-          ],
-          "iconUrl": "https://mymoviebazar.net/assets/commons/header/logo1.png",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixMyMovieBazarTV.cs3",
-          "version": 6,
-          "authors": [
-            "Redowan"
-          ],
-          "fileSize": 9656,
-          "enabled": true
-        },
-        {
-          "id": "BdixRoarZoneTV",
-          "name": "BdixRoarZoneTV",
-          "internalName": "BdixRoarZoneTV",
-          "description": "BDIX Live Tv in Bangladesh",
-          "language": "bn",
-          "tvTypes": [
-            "Live"
-          ],
-          "iconUrl": "https://roarzone.info/logo.webp",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixRoarZoneTV.cs3",
-          "version": 6,
-          "authors": [
-            "Redowan"
-          ],
-          "fileSize": 10702,
-          "enabled": false
-        },
-        {
-          "id": "EmwBD",
-          "name": "EmwBD",
-          "internalName": "EmwBD",
-          "description": "Movie website in Bangladesh",
-          "language": "bn",
-          "tvTypes": [
-            "Movie",
-            "TvSeries",
-            "AnimeMovie",
-            "AsianDrama",
-            "NSFW"
-          ],
-          "iconUrl": "https://www.emwbd.xyz/wp-content/uploads/2024/07/cropped-20240718_170236-192x192.png",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/EmwBD.cs3",
-          "version": 16,
-          "authors": [
-            "Redowan"
-          ],
-          "fileSize": 12796,
-          "enabled": true
-        },
-        {
-          "id": "FootReplays",
-          "name": "FootReplays",
-          "internalName": "FootReplays",
-          "description": "FootBall Matches Replays and Highlights",
-          "language": "en",
-          "tvTypes": [
-            "Others"
-          ],
-          "iconUrl": "https://www.footreplays.com/wp-content/uploads/2024/11/cropped-footreplays-favicon-192x192.webp",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/FootReplays.cs3",
-          "version": 6,
-          "authors": [
-            "Redowan"
-          ],
-          "fileSize": 11048,
-          "enabled": true
-        },
-        {
-          "id": "FullReplays",
-          "name": "FullReplays",
-          "internalName": "FullReplays",
-          "description": "Watch Football Full Match Replay and Shows",
-          "language": "en",
-          "tvTypes": [
-            "Others"
-          ],
-          "iconUrl": "https://www.fullreplays.com/wp-content/uploads/2023/05/logo-ball-150x150.png",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/FullReplays.cs3",
-          "version": 6,
-          "authors": [
-            "Redowan"
-          ],
-          "fileSize": 11022,
-          "enabled": true
-        },
-        {
-          "id": "FullyMaza",
-          "name": "FullyMaza",
-          "internalName": "FullyMaza",
-          "description": "",
-          "language": "en",
-          "tvTypes": [
-            "Movie",
-            "TvSeries",
-            "AnimeMovie",
-            "Cartoon"
-          ],
-          "iconUrl": "https://fibwatch.online/themes/default/img/fibwatch-logo-new.png",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/FullyMaza.cs3",
-          "version": 7,
-          "authors": [
-            "Redowan"
-          ],
-          "fileSize": 11826,
-          "enabled": true
-        },
-        {
-          "id": "MoviPK",
-          "name": "MoviPK",
-          "internalName": "MoviPK",
-          "description": "",
-          "language": "en",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://www.movi.pk/wp-content/uploads/2023/06/apple-touch-icon.png",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/MoviPK.cs3",
-          "version": 4,
-          "authors": [
-            "MoviPK"
-          ],
-          "fileSize": 10567,
-          "enabled": true
-        },
-        {
-          "id": "Mp4Moviez",
-          "name": "Mp4Moviez",
-          "internalName": "Mp4Moviez",
-          "description": "Download Mp4Moviez free full movies, high quality movies, latest movies from Mp4Moviez. Mp4moviez is number one entertainment hollywood bollywood website and provide free Mp4moviez full movie download facility",
-          "language": "hi",
-          "tvTypes": [
-            "Movie",
-            "TvSeries",
-            "NSFW"
-          ],
-          "iconUrl": "https://www.mp4moviez.glass/images/mp4moviez.png",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/Mp4Moviez.cs3",
-          "version": 3,
-          "authors": [
-            "salman731"
-          ],
-          "fileSize": 13275,
-          "enabled": true
-        },
-        {
-          "id": "TheMoviesFlix",
-          "name": "TheMoviesFlix",
-          "internalName": "TheMoviesFlix",
-          "description": "720p Movies, 1080p movies, Dual Audio Movies, Hindi Dubbed Series, Hollywood Movies",
-          "language": "hi",
-          "tvTypes": [
-            "Movie",
-            "TvSeries",
-            "NSFW"
-          ],
-          "iconUrl": "https://themoviesflix.it.com/wp-content/uploads/2024/12/cropped-cropped-favicon-32x32-1-180x180.png",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/TheMoviesFlix.cs3",
-          "version": 6,
-          "authors": [
-            "salman731,Redowan"
-          ],
-          "fileSize": 27276,
-          "enabled": true
-        },
-        {
-          "id": "WatchMoviesPk",
-          "name": "WatchMoviesPk",
-          "internalName": "WatchMoviesPk",
-          "description": "Watch Online Movies in HD Print Quality Free Download,Watch Full Movies Online Bollywood Movies Download Latest Hollywood Movies in DVD Print Quality Free",
-          "language": "hi",
-          "tvTypes": [
-            "TvSeries",
-            "Movie"
-          ],
-          "iconUrl": "https://www.watch-movies.com.pk/wp-content/uploads/2022/05/logo.png",
-          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/WatchMoviesPk.cs3",
-          "version": 3,
-          "authors": [
-            "salman731"
-          ],
-          "fileSize": 12297,
-          "enabled": true
-        }
-      ]
-    },
-    {
       "id": "cs-repo-phisher",
       "name": "Phisher Repo",
       "description": "Phisher Repository",
@@ -556,7 +174,7 @@
             "Anime",
             "Cartoon"
           ],
-          "iconUrl": "https://animedekho.app/wp-content/uploads/2023/07/AnimeDekho-Logo-300x-1.png",
+          "iconUrl": "https://animedekho.tv/wp-content/uploads/2026/10/AnimeDekho-Logo.png",
           "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/AnimeDekhoProvider.cs3",
           "version": 72,
           "authors": [
@@ -820,7 +438,7 @@
             "Phisher98"
           ],
           "fileSize": 210527,
-          "enabled": true
+          "enabled": false
         },
         {
           "id": "Cinemacity",
@@ -1088,7 +706,7 @@
             "Phisher98"
           ],
           "fileSize": 72257,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "HiAnime",
@@ -1107,7 +725,7 @@
             "Phisher98"
           ],
           "fileSize": 87083,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Hindmoviez",
@@ -1267,11 +885,11 @@
           ],
           "iconUrl": "https://www.google.com/s2/favicons?domain=kisskh.co&sz=%size%",
           "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/KisskhProvider.cs3",
-          "version": 22,
+          "version": 24,
           "authors": [
             "Phisher98,Hexated,Peerless"
           ],
-          "fileSize": 66635,
+          "fileSize": 70144,
           "enabled": false
         },
         {
@@ -1406,7 +1024,7 @@
             "Phisher98"
           ],
           "fileSize": 122141,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "MPlayerProvider",
@@ -2100,7 +1718,7 @@
             "Phisher98, megix"
           ],
           "fileSize": 12016,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "AllPornStream",
@@ -2136,7 +1754,7 @@
             "Phisher98"
           ],
           "fileSize": 12223,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Asianpinay",
@@ -2154,7 +1772,7 @@
             "Phisher98"
           ],
           "fileSize": 12728,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Cam4",
@@ -2248,7 +1866,7 @@
             "RowdyRushya"
           ],
           "fileSize": 12045,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Eporner",
@@ -2284,7 +1902,7 @@
             "Phisher98"
           ],
           "fileSize": 14600,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "FullPorner",
@@ -2302,7 +1920,7 @@
             "Coxju, megix"
           ],
           "fileSize": 14509,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "FXPrnHD",
@@ -2341,7 +1959,7 @@
             "ArjixWasTaken"
           ],
           "fileSize": 16653,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Hanime",
@@ -2414,7 +2032,7 @@
             "Jace"
           ],
           "fileSize": 18409,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "HentaiPro",
@@ -2450,7 +2068,7 @@
             "Phishe"
           ],
           "fileSize": 16867,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "HStream",
@@ -2901,7 +2519,7 @@
             "luck731"
           ],
           "fileSize": 12783,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Pornken",
@@ -2937,7 +2555,7 @@
             "megix"
           ],
           "fileSize": 13347,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Pornobae",
@@ -3385,11 +3003,11 @@
           ],
           "iconUrl": "https://anikototv.to/AnikotoTheme/assets/images/favicon.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/AniKoto.cs3",
-          "version": 10,
+          "version": 11,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 66350,
+          "fileSize": 66292,
           "enabled": false
         },
         {
@@ -3405,11 +3023,11 @@
           ],
           "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://animesuge.cz&size=64",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/AnimeSuge.cs3",
-          "version": 10,
+          "version": 11,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 61577,
+          "fileSize": 61531,
           "enabled": false
         },
         {
@@ -3426,12 +3044,12 @@
           ],
           "iconUrl": "https://play-lh.googleusercontent.com/G9s84Cm1TDnKDX2P8nipS_s60cuCnYtjBRRLespF8nivjXmbV9tF1fY37clZhXMLaA",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/BilibiliProvider.cs3",
-          "version": 36,
+          "version": 37,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 104387,
-          "enabled": false
+          "fileSize": 104306,
+          "enabled": true
         },
         {
           "id": "CastleTvProvider",
@@ -3445,11 +3063,11 @@
           ],
           "iconUrl": "https://github.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/raw/refs/heads/master/Logos/CastleTvProvider/icon.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/CastleTvProvider.cs3",
-          "version": 40,
+          "version": 41,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 88009,
+          "fileSize": 87957,
           "enabled": true
         },
         {
@@ -3464,11 +3082,11 @@
           ],
           "iconUrl": "https://modapk.world/wp-content/uploads/2025/11/Et-90x90.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/CineTvProvider.cs3",
-          "version": 35,
+          "version": 36,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 60002,
+          "fileSize": 59963,
           "enabled": false
         },
         {
@@ -3483,11 +3101,11 @@
           ],
           "iconUrl": "https://cinevood.chat/cinevood-logo.webp",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/CineVoodProvider.cs3",
-          "version": 2,
+          "version": 3,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 112039,
+          "fileSize": 112044,
           "enabled": false
         },
         {
@@ -3502,11 +3120,11 @@
           ],
           "iconUrl": "https://github.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/raw/refs/heads/master/Logos/CNC%20Verse/icon.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/CNC Verse.cs3",
-          "version": 114,
+          "version": 115,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 92713,
+          "fileSize": 92652,
           "enabled": true
         },
         {
@@ -3521,11 +3139,11 @@
           ],
           "iconUrl": "https://github.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/raw/refs/heads/master/Logos/CNC%20Verse%20Mobile/logo.jpeg",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/CNC Verse Mobile.cs3",
-          "version": 11,
+          "version": 12,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 97614,
+          "fileSize": 97534,
           "enabled": true
         },
         {
@@ -3539,11 +3157,11 @@
           ],
           "iconUrl": "https://cricfy.pro/wp-content/uploads/2024/11/cropped-cricfytv-2.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/CricifyProvider.cs3",
-          "version": 73,
+          "version": 74,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 117310,
+          "fileSize": 117254,
           "enabled": true
         },
         {
@@ -3557,11 +3175,11 @@
           ],
           "iconUrl": "https://www.google.com/s2/favicons?domain=desi-serials.to&sz=%size%",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/DesiSerialsProvider.cs3",
-          "version": 33,
+          "version": 34,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 59470,
+          "fileSize": 59363,
           "enabled": false
         },
         {
@@ -3576,11 +3194,11 @@
           ],
           "iconUrl": "https://github.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/raw/refs/heads/master/Logos/DoFlixProvider/icon.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/DoFlixProvider.cs3",
-          "version": 37,
+          "version": 38,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 98904,
+          "fileSize": 98897,
           "enabled": false
         },
         {
@@ -3594,11 +3212,11 @@
           ],
           "iconUrl": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/heads/master/Logos/EinthusanProvider/icon.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/EinthusanProvider.cs3",
-          "version": 37,
+          "version": 38,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 40139,
+          "fileSize": 40093,
           "enabled": false
         },
         {
@@ -3612,11 +3230,11 @@
           ],
           "iconUrl": "https://www.google.com/s2/favicons?domain=goldenaudiobook.com/&sz=%size%",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/GoldenAudiobook.cs3",
-          "version": 34,
+          "version": 35,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 38072,
+          "fileSize": 38034,
           "enabled": false
         },
         {
@@ -3631,11 +3249,11 @@
           ],
           "iconUrl": "https://images.dwncdn.net/images/t_app-icon-l/p/b0c9663c-0d61-4941-b12f-91c58c06189f/1137087733/hdo-box-logo",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/HDOProvider.cs3",
-          "version": 35,
+          "version": 36,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 48310,
+          "fileSize": 48260,
           "enabled": true
         },
         {
@@ -3652,11 +3270,11 @@
           ],
           "iconUrl": "https://www.google.com/s2/favicons?domain=rezka.ag&sz=%size%",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/HDrezkaProvider.cs3",
-          "version": 36,
+          "version": 37,
           "authors": [
             "Hexated, NivinCNC"
           ],
-          "fileSize": 60123,
+          "fileSize": 60045,
           "enabled": false
         },
         {
@@ -3670,11 +3288,11 @@
           ],
           "iconUrl": "https://librivox.org/wp-content/themes/librivox/images/librivox-logo.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/LibriVoxAudiobook.cs3",
-          "version": 34,
+          "version": 35,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 36205,
+          "fileSize": 36138,
           "enabled": false
         },
         {
@@ -3688,11 +3306,11 @@
           ],
           "iconUrl": "https://www.livxow.site/logo.jpg",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/LivXowProvider.cs3",
-          "version": 22,
+          "version": 23,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 127417,
+          "fileSize": 127401,
           "enabled": false
         },
         {
@@ -3706,11 +3324,11 @@
           ],
           "iconUrl": "https://play-lh.googleusercontent.com/V4t4JeQV2Cu9u72hKuqOW5c0IfwcZuuVS1d9PF2uJsW3rlIq-aOMTrT5bABVGaAFTcM=w480-h960-rw",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/M3UPlaylistPlayerProvider.cs3",
-          "version": 18,
+          "version": 19,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 65129,
+          "fileSize": 65133,
           "enabled": false
         },
         {
@@ -3727,11 +3345,11 @@
           ],
           "iconUrl": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/refs/heads/master/Logos/MLSBD-Logo.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/MLSBDProvider.cs3",
-          "version": 35,
+          "version": 36,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 118734,
+          "fileSize": 118715,
           "enabled": true
         },
         {
@@ -3746,11 +3364,11 @@
           ],
           "iconUrl": "https://github.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/raw/refs/heads/master/Logos/MovieBoxProvider/icon.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/MovieBoxProvider.cs3",
-          "version": 52,
+          "version": 53,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 94749,
+          "fileSize": 94649,
           "enabled": true
         },
         {
@@ -3765,11 +3383,11 @@
           ],
           "iconUrl": "https://github.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/raw/refs/heads/master/Logos/MovieBoxProviderIN/icon.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/MovieBoxProviderIN.cs3",
-          "version": 54,
+          "version": 55,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 92281,
+          "fileSize": 92240,
           "enabled": true
         },
         {
@@ -3786,11 +3404,11 @@
           ],
           "iconUrl": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/refs/heads/master/Logos/movielinkbd.webp",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/MovieLinkBDProvider.cs3",
-          "version": 25,
+          "version": 26,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 58080,
+          "fileSize": 57989,
           "enabled": true
         },
         {
@@ -3804,11 +3422,11 @@
           ],
           "iconUrl": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/heads/master/Logos/MoviezwapProvider/icon.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/MoviezwapProvider.cs3",
-          "version": 32,
+          "version": 33,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 40219,
+          "fileSize": 40156,
           "enabled": false
         },
         {
@@ -3823,11 +3441,11 @@
           ],
           "iconUrl": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/refs/heads/master/Logos/PikashowProvider/logo.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/PikashowProvider.cs3",
-          "version": 32,
+          "version": 33,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 82128,
+          "fileSize": 82072,
           "enabled": true
         },
         {
@@ -3841,11 +3459,11 @@
           ],
           "iconUrl": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/refs/heads/master/Logos/PlayFyTvProvider/playfy-tv-4.webp",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/PlayFyProvider.cs3",
-          "version": 16,
+          "version": 17,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 107306,
+          "fileSize": 107267,
           "enabled": false
         },
         {
@@ -3859,11 +3477,11 @@
           ],
           "iconUrl": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/refs/heads/master/Logos/PlayZTVProvider/logo.jpg",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/PlayZTVProvider.cs3",
-          "version": 44,
+          "version": 45,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 117498,
+          "fileSize": 117522,
           "enabled": true
         },
         {
@@ -3877,11 +3495,11 @@
           ],
           "iconUrl": "https://cdn.mytuner.mobi/static/ctr/icons/App_192x192/in.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/RadioIndiaProvider.cs3",
-          "version": 33,
+          "version": 34,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 36329,
+          "fileSize": 36277,
           "enabled": false
         },
         {
@@ -3899,11 +3517,11 @@
           ],
           "iconUrl": "https://github.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/raw/refs/heads/master/Logos/Rtally/icon.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/Rtally.cs3",
-          "version": 52,
+          "version": 53,
           "authors": [
             "Redowan, NivinCNC"
           ],
-          "fileSize": 111335,
+          "fileSize": 111273,
           "enabled": false
         },
         {
@@ -3917,11 +3535,11 @@
           ],
           "iconUrl": "https://sktechtv.org/wp-content/uploads/2026/05/sktechtv.webp",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/SKTechProvider.cs3",
-          "version": 60,
+          "version": 61,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 125456,
+          "fileSize": 125462,
           "enabled": false
         },
         {
@@ -3935,11 +3553,11 @@
           ],
           "iconUrl": "https://sportzxlive.com/wp-content/uploads/2026/04/cropped-logo-1-2048x1611-1-1024x806.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/SportzxProvider.cs3",
-          "version": 28,
+          "version": 29,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 123413,
+          "fileSize": 123335,
           "enabled": false
         },
         {
@@ -3955,11 +3573,11 @@
           ],
           "iconUrl": "https://play-lh.googleusercontent.com/7geBQBtW_yN70BU81Oi2SoZvYsj5VoYrI4FmUNdqWQlchtExJb7XE_1BQysGzgJ6mBU",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/StreamFlixProvider.cs3",
-          "version": 34,
+          "version": 35,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 65089,
+          "fileSize": 65038,
           "enabled": false
         },
         {
@@ -3974,11 +3592,11 @@
           ],
           "iconUrl": "https://github.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/raw/refs/heads/master/Logos/CNC%20Verse/icon.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/SubscriptionManager.cs3",
-          "version": 16,
+          "version": 17,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 38794,
+          "fileSize": 38746,
           "enabled": false
         },
         {
@@ -3992,11 +3610,11 @@
           ],
           "iconUrl": "https://github.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/raw/refs/heads/master/Logos/TamilDhoolProvider/icon.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/TamilDhoolProvider.cs3",
-          "version": 40,
+          "version": 41,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 53361,
+          "fileSize": 53266,
           "enabled": false
         },
         {
@@ -4010,11 +3628,11 @@
           ],
           "iconUrl": "https://www.google.com/s2/favicons?domain=tamilian.io&sz=%size%",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/Tamilian.cs3",
-          "version": 32,
+          "version": 33,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 38280,
+          "fileSize": 38224,
           "enabled": false
         },
         {
@@ -4028,12 +3646,34 @@
           ],
           "iconUrl": "https://github.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/raw/refs/heads/master/Logos/TamilUltraProvider/icon.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/TamilUltraProvider.cs3",
-          "version": 40,
+          "version": 41,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 35478,
+          "fileSize": 35387,
           "enabled": false
+        },
+        {
+          "id": "VegaMoviesProvider",
+          "name": "VegaMoviesProvider",
+          "internalName": "VegaMoviesProvider",
+          "description": "VegaMovies and Rogmovies: Bollywood, Hollywood, dubbed movies, series, anime and K-dramas",
+          "language": "hi",
+          "tvTypes": [
+            "TvSeries",
+            "Movie",
+            "AsianDrama",
+            "Anime"
+          ],
+          "iconUrl": "https://github.com/SaurabhKaperwan/CSX/raw/refs/heads/master/VegaMovies/icon.jpg",
+          "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/VegaMoviesProvider.cs3",
+          "version": 1,
+          "authors": [
+            "megix",
+            "NivinCNC"
+          ],
+          "fileSize": 62923,
+          "enabled": true
         },
         {
           "id": "Watch32",
@@ -4047,11 +3687,11 @@
           ],
           "iconUrl": "https://editorialge.com/wp-content/uploads/2023/07/Watch32..jpg",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/Watch32.cs3",
-          "version": 35,
+          "version": 36,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 48222,
+          "fileSize": 48158,
           "enabled": false
         },
         {
@@ -4067,16 +3707,2001 @@
           ],
           "iconUrl": "https://play-lh.googleusercontent.com/zVq_wAus2snoO-ggyI6IomlsCzfybAozQOGYpBrv71r1--rOYOYWsr_N7DWwVp9t7ro=s248-rw",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/XonProvider.cs3",
-          "version": 35,
+          "version": 36,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 63340,
+          "fileSize": 63288,
           "enabled": false
+        }
+      ]
+    },
+    {
+      "id": "cs-repo-1792573669041",
+      "name": "Cs-GizliKeyif +18 | @kraptor123",
+      "description": "+18 Repo",
+      "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/refs/heads/master/repo.json",
+      "enabled": true,
+      "builtin": false,
+      "plugins": [
+        {
+          "id": "18EU",
+          "name": "18EU",
+          "internalName": "18EU",
+          "description": "Watch full EURO Movies with Full Frontal Nudity",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://18eu.net&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/18EU.cs3",
+          "version": 4,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 16546,
+          "enabled": true
+        },
+        {
+          "id": "3XChina",
+          "name": "3XChina",
+          "internalName": "3XChina",
+          "description": "Watch free chinese av, china av, MD series. Jelly Media. Jingdong Pictures. Tianmei Media. Taiwan SWAG, stream online amateur sex, 91porn",
+          "language": "zh",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://3xchina.net/szl-036/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/3XChina.cs3",
+          "version": 3,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 24149,
+          "enabled": true
+        },
+        {
+          "id": "AdultDeepFakes",
+          "name": "AdultDeepFakes",
+          "internalName": "AdultDeepFakes",
+          "description": "!Fake Videos! We are the best source of deepfake porn videos. We have the largest collection of celebrity porn deepfakes, featuring celebrities, youtubers, kpop singers, etc.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=https://adultdeepfakes.com",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/AdultDeepFakes.cs3",
+          "version": 2,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 30830,
+          "enabled": true
+        },
+        {
+          "id": "AdultTvChannels",
+          "name": "AdultTvChannels",
+          "internalName": "AdultTvChannels",
+          "description": "Watch free adult TV channels online",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://adult-tv-channels.com&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/AdultTvChannels.cs3",
+          "version": 4,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 11315,
+          "enabled": true
+        },
+        {
+          "id": "Aki",
+          "name": "Aki",
+          "internalName": "Aki",
+          "description": "Dream or Enjoy The Hentai you re looking for is here. Find the Hentai you re looking for in video and 3D or Asmr with 1080p or 720p quality. Watch on any device today",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://aki-h.com/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Aki.cs3",
+          "version": 5,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 25860,
+          "enabled": true
+        },
+        {
+          "id": "AllClassicPorn",
+          "name": "AllClassicPorn",
+          "internalName": "AllClassicPorn",
+          "description": "Exclusive downloadable retro porn videos on AllClassic.porn. Full movies and best hardcore compilations from the old days. Hottest pornstars and antique homemade porn from all over the world.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://allclassic.porn&size=48",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/AllClassicPorn.cs3",
+          "version": 6,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 31413,
+          "enabled": true
+        },
+        {
+          "id": "Allpornstream",
+          "name": "Allpornstream",
+          "internalName": "Allpornstream",
+          "description": "All Porn Stream - Free Porn HD Videos. Watch the best high definition sex movies with hot babes. Allpornstream.com provides you thousands of 1080p, 4k and free porn videos, hd porn tube",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://allpornstream.com/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Allpornstream.cs3",
+          "version": 5,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 20664,
+          "enabled": true
+        },
+        {
+          "id": "AZNude",
+          "name": "AZNude",
+          "internalName": "AZNude",
+          "description": "Welcome to AZNUDE! We have a large, free, every day growing universe of celebrity nudity where stars from all movies and series shine.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.aznude.com/&size=48",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/AZNude.cs3",
+          "version": 7,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 25868,
+          "enabled": true
+        },
+        {
+          "id": "BadTv",
+          "name": "BadTv",
+          "internalName": "BadTv",
+          "description": "Porno falan",
+          "language": "tr",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=https://www.badtv.net/&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/BadTv.cs3",
+          "version": 4,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 16412,
+          "enabled": true
+        },
+        {
+          "id": "Beeg",
+          "name": "Beeg",
+          "internalName": "Beeg",
+          "description": "Beeg.com is a free porn website that features a wide variety of adult videos. It has a large selection of videos from various genres.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://beeg.com/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Beeg.cs3",
+          "version": 6,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 32717,
+          "enabled": true
+        },
+        {
+          "id": "BrazzPW",
+          "name": "BrazzPW",
+          "internalName": "BrazzPW",
+          "description": "BrazzPW.COM no PassWord required; Premium brazzers videos for free.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?sz=64&domain=brazzpw.xyz",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/BrazzPW.cs3",
+          "version": 1,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 13658,
+          "enabled": true
+        },
+        {
+          "id": "CamWh",
+          "name": "CamWh",
+          "internalName": "CamWh",
+          "description": "Free Videos to Watch, Hottest Moments, Private Show, Best Clips, Sexy Webcam Girls, Cam Whores Archive",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://camwh.com/contents/ugmtofwqltgh/theme/logo.png",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/CamWh.cs3",
+          "version": 7,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 11724,
+          "enabled": true
+        },
+        {
+          "id": "Chatrubate",
+          "name": "Chatrubate",
+          "internalName": "Chatrubate",
+          "description": "Chaturbate - Free Adult Webcams, Live Sex, Free Sex Chat, Exhibitionist & Pornstar Free Cams",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://web.static.mmcdn.com/favicons/apple-touch-icon-120x120.png?hash=b494063e083a",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Chatrubate.cs3",
+          "version": 6,
+          "authors": [
+            "kraptor",
+            "luck731"
+          ],
+          "fileSize": 15321,
+          "enabled": true
+        },
+        {
+          "id": "Cloudbate",
+          "name": "Cloudbate",
+          "internalName": "Cloudbate",
+          "description": "Watch and download cam girls videos at free chaturbate cam show archive.f",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.cloudbate.com&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Cloudbate.cs3",
+          "version": 2,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 16346,
+          "enabled": true
+        },
+        {
+          "id": "Coomer",
+          "name": "Coomer",
+          "internalName": "Coomer",
+          "description": "Coomer: supports photos and videos",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://coomer.st&size=32",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Coomer.cs3",
+          "version": 13,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 46880,
+          "enabled": true
+        },
+        {
+          "id": "CosXPlay",
+          "name": "CosXPlay",
+          "internalName": "CosXPlay",
+          "description": "Free Cosplay porn videos ❤️! Beautiful girls clothed as your favorite characters from video games, TV shows and movies. Cosplay porn ONLY!",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://cosxplay.com/storage/2020/08/cropped-favicon-cosxplay-32x32.png",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/CosXPlay.cs3",
+          "version": 1,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 14861,
+          "enabled": true
+        },
+        {
+          "id": "Cumlouder",
+          "name": "Cumlouder",
+          "internalName": "Cumlouder",
+          "description": "Cumlouder, Internet is for porn!",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "http://www.google.com/s2/favicons?domain=cumlouder.com",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Cumlouder.cs3",
+          "version": 4,
+          "authors": [
+            "ByAyzen",
+            "Kraptor"
+          ],
+          "fileSize": 13376,
+          "enabled": true
+        },
+        {
+          "id": "DirtyShip",
+          "name": "DirtyShip",
+          "internalName": "DirtyShip",
+          "description": "Dirtyship.com is the hub of daily free leaked nudes from the hottest female Twitch, Snapchat, YouTube, Instagram, Patreon models, Cosplay, Gamer Girls, and streamers. Choose from the biggest selection of Sexy Leaked Nude Photos, Accidental Slips, Bikini Photos, Banned Streamers and Patreon Creators.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://dirtyship.com&size=48",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/DirtyShip.cs3",
+          "version": 11,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 26968,
+          "enabled": true
+        },
+        {
+          "id": "Doeda",
+          "name": "Doeda",
+          "internalName": "Doeda",
+          "description": "Porno izle Türk ❤ Porn sex video ☘ Doeda inanılmaz Amatör porna ve sikiş filmleri seyret ⭐ altyazılı Full HD pornosu ⭐ endişe verici Türkçe dublaj pornolar.",
+          "language": "tr",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.doeda.one/&size=48",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Doeda.cs3",
+          "version": 9,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 15894,
+          "enabled": true
+        },
+        {
+          "id": "DoedaOrijinal",
+          "name": "DoedaOrijinal",
+          "internalName": "DoedaOrijinal",
+          "description": "Porno film izle ❤️ bedava seks filmi seyret ❤️ götten sikiş, pornu ⭐ mobil porno limitsiz ⭐ Tecavüz porna hd yeni Rokettube, hızlı DoEda ücretsiz sex porn.",
+          "language": "tr",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=www.doeda.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/DoedaOrijinal.cs3",
+          "version": 6,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 15599,
+          "enabled": true
+        },
+        {
+          "id": "EffedUpMovies",
+          "name": "EffedUpMovies",
+          "internalName": "EffedUpMovies",
+          "description": "Fucked up movies. Top twisted and worst controversial exploitation films. Movies of gore sick sexual violence and bizarre strange disgusting scenes leaving you unsettled & messed up.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?sz=64&domain=https://www.effedupmovies.com/",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/EffedUpMovies.cs3",
+          "version": 1,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 14632,
+          "enabled": true
+        },
+        {
+          "id": "EFukt",
+          "name": "EFukt",
+          "internalName": "EFukt",
+          "description": "Adult humor for adults, Makers of Lulz. Shocking Humor, Porn bloopers, Porn Fails, Cam Whores, Amateur Porn and more.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://efukt.com/&size=16",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/EFukt.cs3",
+          "version": 7,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 14919,
+          "enabled": true
+        },
+        {
+          "id": "ePawg",
+          "name": "ePawg",
+          "internalName": "ePawg",
+          "description": "Enjoy a huge selection of custom porn videos starring sexy amateur models from OnlyFans and Snapchat. Real girls posting sex videos in dozens of categories!",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://epawg.com/&size=32",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/ePawg.cs3",
+          "version": 6,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 29566,
+          "enabled": true
+        },
+        {
+          "id": "EPorner",
+          "name": "EPorner",
+          "internalName": "EPorner",
+          "description": "Watch Full HD Porn Videos for free. We have over 4,975,164 full length Hardcore HD Sex Movies in 720p, 1080p and 4K that you can watch online or download.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.eporner.com/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/EPorner.cs3",
+          "version": 5,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 16697,
+          "enabled": true
+        },
+        {
+          "id": "Erome",
+          "name": "Erome",
+          "internalName": "Erome",
+          "description": "Erome.com is a hosting platform that provides a safe and easy way to upload, store and share all your wild & erotic photos & videos. You control who you share your stuff with.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://erome.com&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Erome.cs3",
+          "version": 3,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 16250,
+          "enabled": true
+        },
+        {
+          "id": "EroThots",
+          "name": "EroThots",
+          "internalName": "EroThots",
+          "description": "Erothots Huge Free Place To Find Leaked onlyfans models Videos And images, Models, Pornstars, Gifs ...",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://erothots.is/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/EroThots.cs3",
+          "version": 4,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 13664,
+          "enabled": true
+        },
+        {
+          "id": "Evooli",
+          "name": "Evooli",
+          "internalName": "Evooli",
+          "description": "Porno keyfini Evooli ile daha iyi çıkartıp hazzı doruklarda yaşamaya hazırsan, hadi durma HD Porno Filmlerini ücretsiz izle.",
+          "language": "tr",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=www.evooli.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Evooli.cs3",
+          "version": 5,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 13838,
+          "enabled": true
+        },
+        {
+          "id": "FamilyPorn",
+          "name": "FamilyPorn",
+          "internalName": "FamilyPorn",
+          "description": "FamilyPornHD It's a natural mix of the neighborhood stepmoms, older stepdads, barely legal stepsisters, and even the college going stepbrother falling into some serious family fun.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=familypornhd.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/FamilyPorn.cs3",
+          "version": 9,
+          "authors": [
+            "kraptor",
+            "kerimmkirac"
+          ],
+          "fileSize": 21092,
+          "enabled": true
+        },
+        {
+          "id": "FapGoat",
+          "name": "FapGoat",
+          "internalName": "FapGoat",
+          "description": "Free HD porn on FapGoat,  no sign-up, no paywall. Thousands of hand-picked scenes across every category and your favourite pornstars. Hit play and fap like a GOAT.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://fapgoat.com/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/FapGoat.cs3",
+          "version": 2,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 31353,
+          "enabled": true
+        },
+        {
+          "id": "Fapix",
+          "name": "Fapix",
+          "internalName": "Fapix",
+          "description": "The only one site where you can filter videos by 4 tags at once for free. We have a lot of great videos, we're sure you'll like them",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://fapix.porn/favicon.ico",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Fapix.cs3",
+          "version": 3,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 21430,
+          "enabled": true
+        },
+        {
+          "id": "Film1K",
+          "name": "Film1K",
+          "internalName": "Film1K",
+          "description": "Stream the largest collection of full-length erotic movies, uncut softcore classics, and international thrillers for free. Watch in HD on any device. No registration required.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?sz=64&domain=https://www.film1k.com",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Film1K.cs3",
+          "version": 1,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 46729,
+          "enabled": true
+        },
+        {
+          "id": "FitNakedGirls",
+          "name": "FitNakedGirls",
+          "internalName": "FitNakedGirls",
+          "description": "The best Gym porn and Fitness nude videos. Gym sex - Naked workout - Nude Fit Instagram Girls - Naked Yoga",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?sz=64&domain=fitnakedgirls.com",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/FitNakedGirls.cs3",
+          "version": 1,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 12527,
+          "enabled": true
+        },
+        {
+          "id": "FreePornVideos",
+          "name": "FreePornVideos",
+          "internalName": "FreePornVideos",
+          "description": "Check out 🔥 Full Length Porn Videos from Top Studios in Ultra HD. NO annoying ADS ✔",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=www.freepornvideos.xxx&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/FreePornVideos.cs3",
+          "version": 5,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 15234,
+          "enabled": true
+        },
+        {
+          "id": "FreeUsePorn",
+          "name": "FreeUsePorn",
+          "internalName": "FreeUsePorn",
+          "description": "Watch High Quality Freeuse Porn Videos for free! Thousands of videos available for all freeuse porn categories including: Free Service Porn, Hypno Porn, Mind Control Porn, and more! Join our community and unlock video downloads, custom favorite lists, and more!",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.freeuseporn.com&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/FreeUsePorn.cs3",
+          "version": 3,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 11549,
+          "enabled": true
+        },
+        {
+          "id": "FullPorner",
+          "name": "FullPorner",
+          "internalName": "FullPorner",
+          "description": "(VPN) FullPorner is the best free full length porn video site. Choose from millions of hardcore videos that stream quickly and in high quality and only full length",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=fullporner.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/FullPorner.cs3",
+          "version": 7,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 19954,
+          "enabled": true
+        },
+        {
+          "id": "Fyptt",
+          "name": "Fyptt",
+          "internalName": "Fyptt",
+          "description": "If you think you can't find TikTok, Shorts, and Reels-inspired porn videos then FYPTT will prove you wrong. Here on our site, you can find lots of adult TikTok-, Shorts-, and Reels-like vertical porn videos that are hard to find anywhere else. You'll see familiar challenges, but they're all NSFW and contain nudity. Feel turned on? Start browsing FYPTT right now and remember to come back regularly because we update content very often.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://fyptt.to/wp-content/uploads/2020/04/fypttlogo-white.png&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Fyptt.cs3",
+          "version": 3,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 13994,
+          "enabled": true
+        },
+        {
+          "id": "Girlsswallowed",
+          "name": "Girlsswallowed",
+          "internalName": "Girlsswallowed",
+          "description": "GirlSwallowed is the best site for free full-length Mike Adriano videos in 4K 2160p, 1080p, and 720p resolution, including the latest content from sites like Swallowed.com, Nympho.com, AnalOnly.com, TrueAnal.com, AllAnal.com, DirtyAuditions.com, and OnlyFans @realmikeadriano, with the ability to download the videos for free!",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://girlswallowed.com/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Girlsswallowed.cs3",
+          "version": 1,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 12452,
+          "enabled": true
+        },
+        {
+          "id": "HanimeTV",
+          "name": "HanimeTV",
+          "internalName": "HanimeTV",
+          "description": "Watch hentai online free download HD on mobile phone tablet laptop desktop.  Stream online, regularly released uncensored, subbed, in 720p and 1080p!",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://hanime.tv/home&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/HanimeTV.cs3",
+          "version": 4,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 32732,
+          "enabled": true
+        },
+        {
+          "id": "HeavyR",
+          "name": "HeavyR",
+          "internalName": "HeavyR",
+          "description": "Heavy-R.com is a free porn tube. Updated with the best free porn videos every day!",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.heavy-r.com/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/HeavyR.cs3",
+          "version": 2,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 11719,
+          "enabled": true
+        },
+        {
+          "id": "HentaiCity",
+          "name": "HentaiCity",
+          "internalName": "HentaiCity",
+          "description": "Hentai City has free HD hentai porn videos, hot anime sex, naughty cartoon XXX and 3D hardcore movies. Tons of adult comics, doujinshi and manga to read.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.defendonlineprivacy.com&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/HentaiCity.cs3",
+          "version": 7,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 13678,
+          "enabled": true
+        },
+        {
+          "id": "Hentaila",
+          "name": "Hentaila",
+          "internalName": "Hentaila",
+          "description": "porn",
+          "language": "mx",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://hentaila.tv&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Hentaila.cs3",
+          "version": 3,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 29443,
+          "enabled": true
+        },
+        {
+          "id": "Horny69",
+          "name": "Horny69",
+          "internalName": "Horny69",
+          "description": "Watch free HD & 4K XXX on Horny69 - premium porn from Brazzers, Blacked, Tushy & top studios. New full videos every day. Stream instantly, no sign-up.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.porntape.net&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Horny69.cs3",
+          "version": 3,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 12287,
+          "enabled": true
+        },
+        {
+          "id": "HotLeak",
+          "name": "HotLeak",
+          "internalName": "HotLeak",
+          "description": "Hotleak is the best free porn site of Millions Exclusive Leak contents such as Images, Gallery and Videos.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=https://hotleak.vip/&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/HotLeak.cs3",
+          "version": 5,
+          "authors": [
+            "kerimmkirac",
+            "kraptor"
+          ],
+          "fileSize": 14782,
+          "enabled": true
+        },
+        {
+          "id": "HQPorner",
+          "name": "HQPorner",
+          "internalName": "HQPorner",
+          "description": "Truly high definition porn videos and truly for free! We're sure you'll like our best collection containing thousands of 4K, 60FPS and 1080p free HD porn videos with the hottest girls ever!",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://hqporner.com/&size=32",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/HQPorner.cs3",
+          "version": 4,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 16637,
+          "enabled": true
+        },
+        {
+          "id": "İnfluencerChicks",
+          "name": "İnfluencerChicks",
+          "internalName": "İnfluencerChicks",
+          "description": "Daily updated nude influencer videos and photos for free only on InfluencerChicks.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=influencerchicks.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/İnfluencerChicks.cs3",
+          "version": 7,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 12749,
+          "enabled": true
+        },
+        {
+          "id": "JavGuru",
+          "name": "JavGuru",
+          "internalName": "JavGuru",
+          "description": "JavGuru",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=jav.guru&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/JavGuru.cs3",
+          "version": 20,
+          "authors": [
+            "kraptor",
+            "ByAyzen"
+          ],
+          "fileSize": 97958,
+          "enabled": true
+        },
+        {
+          "id": "Javseen",
+          "name": "Javseen",
+          "internalName": "Javseen",
+          "description": "Watch Free JAV Sex Movies Streaming, Japanese Adult Videos, Tons of hot jav censored,Japanese tube, Japanese sex online.",
+          "language": "jp",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://javseen.tv/favicon-96x96.png",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Javseen.cs3",
+          "version": 10,
+          "authors": [
+            "byayzen"
+          ],
+          "fileSize": 89591,
+          "enabled": true
+        },
+        {
+          "id": "Javtiful",
+          "name": "Javtiful",
+          "internalName": "Javtiful",
+          "description": "Watch more than 60,000 Full HD JAV Online For Free at Javtiful",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://javtiful.com/main&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Javtiful.cs3",
+          "version": 6,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 15077,
+          "enabled": true
+        },
+        {
+          "id": "Kalite18",
+          "name": "Kalite18",
+          "internalName": "Kalite18",
+          "description": "Kalite18, sizlere porno filmleri HD kalite ve türkçe altyazılı olarak izleme keyfi sunmaktadır. Porno ve sex filmlerini anlayarak 31 çekmenin keyfini çıkarın.",
+          "language": "tr",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=www.kalite18.net&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Kalite18.cs3",
+          "version": 3,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 14488,
+          "enabled": true
+        },
+        {
+          "id": "Kopeda",
+          "name": "Kopeda",
+          "internalName": "Kopeda",
+          "description": "En kaliteli porno ve sikiş video sitesi olarak bakış açınızı değiştirmeye geldik. Premium pornoları ücretsiz olarak izlemek için tıkla!",
+          "language": "tr",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=www.kopeda.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Kopeda.cs3",
+          "version": 4,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 12258,
+          "enabled": true
+        },
+        {
+          "id": "Koreanpornmovie",
+          "name": "Koreanpornmovie",
+          "internalName": "Koreanpornmovie",
+          "description": "KoreanPornMovie.com is a dedicated platform for fans of Korean adult films, offering a comprehensive collection of movies and clips from classic hits to the latest releases. Each title is carefully organized by genre, year, and performer, making it easy for visitors to find exactly what they are looking for.",
+          "language": "kr",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://koreanpornmovie.com/wp-content/uploads/2020/01/cropped-koreanpornmovie-favicon-180x180.png",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Koreanpornmovie.cs3",
+          "version": 4,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 13372,
+          "enabled": true
+        },
+        {
+          "id": "Koreaye",
+          "name": "Koreaye",
+          "internalName": "Koreaye",
+          "description": "Porno Film - Sikiş izle - Sex Video - Mobil Seks Seyret | Koreaye",
+          "language": "tr",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=koreaye.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Koreaye.cs3",
+          "version": 9,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 13399,
+          "enabled": true
+        },
+        {
+          "id": "LiveCamRips",
+          "name": "LiveCamRips",
+          "internalName": "LiveCamRips",
+          "description": "LiveCamRips",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://livecamrips.to&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/LiveCamRips.cs3",
+          "version": 17,
+          "authors": [
+            "kraptor",
+            "kerimmkirac"
+          ],
+          "fileSize": 27514,
+          "enabled": true
+        },
+        {
+          "id": "Maheir",
+          "name": "Maheir",
+          "internalName": "Maheir",
+          "description": "Boşalmak istediğiniz zaman ❤️ porno izle videolarına girebilir ❤️ sikiş seyret keyfini yaşayın. Konulu hd porn seksleriyle ⭐ mobil porna filmi çok daha güzel",
+          "language": "tr",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=maheir.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Maheir.cs3",
+          "version": 2,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 16106,
+          "enabled": true
+        },
+        {
+          "id": "Mangoporn",
+          "name": "Mangoporn",
+          "internalName": "Mangoporn",
+          "description": "Mangoporn",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://mangoporn.net/wp-content/uploads/2024/07/mangoporn.net_.png",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Mangoporn.cs3",
+          "version": 34,
+          "authors": [
+            "kraptor",
+            "ByAyzen",
+            "HindiProvider"
+          ],
+          "fileSize": 108399,
+          "enabled": true
+        },
+        {
+          "id": "Max",
+          "name": "Max",
+          "internalName": "Max",
+          "description": "Now you can watch new xxx videos from your favorite porn studios as easy as 1-2-3. Click it! Watch it!",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?sz=64&domain=https://max.porn",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Max.cs3",
+          "version": 1,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 21980,
+          "enabled": true
+        },
+        {
+          "id": "MilfNut",
+          "name": "MilfNut",
+          "internalName": "MilfNut",
+          "description": "Milfnut provides free incest porn videos. Watch milf porn videos, mom son porn videos and other taboo porn on Milfnut.com.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://milfnut.com&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/MilfNut.cs3",
+          "version": 3,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 12489,
+          "enabled": true
+        },
+        {
+          "id": "MissAV",
+          "name": "MissAV",
+          "internalName": "MissAV",
+          "description": "Best Japan AV porn site, free forever, high speed, no lag, over 100,000 videos with daily update.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://missav.ws/missav/logo-square.png",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/MissAV.cs3",
+          "version": 7,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 15967,
+          "enabled": true
+        },
+        {
+          "id": "NetFapX",
+          "name": "NetFapX",
+          "internalName": "NetFapX",
+          "description": "Watch HD porn sex videos for free. Large collection of tube porn videos in high quality. Very fast HD porn streaming. It's time to FAP!",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=netfapx.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/NetFapX.cs3",
+          "version": 7,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 15110,
+          "enabled": true
+        },
+        {
+          "id": "NoodleMagazine",
+          "name": "NoodleMagazine",
+          "internalName": "NoodleMagazine",
+          "description": "Biggest videos collection of high quality. Our entertainment portal finds the best video for you every day!",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://noodlemagazine.com/static/extend/dark/apple-icon-120x120.png",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/NoodleMagazine.cs3",
+          "version": 4,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 15010,
+          "enabled": true
+        },
+        {
+          "id": "Notmik",
+          "name": "Notmik",
+          "internalName": "Notmik",
+          "description": "Porno sektörünün en güncel porno izleme sitesi karşınızda. Ünlü sitelerden eklenen premium pornoları izlemek için hemen tıkla!",
+          "language": "tr",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=www.notmik.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Notmik.cs3",
+          "version": 4,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 13357,
+          "enabled": true
+        },
+        {
+          "id": "OnScreens",
+          "name": "OnScreens",
+          "internalName": "OnScreens",
+          "description": "Missed a show? OnScreens turns live cam broadcasts into an HD replay library from Chaturbate, Cam4, Stripchat, Bongacams &#38; more. Stream or download replays free.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=www.onscreens.me",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/OnScreens.cs3",
+          "version": 3,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 21577,
+          "enabled": true
+        },
+        {
+          "id": "OppaiStream",
+          "name": "OppaiStream",
+          "internalName": "OppaiStream",
+          "description": "Watch your favorite episodes in 4k hentai, 1080p hentai or 720p hentai! On oppai.stream you will find the highest quality hentai with latest releases and top speeds",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://oppai.stream/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/OppaiStream.cs3",
+          "version": 1,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 15624,
+          "enabled": true
+        },
+        {
+          "id": "PerfectGirls",
+          "name": "PerfectGirls",
+          "internalName": "PerfectGirls",
+          "description": "New free porn videos every day. Tons of adult movies in our archive. The only bookmark you need for all you free sex fantasies.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=www.perfectgirls.xxx&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/PerfectGirls.cs3",
+          "version": 4,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 15249,
+          "enabled": true
+        },
+        {
+          "id": "PerverZija",
+          "name": "PerverZija",
+          "internalName": "PerverZija",
+          "description": "porn",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?sz=64&domain=https://tube.perverzija.com",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/PerverZija.cs3",
+          "version": 1,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 14554,
+          "enabled": true
+        },
+        {
+          "id": "Pimpbunny",
+          "name": "Pimpbunny",
+          "internalName": "Pimpbunny",
+          "description": "Looking for the hottest content on the internet? PimpBunny brings you the hottest porn videos and lets you chat with the content creators.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://pimpbunny.com/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Pimpbunny.cs3",
+          "version": 16,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 36660,
+          "enabled": true
+        },
+        {
+          "id": "Pinkueiga",
+          "name": "Pinkueiga",
+          "internalName": "Pinkueiga",
+          "description": "Watch Full Pinku Eiga, Japan movies 18+",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://pinkueiga.net&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Pinkueiga.cs3",
+          "version": 5,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 16552,
+          "enabled": true
+        },
+        {
+          "id": "PMVHaven",
+          "name": "PMVHaven",
+          "internalName": "PMVHaven",
+          "description": "Watch, upload, and share the best PMVs and HMVs on PMVHaven. Browse thousands of porn music videos by tags, creators, and more.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://pmvhaven.com/&size=64",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/PMVHaven.cs3",
+          "version": 1,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 19340,
+          "enabled": true
+        },
+        {
+          "id": "Porn00",
+          "name": "Porn00",
+          "internalName": "Porn00",
+          "description": "Porn00 provides hd porn videos for fee. And we're offering latest 720p porn, xxx and sex videos at porn00.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=www.porn00.org&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Porn00.cs3",
+          "version": 8,
+          "authors": [
+            "kraptor",
+            "kerimmkirac"
+          ],
+          "fileSize": 29438,
+          "enabled": true
+        },
+        {
+          "id": "PornHat",
+          "name": "PornHat",
+          "internalName": "PornHat",
+          "description": "Watch new HD ⚡ XXX movies at the Porn Hat tube for free! Famous pornstars ⭐ and amateur girls ✌️. Stream it! Download it! Enjoy it!",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=www.pornhat.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/PornHat.cs3",
+          "version": 4,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 15343,
+          "enabled": true
+        },
+        {
+          "id": "PornHub",
+          "name": "PornHub",
+          "internalName": "PornHub",
+          "description": "Welcome to Pornhub.com, home of the best hardcore free porn videos with the hottest adult stars. Get full length scenes from your favorite porn studios 24/7!",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.pornhub.com/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/PornHub.cs3",
+          "version": 7,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 17522,
+          "enabled": true
+        },
+        {
+          "id": "Pornocarioca",
+          "name": "Pornocarioca",
+          "internalName": "Pornocarioca",
+          "description": "Porno Carioca ✓ Videos e filmes pornô diariamente atualizados com cenas de porno grátis. O melhor site pornô com mulheres gostosas!",
+          "language": "pt-BR",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.pornocarioca.com/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Pornocarioca.cs3",
+          "version": 1,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 14383,
+          "enabled": true
+        },
+        {
+          "id": "Pornslash",
+          "name": "Pornslash",
+          "internalName": "Pornslash",
+          "description": "Watch millions of top and fresh porn videos for free, stream the hottest HD porn videos for free on PornSlash, full-length porn videos",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.pornslash.com/embed/E3mJAZANNge&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Pornslash.cs3",
+          "version": 2,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 15099,
+          "enabled": true
+        },
+        {
+          "id": "Porntrex",
+          "name": "Porntrex",
+          "internalName": "Porntrex",
+          "description": "Watch HD and 4k best porn videos on PornTrex. Get your daily dose of porn from our huge collection of free hd and 4k porn videos.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://www.porntrex.com&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Porntrex.cs3",
+          "version": 3,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 13261,
+          "enabled": true
+        },
+        {
+          "id": "PornWatch",
+          "name": "PornWatch",
+          "internalName": "PornWatch",
+          "description": "PornWatch - Porn Watch Online Free. Biggest Porn Movies Online Database. Watch and Download Full Porn Movie DVD in High Definition Quality. Latest Collection of Porn Movies DVD Free",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://pornwatch.ws/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/PornWatch.cs3",
+          "version": 26,
+          "authors": [
+            "Kraptor"
+          ],
+          "fileSize": 114237,
+          "enabled": true
+        },
+        {
+          "id": "Pvip",
+          "name": "Pvip",
+          "internalName": "Pvip",
+          "description": "PornoVIP gratis you will find all the Free Porn you are looking for. The latest videos from your favorite producers, to watch online or download.",
+          "language": "mx",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://pvip.se/en/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Pvip.cs3",
+          "version": 2,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 18452,
+          "enabled": true
+        },
+        {
+          "id": "Redgifs",
+          "name": "Redgifs",
+          "internalName": "Redgifs",
+          "description": "RedGIFs is the leading free porn GIFs site in the world. Browse millions of hardcore sex GIFs and the NEWEST porn videos every day!",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.redgifs.com/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Redgifs.cs3",
+          "version": 2,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 18315,
+          "enabled": true
+        },
+        {
+          "id": "RoshyTv",
+          "name": "RoshyTv",
+          "internalName": "RoshyTv",
+          "description": "Leaked Uncensored Japanese Adult Videos. Daily Updated Decensored JAV Porn.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://roshy.tv/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/RoshyTv.cs3",
+          "version": 9,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 18429,
+          "enabled": true
+        },
+        {
+          "id": "RouVideo",
+          "name": "RouVideo",
+          "internalName": "RouVideo",
+          "description": "Latest high-quality domestic AV, leaked amateur videos, and premium Tanhua content featuring top creators like 91 Masters. Free online streaming with daily updates from major studios including Madou, Tianmei, Mitao, 91 Production, Tangxin Vlog, and more. Experience the best adult content anytime on RouVideo.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://rou.video&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/RouVideo.cs3",
+          "version": 5,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 26245,
+          "enabled": true
+        },
+        {
+          "id": "Rule34video",
+          "name": "Rule34video",
+          "internalName": "Rule34video",
+          "description": "Rule 34 - If it exists, there is porn of it. We aspire to be the biggest video archive of rule34 content.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://rule34video.com/video/3822977/shorekeeper-akt/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Rule34video.cs3",
+          "version": 3,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 30824,
+          "enabled": true
+        },
+        {
+          "id": "Rusporn",
+          "name": "Rusporn",
+          "internalName": "Rusporn",
+          "description": "Mobile large selection of porn Amateur in HD quality, watch porn. Amateur Only in excellent HD quality for free.",
+          "language": "ru",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://en.rusporn.center/favicon.ico",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Rusporn.cs3",
+          "version": 4,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 25467,
+          "enabled": true
+        },
+        {
+          "id": "Sexfilm",
+          "name": "Sexfilm",
+          "internalName": "Sexfilm",
+          "description": "On our website, you can watch foreign porn movies, new releases, free online.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://en.sex-film.biz/movies/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Sexfilm.cs3",
+          "version": 1,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 15448,
+          "enabled": true
+        },
+        {
+          "id": "SexTB",
+          "name": "SexTB",
+          "internalName": "SexTB",
+          "description": "The Best Free JAV online, JAV DVD online, Stream JAV Online High Quality always updated daily.",
+          "language": "jp",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://sextb.net/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/SexTB.cs3",
+          "version": 15,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 90798,
+          "enabled": true
+        },
+        {
+          "id": "SimpCity",
+          "name": "SimpCity",
+          "internalName": "SimpCity",
+          "description": "SimpCity: supports photos and videos with gallery",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "http://www.google.com/s2/favicons?domain=https://simpcity.cr/",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/SimpCity.cs3",
+          "version": 9,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 89580,
+          "enabled": true
+        },
+        {
+          "id": "SpankBang",
+          "name": "SpankBang",
+          "internalName": "SpankBang",
+          "description": "SpankBang is a home of free porn videos and exclusive XXX movies from pornstars and amateurs. Enjoy 6M+ hardcore sex videos from premium studios for free on the best porn tube!",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://spankbang.com/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/SpankBang.cs3",
+          "version": 1,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 13232,
+          "enabled": true
+        },
+        {
+          "id": "Sxyprn",
+          "name": "Sxyprn",
+          "internalName": "Sxyprn",
+          "description": "Enjoy the high quality porn videos, upload original content.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://sxyprn.com&size=16",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Sxyprn.cs3",
+          "version": 8,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 36257,
+          "enabled": true
+        },
+        {
+          "id": "ThaiPorn",
+          "name": "ThaiPorn",
+          "internalName": "ThaiPorn",
+          "description": "ThaiPorn",
+          "language": "th",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://xn--72c9aha0f8ad1l6bi.com&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/ThaiPorn.cs3",
+          "version": 3,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 17170,
+          "enabled": true
+        },
+        {
+          "id": "Tubepornclassic",
+          "name": "Tubepornclassic",
+          "internalName": "Tubepornclassic",
+          "description": "Are you tired of modern porn, where new and new perversions are constantly used? Then give yourself the opportunity to relax and watch classic sex on our website TubePornClassic.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://tubepornclassic.com/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Tubepornclassic.cs3",
+          "version": 2,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 20616,
+          "enabled": true
+        },
+        {
+          "id": "TurkHub",
+          "name": "TurkHub",
+          "internalName": "TurkHub",
+          "description": "TurkHub.",
+          "language": "tr",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://turkhub154.cfd&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/TurkHub.cs3",
+          "version": 97,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 19477,
+          "enabled": true
+        },
+        {
+          "id": "TurkifsaBlog",
+          "name": "TurkifsaBlog",
+          "internalName": "TurkifsaBlog",
+          "description": "En güncel Turk ifşa videoları ve sızıntı arşivini kesintisiz full HD kalitede ücretsiz izleyin.",
+          "language": "tr",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://turkifsa.blog/category/turk-ifsa&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/TurkifsaBlog.cs3",
+          "version": 1,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 11467,
+          "enabled": true
+        },
+        {
+          "id": "TurkIfsalar",
+          "name": "TurkIfsalar",
+          "internalName": "TurkIfsalar",
+          "description": "TurkIfsalar",
+          "language": "tr",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?sz=64&domain=https://turkifsalar2.site",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/TurkIfsalar.cs3",
+          "version": 3,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 18547,
+          "enabled": true
+        },
+        {
+          "id": "TurkPorno",
+          "name": "TurkPorno",
+          "internalName": "TurkPorno",
+          "description": "Türk ifşa.",
+          "language": "tr",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://turkporno58.lat&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/TurkPorno.cs3",
+          "version": 151,
+          "authors": [
+            "Kraptor"
+          ],
+          "fileSize": 37283,
+          "enabled": true
+        },
+        {
+          "id": "UnusualPornX",
+          "name": "UnusualPornX",
+          "internalName": "UnusualPornX",
+          "description": "Warning: Contains Disgusting Content Free unusual porn: tentacle sex, parasite infection, futanari, mind control, time stop, vampires, zombies and more. Daily HD updates - the real taboo shit for you.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?sz=64&domain=https://unusualpornx.com",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/UnusualPornX.cs3",
+          "version": 2,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 29921,
+          "enabled": true
+        },
+        {
+          "id": "VideoCelebs",
+          "name": "VideoCelebs",
+          "internalName": "VideoCelebs",
+          "description": "Database of streaming videos with nude celebs",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "http://www.google.com/s2/favicons?domain=https://videocelebs.net",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/VideoCelebs.cs3",
+          "version": 4,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 29668,
+          "enabled": true
+        },
+        {
+          "id": "Vsex",
+          "name": "Vsex",
+          "internalName": "Vsex",
+          "description": "Videos porno gran base de datos de informacion y ademas descarga directa torrent online todo gratis muchos videos de brazzers, bangbross, mofos, Naughty America",
+          "language": "es",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://vsex.in&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Vsex.cs3",
+          "version": 4,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 32818,
+          "enabled": true
+        },
+        {
+          "id": "WatchHentai",
+          "name": "WatchHentai",
+          "internalName": "WatchHentai",
+          "description": "Watch hentai online and free download hd. stream online, daily releases uncensored, english subbed and dubbed, anime hentai porn in 720p and 1080p.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://watchhentai.net&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/WatchHentai.cs3",
+          "version": 3,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 14505,
+          "enabled": true
+        },
+        {
+          "id": "WatchPorn",
+          "name": "WatchPorn",
+          "internalName": "WatchPorn",
+          "description": "High quality family porn from all over the world especially from manyvids, onlyfans, missax,tabooheat,adulttime and many more. Enjoy MILFs and stepmother with big tits and a lot of mommy roleplay action.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://watchporn.to/&size=32",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/WatchPorn.cs3",
+          "version": 7,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 31673,
+          "enabled": true
+        },
+        {
+          "id": "Whoreshub",
+          "name": "Whoreshub",
+          "internalName": "Whoreshub",
+          "description": "Discover all the porn categories available on WhoresHub! Here you will find a big variety of sex categories. Watch and download porn videos in High-Definition.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://whoreshub.com&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Whoreshub.cs3",
+          "version": 2,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 30185,
+          "enabled": true
+        },
+        {
+          "id": "Wumaobi",
+          "name": "Wumaobi",
+          "internalName": "Wumaobi",
+          "description": "Explore an exclusive, uncensored collection of free leaked Asian adult videos featuring young, hairless performers with tight, pristine genitalia in extreme close-up scenes, showcasing professional AV idols and amateur content with no censorship.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://wumaobi.com/search/se/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Wumaobi.cs3",
+          "version": 2,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 10568,
+          "enabled": true
+        },
+        {
+          "id": "XChina",
+          "name": "XChina",
+          "internalName": "XChina",
+          "description": "xChina is one of the biggest porn websites (NSFW) in the world, it collects all kinds of high-definition sexy photo sets, nude photography, adult novels, erotic videos and other adult content. Everything is free here.",
+          "language": "zh",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://en.xchina.co/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/XChina.cs3",
+          "version": 3,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 12529,
+          "enabled": true
+        },
+        {
+          "id": "Xhamster",
+          "name": "Xhamster",
+          "internalName": "Xhamster",
+          "description": "(VPN) 5 milyondan fazla Porno Videosunu ücretsiz izleyin.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=xhamster.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Xhamster.cs3",
+          "version": 12,
+          "authors": [
+            "kraptor",
+            "coxju",
+            "SIX"
+          ],
+          "fileSize": 21126,
+          "enabled": true
+        },
+        {
+          "id": "XMoviesForYou",
+          "name": "XMoviesForYou",
+          "internalName": "XMoviesForYou",
+          "description": "Free Watch Streaming Premium Porn",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://xmoviesforyou.com/&size=32",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/XMoviesForYou.cs3",
+          "version": 10,
+          "authors": [
+            "kraptor",
+            "ByAyzen"
+          ],
+          "fileSize": 16288,
+          "enabled": true
+        },
+        {
+          "id": "XNalgas",
+          "name": "XNalgas",
+          "internalName": "XNalgas",
+          "description": "Sitio de contenido para adulto donde usted encontrara, Porno Español, Latinas XXX, Sexo Anal, Transexuales, Sexo Grupal y Vídeos HD.",
+          "language": "es",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=www.xnalgas.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/XNalgas.cs3",
+          "version": 4,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 12633,
+          "enabled": true
+        },
+        {
+          "id": "Xpaja",
+          "name": "Xpaja",
+          "internalName": "Xpaja",
+          "description": "Xpaja te ofrece vídeos porno amateur y HD gratis todos los días. Tenemos el mejor porno casero del mundo con chicas hermosas, ven disfrútalo ahora!",
+          "language": "es",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=www.xpaja.net&sz=%size%",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Xpaja.cs3",
+          "version": 9,
+          "authors": [
+            "kerimmkirac"
+          ],
+          "fileSize": 14824,
+          "enabled": true
+        },
+        {
+          "id": "XRares",
+          "name": "XRares",
+          "internalName": "XRares",
+          "description": "XRares.com is a free porn tube for rare scandals, Amateur porn and incest porn. You'll see groping naked, sex in public and much more.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?sz=128&domain=www.xrares.com",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/XRares.cs3",
+          "version": 2,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 15309,
+          "enabled": true
+        },
+        {
+          "id": "xVideos",
+          "name": "xVideos",
+          "internalName": "xVideos",
+          "description": "xVideos.com is a free hosting service for porn videos.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=https://www.xvideos.com&sz=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/xVideos.cs3",
+          "version": 7,
+          "authors": [
+            "ByAyzen",
+            "SIX"
+          ],
+          "fileSize": 15785,
+          "enabled": true
+        },
+        {
+          "id": "Yesporn",
+          "name": "Yesporn",
+          "internalName": "Yesporn",
+          "description": "Discover the hottest USA free HD porn videos on YesPorn VIP. Stream explicit XXX sex movies, hardcore clips with busty American sluts, big asses, wet pussies, and raw fucking action for premium adult entertainment online.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://yesporn.vip/favicon.ico",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Yesporn.cs3",
+          "version": 2,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 30374,
+          "enabled": true
+        },
+        {
+          "id": "YouJizz",
+          "name": "YouJizz",
+          "internalName": "YouJizz",
+          "description": "Youjizz Porn Tube! Free porn movies and sex videos on your desktop or mobile phone.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?sz=64&domain=youjizz.com",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/YouJizz.cs3",
+          "version": 3,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 13337,
+          "enabled": true
+        },
+        {
+          "id": "Youperv",
+          "name": "Youperv",
+          "internalName": "Youperv",
+          "description": "YouPerv is a great new porn website with HD high quality content. Site has the best of movies. Enjoy free full hd porn videos. The best straight latest sex movies with anal, big cock, big tits, hot milfs and sex clips.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://youperv.com/&size=128",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Youperv.cs3",
+          "version": 3,
+          "authors": [
+            "ByAyzen"
+          ],
+          "fileSize": 12931,
+          "enabled": true
         }
       ]
     }
   ],
   "cloudstreamMasterEnabled": true,
-  "updatedAt": "2026-10-20T18:20:15.100Z"
+  "updatedAt": "2026-10-21T12:40:06.194Z"
 }
