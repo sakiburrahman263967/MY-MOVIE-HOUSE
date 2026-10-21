@@ -1472,9 +1472,16 @@ export class AddonManager {
             if (!s) return false;
             if (isTorrentStream(s)) return false;
             if (!s.url && !s.externalUrl) return false;
+            const addonIdLower = String(s.addonId || addon.id || '').toLowerCase();
+            const addonNameLower = String(s.addonName || addon.name || '').toLowerCase();
             const fullText = `${s.name || ''} ${s.title || ''} ${s.externalUrl || ''}`.toLowerCase();
             if (fullText.includes('donate') || fullText.includes('support the project') || fullText.includes('tap to donate')) {
-              return false;
+              // Don't drop httpstreaming direct providers
+              if (addonNameLower.includes('sootio') || addonNameLower.includes('pengu') || addonIdLower.includes('sootio') || addonIdLower.includes('pengu') || s.httpProvider === 'httpstreaming' || s.provider === 'httpstreaming') {
+                // allow
+              } else {
+                return false;
+              }
             }
             return true;
           })
@@ -1490,9 +1497,14 @@ export class AddonManager {
           })
           .filter((s) => {
             if (!s) return false;
+            const addonIdLower = String(s.addonId || addon.id || '').toLowerCase();
+            const addonNameLower = String(s.addonName || addon.name || '').toLowerCase();
+            if (addonNameLower.includes('sootio') || addonNameLower.includes('pengu') || addonIdLower.includes('sootio') || addonIdLower.includes('pengu') || s.httpProvider === 'httpstreaming' || s.provider === 'httpstreaming') {
+              return true;
+            }
             if (type === 'movie' && s.size) {
               const mbMatch = s.size.match(/([\d.]+)\s*MB/i);
-              if (mbMatch && parseFloat(mbMatch[1]) < 100) return false;
+              if (mbMatch && parseFloat(mbMatch[1]) < 30) return false;
             }
             return true;
           });
