@@ -450,6 +450,10 @@ export default function Detail() {
                             episode: ep.episodeNumber,
                             name: ep.name
                           });
+                          setSelectedStream(null);
+                          setAvailableStreams([]);
+                          setAddonStatuses([]);
+                          setStreamsLoading(true);
                           setShowStreams(true);
                         }}
                         className="group flex items-start gap-2.5 rounded-xl bg-white/[0.04] hover:bg-blue-600/20 border border-white/10 hover:border-blue-400/50 p-2 text-left transition-all"
@@ -618,6 +622,20 @@ export default function Detail() {
                       episode: episodes[0].episodeNumber,
                       name: episodes[0].name
                     });
+                    setSelectedStream(null);
+                    setAvailableStreams([]);
+                    setAddonStatuses([]);
+                    setStreamsLoading(true);
+                  } else if (!activeEpisode && (meta.type === 'series' || type === 'series')) {
+                    setActiveEpisode({
+                      season: selectedSeason,
+                      episode: 1,
+                      name: 'Episode 1'
+                    });
+                    setSelectedStream(null);
+                    setAvailableStreams([]);
+                    setAddonStatuses([]);
+                    setStreamsLoading(true);
                   }
                   if (!selectedStream && availableStreams.length > 0) {
                     setSelectedStream(availableStreams[0]);
