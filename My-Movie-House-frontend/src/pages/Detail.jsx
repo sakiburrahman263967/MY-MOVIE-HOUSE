@@ -63,7 +63,18 @@ export default function Detail() {
   }, [id, selectedSeason, meta, type]);
 
   useEffect(() => {
+    if (type === 'series' || meta?.type === 'series') {
+      if (!activeEpisode) {
+        setAvailableStreams([]);
+        setSelectedStream(null);
+        setAddonStatuses([]);
+        setStreamsLoading(false);
+        return () => {};
+      }
+    }
+
     let active = true;
+    const controller = new AbortController();
     setStreamsLoading(true);
     setAvailableStreams([]);
     setSelectedStream(null);
@@ -86,7 +97,7 @@ export default function Detail() {
 
     const cleanup = api.getStreamsLive(type, streamTargetId, {
       onAddonStreams: (chunk) => {
-        if (!active) return;
+        if (!active || controller.signal.aborted) return;
         setAddonStatuses((prev) => {
           const filtered = prev.filter((a) => a.addonId !== chunk.addonId);
           return [...filtered, {
@@ -116,19 +127,30 @@ export default function Detail() {
         }
       },
       onDone: (data) => {
-        if (!active) return;
+        if (!active || controller.signal.aborted) return;
         setStreamsLoading(false);
         if (Array.isArray(data?.streams) && data.streams.length > 0) {
-          setAvailableStreams(data.streams);
-          setSelectedStream((current) => current || pickBestStream(data.streams));
+          setAvailableStreams((prev) => {
+            const map = new Map();
+            for (const s of prev) {
+              const key = s.url || s.externalUrl;
+              if (key) map.set(key, s);
+            }
+            for (const s of data.streams) {
+              const key = s.url || s.externalUrl;
+              if (key && !map.has(key)) map.set(key, s);
+            }
+            const combined = Array.from(map.values());
+            setSelectedStream((current) => current || pickBestStream(combined));
+            return combined;
+          });
         }
       },
       onError: () => {
-        if (!active) return;
-        // Fallback to standard getStreams if SSE fails
+        if (!active || controller.signal.aborted) return;
         api.getStreams(type, streamTargetId)
           .then((data) => {
-            if (!active) return;
+            if (!active || controller.signal.aborted) return;
             const valid = (data || []).filter((s) => (
               s &&
               (s.url || s.externalUrl) &&
@@ -144,16 +166,17 @@ export default function Detail() {
           })
           .catch(() => {})
           .finally(() => {
-            if (active) setStreamsLoading(false);
+            if (active && !controller.signal.aborted) setStreamsLoading(false);
           });
       }
     });
 
     return () => {
       active = false;
+      controller.abort();
       cleanup?.();
     };
-  }, [type, id, activeEpisode]);
+  }, [type, id, activeEpisode, meta?.type]);
 
   useEffect(() => setSaved(library.has(id)), [id]);
 
@@ -454,9 +477,13 @@ export default function Detail() {
                           setAvailableStreams([]);
                           setAddonStatuses([]);
                           setStreamsLoading(true);
-                          setShowStreams(true);
+                          setShowStreams(false);
                         }}
-                        className="group flex items-start gap-2.5 rounded-xl bg-white/[0.04] hover:bg-blue-600/20 border border-white/10 hover:border-blue-400/50 p-2 text-left transition-all"
+                        className={`group flex items-start gap-2.5 rounded-xl p-2 text-left transition-all ${
+                          activeEpisode?.season === (ep.seasonNumber || selectedSeason) && activeEpisode?.episode === ep.episodeNumber
+                            ? 'bg-blue-600/25 border border-blue-400/70'
+                            : 'bg-white/[0.04] hover:bg-blue-600/20 border border-white/10 hover:border-blue-400/50'
+                        }`}
                       >
                         <div className="relative h-14 w-24 shrink-0 rounded-lg overflow-hidden bg-black/60 border border-white/10">
                           {ep.stillPath ? (
@@ -499,6 +526,7 @@ export default function Detail() {
             )}
 
             {/* ─── Real-Time Live Streaming Sources with File Sizes & Providers ─── */}
+            {(type === 'movie' || meta?.type === 'movie' || activeEpisode) && (
             <div className="mt-6 border-t border-white/10 pt-5">
               <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2">
@@ -553,14 +581,18 @@ export default function Detail() {
                 </div>
               )}
 
-              {streamsLoading ? (
+              {(type === 'series' || meta?.type === 'series') && !activeEpisode ? (
+                <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-3 text-xs text-white/50 text-center">
+                  Select an episode to see sources.
+                </div>
+              ) : streamsLoading ? (
                 <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-4 text-center">
                   <div className="mx-auto mb-2 h-5 w-5 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
                   <p className="text-xs text-white/70">Scanning live streaming addons for direct links & file sizes...</p>
                 </div>
               ) : availableStreams.length === 0 ? (
                 <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-3 text-xs text-white/50 text-center">
-                  Direct stream scanning active. Click &quot;Stream Now&quot; below to launch live player search.
+                  No sources found for this episode. Try selecting another episode or click &quot;Stream Now&quot;.
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-1">
