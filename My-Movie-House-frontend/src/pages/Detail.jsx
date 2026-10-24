@@ -642,32 +642,16 @@ export default function Detail() {
                     );
                   })}
                 </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <button
                 onClick={() => {
-                  if ((meta.type === 'series' || type === 'series') && episodes.length > 0 && !activeEpisode) {
-                    setActiveEpisode({
-                      season: selectedSeason,
-                      episode: episodes[0].episodeNumber,
-                      name: episodes[0].name
-                    });
-                    setSelectedStream(null);
-                    setAvailableStreams([]);
-                    setAddonStatuses([]);
-                    setStreamsLoading(true);
-                  } else if (!activeEpisode && (meta.type === 'series' || type === 'series')) {
-                    setActiveEpisode({
-                      season: selectedSeason,
-                      episode: 1,
-                      name: 'Episode 1'
-                    });
-                    setSelectedStream(null);
-                    setAvailableStreams([]);
-                    setAddonStatuses([]);
-                    setStreamsLoading(true);
+                  if (!activeEpisode && (meta.type === 'series' || type === 'series')) {
+                    alert('Select an episode first');
+                    return;
                   }
                   if (!selectedStream && availableStreams.length > 0) {
                     setSelectedStream(availableStreams[0]);
