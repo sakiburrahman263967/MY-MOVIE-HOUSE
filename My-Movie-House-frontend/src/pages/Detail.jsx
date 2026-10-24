@@ -445,71 +445,16 @@ export default function Detail() {
                       <button
                         key={`${ep.seasonNumber}-${ep.episodeNumber}`}
                         onClick={() => {
-                          const epObj = {
+                          setActiveEpisode({
                             season: ep.seasonNumber || selectedSeason,
                             episode: ep.episodeNumber,
                             name: ep.name
-                          };
-                          setActiveEpisode(epObj);
+                          });
                           setSelectedStream(null);
                           setAvailableStreams([]);
                           setAddonStatuses([]);
                           setStreamsLoading(true);
                           setShowStreams(true);
-                          // Trigger stream search immediately
-                          try {
-                            const streamTargetId = `${id}:${epObj.season}:${epObj.episode}`;
-                            const preferredQuality = (typeof localStorage !== 'undefined' && localStorage.getItem('mmh_preferred_quality')) || '';
-                            const cleanup = api.getStreamsLive(type, streamTargetId, {
-                              onAddonStreams: (chunk) => {
-                                setAddonStatuses((prev) => {
-                                  const filtered = prev.filter((a) => a.addonId !== chunk.addonId);
-                                  return [...filtered, {
-                                    addonId: chunk.addonId,
-                                    addonName: chunk.addonName,
-                                    status: chunk.status,
-                                    latency: chunk.latency,
-                                    count: chunk.count || 0
-                                  }];
-                                });
-                                if (Array.isArray(chunk.streams) && chunk.streams.length > 0) {
-                                  setAvailableStreams((prev) => {
-                                    const map = new Map();
-                                    for (const s of prev) {
-                                      const key = s.url || s.externalUrl;
-                                      if (key) map.set(key, s);
-                                    }
-                                    for (const s of chunk.streams) {
-                                      const key = s.url || s.externalUrl;
-                                      if (key && !map.has(key)) map.set(key, s);
-                                    }
-                                    return Array.from(map.values());
-                                  });
-                                }
-                              },
-                              onDone: (data) => {
-                                setStreamsLoading(false);
-                                if (Array.isArray(data?.streams)) {
-                                  setAvailableStreams((prev) => {
-                                    const map = new Map();
-                                    for (const s of prev) {
-                                      const key = s.url || s.externalUrl;
-                                      if (key) map.set(key, s);
-                                    }
-                                    for (const s of data.streams) {
-                                      const key = s.url || s.externalUrl;
-                                      if (key && !map.has(key)) map.set(key, s);
-                                    }
-                                    return Array.from(map.values());
-                                  });
-                                }
-                              },
-                              onError: () => {
-                                setStreamsLoading(false);
-                              }
-                            });
-                            // cleanup will be handled by effect, but fire and forget
-                          } catch {}
                         }}
                         className="group flex items-start gap-2.5 rounded-xl bg-white/[0.04] hover:bg-blue-600/20 border border-white/10 hover:border-blue-400/50 p-2 text-left transition-all"
                       >
