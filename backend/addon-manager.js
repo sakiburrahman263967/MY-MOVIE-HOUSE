@@ -1792,7 +1792,7 @@ export class AddonManager {
           });
 
           const latency = Date.now() - startTime;
-          const parsed = (csStreams || []).map((s) => parseStreamDetails(s, s.addonName || 'CloudStream', latency));
+          const parsed = (csStreams || []).map((s) => ({ ...parseStreamDetails(s, s.addonName || 'CloudStream Hub', latency), addonId: 'cloudstream-hub', addonName: 'CloudStream Hub' }));
           allAccumulatedStreams.push(...parsed);
           onChunk({ addonId: 'cloudstream-hub', addonName: 'CloudStream Hub', status: 'ok', latency, count: parsed.length, streams: parsed });
           return parsed;
@@ -1815,7 +1815,7 @@ export class AddonManager {
         const streams = await getProviderStreams({ type, id, meta, deadline: startTime + 14000 });
         const latency = Date.now() - startTime;
         const parsed = (streams || [])
-          .map((s) => parseStreamDetails(s, s.addonName || 'MovieBox Sources', latency))
+          .map((s) => ({ ...parseStreamDetails(s, s.addonName || 'MovieBox Sources', latency), addonId: 'moviebox-tui', addonName: 'MovieBox Sources' }))
           .filter(Boolean);
         allAccumulatedStreams.push(...parsed);
         chunkEmitted = true;
@@ -1837,7 +1837,7 @@ export class AddonManager {
         const streams = await getBdixFtpStreams({ type, id, meta, deadline: startTime + 8000 });
         const latency = Date.now() - startTime;
         const parsed = (streams || [])
-          .map((s) => parseStreamDetails(s, s.addonName || 'BDIX Fast FTP', latency))
+          .map((s) => ({ ...parseStreamDetails(s, s.addonName || 'BDIX Fast FTP Servers', latency), addonId: 'bdix-ftp', addonName: 'BDIX Fast FTP Servers' }))
           .filter(Boolean);
         allAccumulatedStreams.push(...parsed);
         chunkEmitted = true;

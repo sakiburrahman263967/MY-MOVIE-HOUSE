@@ -10,6 +10,36 @@ const require = createRequire(import.meta.url);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+export function isTitleMatch(candidateTitle, targetTitle, targetYear) {
+  if (!candidateTitle || !targetTitle) return false;
+  const candNorm = String(candidateTitle).toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+  const targNorm = String(targetTitle).toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+
+  if (candNorm === targNorm) return true;
+
+  // Candidate must start with target title (e.g. "Obsession 2026", "Obsession Dual Audio")
+  // Rejects prefixes like "A Deadly Obsession", "Secret Obsession", "Unwritten Obsession", "Raftaar - An Obsession"
+  if (!candNorm.startsWith(targNorm)) {
+    return false;
+  }
+
+  // Ensure word boundary: "Obsession" shouldn't match "Obsessionist"
+  const charAfter = candNorm.slice(targNorm.length, targNorm.length + 1);
+  if (charAfter && charAfter !== ' ') return false;
+
+  // Year check if candidate specifies a year and target year is provided
+  if (targetYear) {
+    const candYearMatch = candNorm.match(/\b(19\d\d|20\d\d)\b/);
+    if (candYearMatch) {
+      const cy = parseInt(candYearMatch[1], 10);
+      const ty = parseInt(targetYear, 10);
+      if (Math.abs(cy - ty) > 1) return false;
+    }
+  }
+
+  return true;
+}
+
 let dhakaDb = null;
 function getDhakaDb() {
   if (dhakaDb) return dhakaDb;
@@ -39,7 +69,7 @@ function parseEpisodeNum(str) {
   return m ? parseInt(m[1], 10) : 1;
 }
 
-// 4. Search DhakaFlix BDIX (172.16.50.7, 172.16.50.12, 172.16.50.14)
+// 1. Search DhakaFlix BDIX (172.16.50.4, 172.16.50.7, 172.16.50.14)
 export async function searchDhakaFlix(title, year, isSeries = false, season = 1, episode = 1) {
   try {
     const db = getDhakaDb();
@@ -47,15 +77,9 @@ export async function searchDhakaFlix(title, year, isSeries = false, season = 1,
     if (!list || list.length === 0) return [];
 
     const normQuery = normalizeDhakaTitle(title);
-    const qWords = normQuery.split(' ').filter(w => w.length >= 2);
-    if (qWords.length === 0) return [];
+    if (!normQuery) return [];
 
-    const mainWords = qWords.slice(0, 3);
-    const candidates = list.filter(item => {
-      const itemNorm = normalizeDhakaTitle(item.n);
-      return mainWords.every(w => itemNorm.includes(w));
-    });
-
+    const candidates = list.filter(item => isTitleMatch(item.n, title, year));
     if (candidates.length === 0) return [];
     const top = candidates[0];
 
@@ -72,7 +96,7 @@ export async function searchDhakaFlix(title, year, isSeries = false, season = 1,
           title: `${f.n || top.n} (${f.z || 'BDIX'})`,
           quality,
           size: f.z || 'BDIX Gigabit',
-          addonName: 'BDIX Fast FTP',
+          addonName: 'BDIX Fast FTP Servers',
           serverName: 'DhakaFlix BDIX Gigabit',
           behaviorHints: { notWebReady: false }
         };
@@ -105,7 +129,7 @@ export async function searchDhakaFlix(title, year, isSeries = false, season = 1,
             title: `${epFile.name} (${epFile.size || 'BDIX Gigabit'})`,
             quality,
             size: epFile.size || 'BDIX Gigabit',
-            addonName: 'BDIX Fast FTP',
+            addonName: 'BDIX Fast FTP Servers',
             serverName: 'DhakaFlix BDIX Gigabit',
             behaviorHints: { notWebReady: false }
           }];
@@ -143,44 +167,22 @@ async function getIbcclAuth() {
   });
 }
 
-/**
- * Generate intelligent query variants:
- * e.g. "Kama Sutra: A Tale of Love" ->
- * ["Kama Sutra: A Tale of Love", "Kama Sutra", "Kama.Sutra", "Kama"]
- */
 export function generateSearchQueries(title) {
   if (!title || typeof title !== 'string') return [];
   const raw = title.trim();
   const set = new Set();
   set.add(raw);
 
-  // Strip anything after colon, dash or en-dash: "Movie: Subtitle" -> "Movie"
   const colonPart = raw.split(/[:\-\–\—]/)[0].trim();
   if (colonPart && colonPart.length >= 2) set.add(colonPart);
 
-  // Clean special characters
   const cleanChars = raw.replace(/[^a-zA-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
   if (cleanChars && cleanChars.length >= 2) set.add(cleanChars);
-
-  const cleanColon = colonPart.replace(/[^a-zA-Z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
-  if (cleanColon && cleanColon.length >= 2) set.add(cleanColon);
-
-  // Dotted variations (FTP filenames commonly use dots like "Kama.Sutra")
-  if (colonPart) set.add(colonPart.replace(/\s+/g, '.'));
-  if (cleanColon) set.add(cleanColon.replace(/\s+/g, '.'));
-  if (raw) set.add(raw.replace(/\s+/g, '.'));
-
-  // First 2 words if longer
-  const words = cleanColon.split(' ').filter(Boolean);
-  if (words.length >= 2) {
-    set.add(words.slice(0, 2).join(' '));
-    set.add(words.slice(0, 2).join('.'));
-  }
 
   return Array.from(set).filter(q => q && q.length >= 2);
 }
 
-// 1. Search IBCCL BDIX (103.203.93.2 & 103.203.93.4 / 103.203.93.3 / 103.203.93.18 / 103.203.93.19)
+// 2. Search IBCCL BDIX (103.203.93.2 & 103.203.93.4 / 103.203.93.3 / 103.203.93.18 / 103.203.93.19)
 export async function searchIbcclFtp(title, year) {
   try {
     const auth = await getIbcclAuth();
@@ -228,6 +230,11 @@ export async function searchIbcclFtp(title, year) {
 
       for (const item of items) {
         if (!item || !item.drive_host || !item.video_url) continue;
+
+        // Verify title match: reject completely different movies
+        const folderOrTitle = item.video_folder_name || item.video_url || '';
+        if (!isTitleMatch(folderOrTitle, title, year)) continue;
+
         const cat = item.category_name ? encodeURIComponent(item.category_name) : '';
         const sub = item.sub_category_title ? encodeURIComponent(item.sub_category_title) : '';
         const folder = item.video_folder_name ? encodeURIComponent(item.video_folder_name) : '';
@@ -249,7 +256,7 @@ export async function searchIbcclFtp(title, year) {
           title: `${item.video_folder_name || title} (BDIX Gigabit)`,
           quality,
           size: 'BDIX Gigabit',
-          addonName: 'BDIX Fast FTP',
+          addonName: 'BDIX Fast FTP Servers',
           serverName: `IBCCL FTP (${item.drive || 'Fast'})`,
           behaviorHints: { notWebReady: false }
         });
@@ -264,8 +271,8 @@ export async function searchIbcclFtp(title, year) {
   }
 }
 
-// 2. Search Ghuri / Gori BDIX (103.96.104.6)
-export async function searchGhuriFtp(title, imdbId) {
+// 3. Search Ghuri / Gori BDIX (103.96.104.6)
+export async function searchGhuriFtp(title, imdbId, year) {
   try {
     const queries = generateSearchQueries(title);
     for (const q of queries) {
@@ -285,7 +292,7 @@ export async function searchGhuriFtp(title, imdbId) {
                 if (matchedImdb.length > 0) chosen = matchedImdb;
               }
 
-              const streamPromises = chosen.slice(0, 2).map((movieRel) => {
+              const streamPromises = chosen.slice(0, 3).map((movieRel) => {
                 return new Promise((resMovie) => {
                   const fullMovieUrl = movieRel.startsWith('http') ? movieRel : `http://103.96.104.6/${movieRel.replace(/^\//, '')}`;
                   const mReq = http.get(fullMovieUrl, { timeout: 3000, headers: { 'User-Agent': 'Mozilla/5.0' } }, (mRes) => {
@@ -295,6 +302,9 @@ export async function searchGhuriFtp(title, imdbId) {
                       const videoLinkMatch = mData.match(/href=["'](http:\/\/103\.96\.104\.6\/data_content\/[^"']*\.(?:mp4|mkv|avi))["']/i);
                       if (videoLinkMatch) {
                         const vUrl = videoLinkMatch[1];
+                        if (!isTitleMatch(decodeURIComponent(vUrl), title, year)) {
+                          return resMovie(null);
+                        }
                         const is1080p = /1080p/i.test(vUrl);
                         const is720p = /720p/i.test(vUrl);
                         const is4k = /2160p|4k/i.test(vUrl);
@@ -305,7 +315,7 @@ export async function searchGhuriFtp(title, imdbId) {
                           title: `${title} - Ghuri BDIX High-Speed`,
                           quality,
                           size: 'BDIX Direct',
-                          addonName: 'BDIX Fast FTP',
+                          addonName: 'BDIX Fast FTP Servers',
                           serverName: 'Ghuri FTP (103.96)',
                           behaviorHints: { notWebReady: false }
                         });
@@ -338,8 +348,8 @@ export async function searchGhuriFtp(title, imdbId) {
   }
 }
 
-// 3. Search CTGMovies BDIX (ctgmovies.com)
-export async function searchCtgMovies(title, isSeries = false, season = 1, episode = 1) {
+// 4. Search CTGMovies BDIX (ctgmovies.com)
+export async function searchCtgMovies(title, isSeries = false, season = 1, episode = 1, year = null) {
   try {
     const queries = generateSearchQueries(title);
     for (const q of queries) {
@@ -354,7 +364,10 @@ export async function searchCtgMovies(title, isSeries = false, season = 1, episo
               const list = json.movies || json.tv_shows || json.results || [];
               if (!Array.isArray(list) || list.length === 0) return resolve([]);
               
-              const topItems = list.slice(0, 2);
+              const filteredList = list.filter(item => isTitleMatch(item.title || item.name, title, year));
+              if (filteredList.length === 0) return resolve([]);
+
+              const topItems = filteredList.slice(0, 2);
               const streamPromises = topItems.map(async (item) => {
                 const detailKey = item.slug || item.id;
                 const detailUrl = isSeries ? `https://ctgmovies.com/api/v1/tv/${encodeURIComponent(detailKey)}` : `https://ctgmovies.com/api/v1/movies/${encodeURIComponent(detailKey)}`;
@@ -384,7 +397,7 @@ export async function searchCtgMovies(title, isSeries = false, season = 1, episo
                             title: `${dJson.title || title} (${sizeMb})`,
                             quality,
                             size: sizeMb,
-                            addonName: 'BDIX Fast FTP',
+                            addonName: 'BDIX Fast FTP Servers',
                             serverName: `CTGMovies (${link.source_display || 'BDIX'})`,
                             subtitles: link.subtitle_tracks || [],
                             behaviorHints: { notWebReady: false }
@@ -446,7 +459,7 @@ async function getRoarZoneAuth() {
   }
 }
 
-export async function searchRoarZone(title, isSeries = false, season = 1, episode = 1) {
+export async function searchRoarZone(title, isSeries = false, season = 1, episode = 1, year = null) {
   try {
     const auth = await getRoarZoneAuth();
     if (!auth) return [];
@@ -467,6 +480,8 @@ export async function searchRoarZone(title, isSeries = false, season = 1, episod
 
       for (const item of items) {
         if (!item || !item.Id) continue;
+        if (!isTitleMatch(item.Name, title, year)) continue;
+
         const streamUrl = `https://play.roarzone.net/emby/Videos/${item.Id}/stream.mkv?Static=true&api_key=${auth.token}`;
         if (seenUrls.has(streamUrl)) continue;
         seenUrls.add(streamUrl);
@@ -482,7 +497,7 @@ export async function searchRoarZone(title, isSeries = false, season = 1, episod
           title: `${item.Name} (RoarZone BDIX Gigabit)`,
           quality,
           size: 'BDIX Gigabit',
-          addonName: 'BDIX Fast FTP',
+          addonName: 'BDIX Fast FTP Servers',
           serverName: 'RoarZone Media Server',
           behaviorHints: { notWebReady: false }
         });
@@ -496,7 +511,7 @@ export async function searchRoarZone(title, isSeries = false, season = 1, episod
 }
 
 // 6. Search Circle / Sam FTP (http://10.10.10.3/)
-export async function searchCircleSam(title, isSeries = false, season = 1, episode = 1) {
+export async function searchCircleSam(title, isSeries = false, season = 1, episode = 1, year = null) {
   try {
     const queries = generateSearchQueries(title);
     const results = [];
@@ -510,8 +525,10 @@ export async function searchCircleSam(title, isSeries = false, season = 1, episo
       const items = await res.json();
       if (!Array.isArray(items) || items.length === 0) continue;
 
-      for (const item of items.slice(0, 4)) {
+      for (const item of items.slice(0, 6)) {
         if (!item.id) continue;
+        if (!isTitleMatch(item.title, title, year)) continue;
+
         const typeParam = isSeries ? 'tv' : 'movies';
         const streamUrl = `http://10.10.10.3/api/stream/video/stream?type=${typeParam}&id=${item.id}`;
         if (seenUrls.has(streamUrl)) continue;
@@ -528,7 +545,7 @@ export async function searchCircleSam(title, isSeries = false, season = 1, episo
           title: `${item.title} (Circle/Sam FTP)`,
           quality,
           size: 'BDIX Direct',
-          addonName: 'BDIX Fast FTP',
+          addonName: 'BDIX Fast FTP Servers',
           serverName: 'Circle/Sam FTP (10.10.10.3)',
           behaviorHints: { notWebReady: false }
         });
@@ -542,22 +559,35 @@ export async function searchCircleSam(title, isSeries = false, season = 1, episo
 }
 
 // 7. Search Cloud Media (http://172.19.178.179/)
-export async function searchCloudMedia(title) {
+export async function searchCloudMedia(title, year = null) {
   try {
     const queries = generateSearchQueries(title);
     const results = [];
     const seenUrls = new Set();
 
     for (const q of queries.slice(0, 2)) {
-      const searchUrl = `http://172.19.178.179/search.php?search=${encodeURIComponent(q)}`;
+      // Correct search parameter on Cloud Media is ?q=
+      const searchUrl = `http://172.19.178.179/search.php?q=${encodeURIComponent(q)}`;
       const res = await fetch(searchUrl, { signal: AbortSignal.timeout(4000) });
       if (!res.ok) continue;
       const html = await res.text();
-      const movieMatches = [...html.matchAll(/movie\.php\?id=(\d+)/gi)];
-      const movieIds = [...new Set(movieMatches.map(m => m[1]))].slice(0, 2);
 
-      for (const mId of movieIds) {
-        const dRes = await fetch(`http://172.19.178.179/movie.php?id=${mId}`, { signal: AbortSignal.timeout(3500) });
+      // Extract each <a href="movie.php?id=...">Title</a>
+      const aMatches = [...html.matchAll(/<a[^>]*href="([^"]*movie\.php\?id=\d+)"[^>]*>([\s\S]*?)<\/a>/gi)];
+      const candidateList = [];
+      for (const m of aMatches) {
+        const link = m[1];
+        const linkTitle = m[2].replace(/<[^>]*>/g, '').replace(/&#039;/g, "'").trim();
+        if (linkTitle && isTitleMatch(linkTitle, title, year)) {
+          const idMatch = link.match(/id=(\d+)/);
+          if (idMatch && !candidateList.some(c => c.id === idMatch[1])) {
+            candidateList.push({ id: idMatch[1], title: linkTitle });
+          }
+        }
+      }
+
+      for (const cand of candidateList.slice(0, 2)) {
+        const dRes = await fetch(`http://172.19.178.179/movie.php?id=${cand.id}`, { signal: AbortSignal.timeout(3500) });
         if (!dRes.ok) continue;
         const dHtml = await dRes.text();
         const vMatches = [...dHtml.matchAll(/(?:src|href)=["'](http:\/\/172\.19\.[^"']*\.(?:mp4|mkv|avi|webm)[^"']*)["']/gi)];
@@ -573,10 +603,10 @@ export async function searchCloudMedia(title) {
           results.push({
             url: streamUrl,
             name: `[BDIX FTP] Cloud Media - ${quality}`,
-            title: `${title} (Cloud Media BDIX)`,
+            title: `${cand.title} (${quality})`,
             quality,
             size: 'BDIX Direct',
-            addonName: 'BDIX Fast FTP',
+            addonName: 'BDIX Fast FTP Servers',
             serverName: 'Cloud Media (172.19.178.179)',
             behaviorHints: { notWebReady: false }
           });
@@ -610,12 +640,12 @@ export async function getBdixFtpStreams({ type, id, meta, deadline }) {
 
   const [ibcclRes, ghuriRes, ctgRes, dhakaRes, roarRes, circleRes, cloudRes] = await Promise.allSettled([
     searchIbcclFtp(cleanTitle, year),
-    searchGhuriFtp(cleanTitle, imdbId),
-    searchCtgMovies(cleanTitle, isSeries, season, episode),
+    searchGhuriFtp(cleanTitle, imdbId, year),
+    searchCtgMovies(cleanTitle, isSeries, season, episode, year),
     searchDhakaFlix(cleanTitle, year, isSeries, season, episode),
-    searchRoarZone(cleanTitle, isSeries, season, episode),
-    searchCircleSam(cleanTitle, isSeries, season, episode),
-    searchCloudMedia(cleanTitle)
+    searchRoarZone(cleanTitle, isSeries, season, episode, year),
+    searchCircleSam(cleanTitle, isSeries, season, episode, year),
+    searchCloudMedia(cleanTitle, year)
   ]);
 
   const all = [

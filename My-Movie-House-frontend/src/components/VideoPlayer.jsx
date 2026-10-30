@@ -627,17 +627,23 @@ export default function VideoPlayer({
         }
       });
     } else {
-      // Only transcode if stream explicitly declares HEVC and browser lacks native decoding
-      const isExplicitHevc = (
+      // Auto-convert MKV / HEVC to H.264 MP4 if browser lacks native decoding
+      const isHevcOrMkv = (
         stream?.language === 'hevc' ||
         stream?.quality?.toLowerCase()?.includes('hevc') ||
-        stream?.title?.toLowerCase()?.includes('x265')
+        stream?.title?.toLowerCase()?.includes('hevc') ||
+        stream?.title?.toLowerCase()?.includes('x265') ||
+        stream?.title?.toLowerCase()?.includes('h265') ||
+        stream?.name?.toLowerCase()?.includes('hevc') ||
+        stream?.name?.toLowerCase()?.includes('x265') ||
+        stream?.url?.toLowerCase()?.includes('hevc') ||
+        stream?.url?.toLowerCase()?.includes('.mkv')
       );
-      if (isExplicitHevc && !canBrowserPlayHevc() && (!directUrl || !directUrl.includes('/api/transcode/stream'))) {
+      if (isHevcOrMkv && !canBrowserPlayHevc() && (!directUrl || !directUrl.includes('/api/transcode/stream'))) {
         setIsTranscoding(true);
         const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(streamUrl)}&audioTrack=0&start=0`;
         setDirectUrl(transcodeUrl);
-        showOsd('⚡ Transcoding HEVC video to H.264 for web playback...');
+        showOsd('⚡ Converting MKV/HEVC to H.264 for web playback...');
         return undefined;
       }
 
@@ -666,11 +672,11 @@ export default function VideoPlayer({
                 setAudioTracks(mapped);
               }
               // Only auto-switch to transcode if video is strictly confirmed as HEVC and browser cannot decode it
-              if (data.isHevc === true && !canBrowserPlayHevc() && (!directUrl || !directUrl.includes('/api/transcode/stream'))) {
+              if ((data.isHevc === true || data.isMkv === true) && !canBrowserPlayHevc() && (!directUrl || !directUrl.includes('/api/transcode/stream'))) {
                 setIsTranscoding(true);
                 const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(streamUrl)}&audioTrack=0&start=0`;
                 setDirectUrl(transcodeUrl);
-                showOsd('⚡ Transcoding HEVC video to H.264 for web playback...');
+                showOsd('⚡ Converting MKV/HEVC to H.264 for web playback...');
               }
             }
           })
@@ -1818,6 +1824,11 @@ export default function VideoPlayer({
             autoPlay
             crossOrigin={directUrl && (directUrl.includes('/api/proxy/stream') || directUrl.includes('/api/transcode/stream')) ? 'anonymous' : undefined}
             onTimeUpdate={handleTimeUpdate}
+            onSeeked={() => {
+              if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+                audioCtxRef.current.resume().catch(() => {});
+              }
+            }}
             onWaiting={() => setIsBuffering(true)}
             onCanPlay={() => setIsBuffering(false)}
             onPlaying={() => {

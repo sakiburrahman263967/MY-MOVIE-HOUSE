@@ -130,7 +130,12 @@ export default function Detail() {
               const key = s.url || s.externalUrl;
               if (key) map.set(key, s);
             }
-            for (const s of chunk.streams) {
+            for (const st of chunk.streams) {
+              const s = {
+                ...st,
+                addonId: st.addonId || chunk.addonId,
+                addonName: st.addonName || chunk.addonName
+              };
               const key = s.url || s.externalUrl;
               if (key && !map.has(key)) map.set(key, s);
             }
@@ -913,20 +918,24 @@ export default function Detail() {
             <div className="flex-1 overflow-y-auto py-4 pr-1 space-y-2">
               {(() => {
                 const modalStreams = availableStreams.filter((st) => {
-                  if (st.addonId && st.addonId === selectedAddonForModal.addonId) return true;
-                  if (st.addonName && st.addonName.toLowerCase() === selectedAddonForModal.addonName.toLowerCase()) return true;
-                  if (selectedAddonForModal.addonId === 'bdix-ftp' && (
-                    st.addonName?.toLowerCase().includes('bdix') ||
-                    st.serverName?.toLowerCase().includes('bdix') ||
-                    st.serverName?.toLowerCase().includes('ftp') ||
-                    st.serverName?.toLowerCase().includes('dhaka') ||
-                    st.serverName?.toLowerCase().includes('ctg') ||
-                    st.serverName?.toLowerCase().includes('ghuri') ||
-                    st.serverName?.toLowerCase().includes('ibccl') ||
-                    st.serverName?.toLowerCase().includes('circle') ||
-                    st.serverName?.toLowerCase().includes('roarzone') ||
-                    st.serverName?.toLowerCase().includes('cloud media')
-                  )) return true;
+                  const targetId = (selectedAddonForModal.addonId || '').toLowerCase();
+                  const targetName = (selectedAddonForModal.addonName || '').toLowerCase();
+                  const streamAddonId = (st.addonId || '').toLowerCase();
+                  const streamAddonName = (st.addonName || '').toLowerCase();
+                  const streamServer = (st.serverName || '').toLowerCase();
+
+                  if (streamAddonId && (streamAddonId === targetId || streamAddonId.includes(targetId) || targetId.includes(streamAddonId))) return true;
+                  if (streamAddonName && targetName && (streamAddonName.includes(targetName) || targetName.includes(streamAddonName))) return true;
+
+                  if (targetId.includes('moviebox') || targetName.includes('moviebox')) {
+                    return streamAddonName.includes('moviebox') || streamServer.includes('moviebox') || streamAddonId.includes('moviebox') || streamAddonName.includes('dramachi') || streamServer.includes('dramachi');
+                  }
+                  if (targetId.includes('bdix') || targetName.includes('bdix') || targetName.includes('ftp')) {
+                    return streamAddonId.includes('bdix') || streamAddonName.includes('bdix') || streamServer.includes('bdix') || streamServer.includes('ftp') || streamServer.includes('dhaka') || streamServer.includes('ctg') || streamServer.includes('ghuri') || streamServer.includes('ibccl') || streamServer.includes('circle') || streamServer.includes('roarzone') || streamServer.includes('cloud media') || streamServer.includes('discovery');
+                  }
+                  if (targetId.includes('cloudstream') || targetName.includes('cloudstream')) {
+                    return streamAddonId.includes('cloudstream') || streamAddonName.includes('cloudstream');
+                  }
                   return false;
                 });
 
