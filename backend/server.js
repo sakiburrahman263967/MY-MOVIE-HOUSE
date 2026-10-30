@@ -1203,17 +1203,7 @@ const transcodeHlsHandler = async (req, res) => {
   let customHeaders = { ...(req.body?.headers || {}) };
   let tokenMeta = null;
 
-  // Resolve opaque token (MovieBox/Dramachi)
-  if (isStreamToken(rawUrl)) {
-    const resolved = resolveStreamToken(rawUrl);
-    if (resolved) {
-      rawUrl = resolved.url;
-      customHeaders = { ...customHeaders, ...(resolved.headers || {}) };
-      tokenMeta = resolved.meta || null;
-    }
-  }
-
-  // If URL wraps an inner proxy url
+  // 1. If URL wraps an inner proxy url (/api/proxy/stream or /proxy), unpack the inner target
   if (rawUrl.includes('/api/proxy/stream') || rawUrl.includes('/proxy')) {
     try {
       const full = new URL(rawUrl, 'http://localhost');
@@ -1222,11 +1212,21 @@ const transcodeHlsHandler = async (req, res) => {
       const innerHeaders = full.searchParams.get('headers');
       if (innerHeaders) {
         try {
-          const parsed = JSON.parse(innerHeaders);
+          const parsed = typeof innerHeaders === 'string' ? JSON.parse(innerHeaders) : innerHeaders;
           customHeaders = { ...customHeaders, ...parsed };
         } catch {}
       }
     } catch {}
+  }
+
+  // 2. Resolve opaque token (MovieBox/Dramachi UUID)
+  if (isStreamToken(rawUrl)) {
+    const resolved = resolveStreamToken(rawUrl);
+    if (resolved) {
+      rawUrl = resolved.url;
+      customHeaders = { ...customHeaders, ...(resolved.headers || {}) };
+      tokenMeta = resolved.meta || null;
+    }
   }
 
   if (tokenMeta?.subjectId && tokenMeta?.resourceId) {

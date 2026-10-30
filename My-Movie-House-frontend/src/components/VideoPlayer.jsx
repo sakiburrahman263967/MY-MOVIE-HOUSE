@@ -73,16 +73,17 @@ export function isEmbedUrl(url) {
 // Detect whether the current browser environment can natively decode HEVC / H.265 video
 export function canBrowserPlayHevc() {
   if (typeof document === 'undefined') return false;
+  // Windows Chromium/Chrome does not bundle a software HEVC decoder and produces black screens
+  // for 99% of Windows users without the paid Microsoft Store extension.
+  if (typeof navigator !== 'undefined' && /Windows/i.test(navigator.userAgent || '')) {
+    return false;
+  }
   const v = document.createElement('video');
-  const canPlay = v.canPlayType('video/mp4; codecs="hvc1.1.6.L93.B0"') ||
-                  v.canPlayType('video/mp4; codecs="hev1.1.6.L93.B0"') ||
-                  v.canPlayType('video/mp4; codecs="hev1"') ||
-                  v.canPlayType('video/mp4; codecs="hvc1"');
+  const canPlay = v.canPlayType('video/mp4; codecs="hvc1.1.6.L93.B0"');
   const mse = typeof window !== 'undefined' && window.MediaSource && (
-    window.MediaSource.isTypeSupported('video/mp4; codecs="hvc1.1.6.L93.B0"') ||
-    window.MediaSource.isTypeSupported('video/mp4; codecs="hev1.1.6.L93.B0"')
+    window.MediaSource.isTypeSupported('video/mp4; codecs="hvc1.1.6.L93.B0"')
   );
-  return canPlay === 'probably' || (canPlay === 'maybe' && !!mse);
+  return canPlay === 'probably' && !!mse;
 }
 
 // Simple client-side SRT parser
@@ -662,13 +663,17 @@ export default function VideoPlayer({
       });
     } else {
       // Auto-convert MKV / HEVC to H.264 HLS if browser lacks native decoding
-      const urlToCheck = decodeURIComponent(streamUrl || '') + ' ' + (stream?.externalUrl || '') + ' ' + (stream?.name || '') + ' ' + (stream?.title || '') + ' ' + (stream?.quality || '');
+      const codecString = `${stream?.language || ''} ${stream?.codec || ''} ${stream?.codecName || ''} ${stream?.quality || ''} ${stream?.name || ''} ${stream?.title || ''} ${stream?.serverName || ''} ${stream?.externalUrl || ''} ${decodeURIComponent(streamUrl || '')}`.toLowerCase();
       const isHevcOrMkv = (
-        /\b(hevc|h265|x265|10bit|hdr)\b/i.test(urlToCheck) ||
-        /\.mkv(\?|$)/i.test(urlToCheck) ||
-        urlToCheck.includes('.mkv')
+        codecString.includes('hevc') ||
+        codecString.includes('h265') ||
+        codecString.includes('x265') ||
+        codecString.includes('10bit') ||
+        codecString.includes('hdr') ||
+        codecString.includes('.mkv') ||
+        /\.mkv(\?|$)/i.test(codecString)
       );
-      if (isHevcOrMkv && (!canBrowserPlayHevc() || /\.mkv(\?|$)/i.test(urlToCheck) || urlToCheck.includes('.mkv')) && (!directUrl || !directUrl.includes('/transcode/hls/'))) {
+      if (isHevcOrMkv && (!canBrowserPlayHevc() || codecString.includes('.mkv')) && (!directUrl || !directUrl.includes('/transcode/hls/'))) {
         requestHlsTranscode(streamUrl, 0);
         return undefined;
       }

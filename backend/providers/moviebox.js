@@ -1058,6 +1058,33 @@ export async function getMovieBoxStreams({ subjectId, season = 0, episode = 0, t
   try {
     const details = await movieBoxGetDetails(context.subjectId, opts);
     const detectorCandidates = detectorToCandidates(details, context);
+
+    // Fetch all audio dubs (Hindi dub, Tamil dub, Telugu dub, etc.) available in MovieBox!
+    if (Array.isArray(details?.dubs) && details.dubs.length > 0) {
+      const otherDubs = details.dubs.filter((dub) => dub.subjectId && String(dub.subjectId) !== String(context.subjectId));
+      const dubPromises = otherDubs.slice(0, 8).map(async (dub) => {
+        try {
+          const dubDetails = await movieBoxGetDetails(dub.subjectId, opts);
+          const dubCandidates = detectorToCandidates(dubDetails, { ...context, subjectId: dub.subjectId });
+          const langLabel = dub.lanName || dub.lanCode || 'Dub';
+          return dubCandidates.map((c) => ({
+            ...c,
+            name: `${c.name} [${langLabel}]`,
+            title: `${c.name} [${langLabel}]`,
+            audioLang: langLabel,
+          }));
+        } catch {
+          return [];
+        }
+      });
+      const dubSettled = await Promise.allSettled(dubPromises);
+      for (const res of dubSettled) {
+        if (res.status === 'fulfilled' && Array.isArray(res.value)) {
+          detectorCandidates.push(...res.value);
+        }
+      }
+    }
+
     if (detectorCandidates.length > 0) return finalizeCandidates(detectorCandidates);
   } catch {}
 
@@ -1103,15 +1130,17 @@ function finalizeCandidates(candidates) {
   };
   merged.sort((a, b) => qualityRank(b.quality) - qualityRank(a.quality));
 
-  return merged.slice(0, 30).map((entry) => ({
+  return merged.slice(0, 40).map((entry) => ({
     url: entry.url,
     name: entry.name,
-    title: entry.name,
+    title: entry.title || entry.name,
     quality: entry.quality || undefined,
     size: entry.size || undefined,
-    language: entry.codec || undefined,
+    language: entry.audioLang ? `${entry.audioLang} • ${entry.codec || 'HEVC'}` : (entry.codec || 'HEVC'),
+    codec: entry.codec || 'hevc',
+    codecName: entry.codec || 'hevc',
     addonName: 'MovieBox',
-    serverName: 'MovieBox',
+    serverName: entry.audioLang ? `MovieBox (${entry.audioLang})` : 'MovieBox',
     behaviorHints: entry.notWebReady ? { notWebReady: true } : undefined,
     _resourceId: entry.resourceId || undefined,
   }));

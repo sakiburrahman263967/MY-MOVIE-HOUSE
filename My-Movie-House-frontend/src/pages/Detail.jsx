@@ -137,7 +137,10 @@ export default function Detail() {
                 addonName: st.addonName || chunk.addonName
               };
               const key = s.url || s.externalUrl;
-              if (key && !map.has(key)) map.set(key, s);
+              if (key) {
+                const existing = map.get(key) || {};
+                map.set(key, { ...existing, ...s });
+              }
             }
             const combined = Array.from(map.values());
             // Sort by playable priority so MovieBox / Direct streams are always visible first
@@ -165,7 +168,10 @@ export default function Detail() {
             }
             for (const s of data.streams) {
               const key = s.url || s.externalUrl;
-              if (key && !map.has(key)) map.set(key, s);
+              if (key) {
+                const existing = map.get(key) || {};
+                map.set(key, { ...existing, ...s });
+              }
             }
             const combined = Array.from(map.values());
             combined.sort((a, b) => {
@@ -923,39 +929,40 @@ export default function Detail() {
                   const streamAddonId = (st.addonId || '').toLowerCase();
                   const streamAddonName = (st.addonName || '').toLowerCase();
                   const streamServer = (st.serverName || '').toLowerCase();
+                  const streamFullText = `${streamAddonId} ${streamAddonName} ${streamServer} ${st.name || ''} ${st.title || ''} ${st.description || ''}`.toLowerCase();
 
                   if (streamAddonId && (streamAddonId === targetId || streamAddonId.includes(targetId) || targetId.includes(streamAddonId))) return true;
                   if (streamAddonName && targetName && (streamAddonName.includes(targetName) || targetName.includes(streamAddonName))) return true;
 
                   if (targetId.includes('moviebox') || targetName.includes('moviebox')) {
-                    return streamAddonName.includes('moviebox') || streamServer.includes('moviebox') || streamAddonId.includes('moviebox') || streamAddonName.includes('dramachi') || streamServer.includes('dramachi');
+                    return streamFullText.includes('moviebox') || streamFullText.includes('dramachi');
                   }
                   if (targetId.includes('bdix') || targetName.includes('bdix') || targetName.includes('ftp')) {
-                    return streamAddonId.includes('bdix') || streamAddonName.includes('bdix') || streamServer.includes('bdix') || streamServer.includes('ftp') || streamServer.includes('dhaka') || streamServer.includes('ctg') || streamServer.includes('ghuri') || streamServer.includes('ibccl') || streamServer.includes('circle') || streamServer.includes('roarzone') || streamServer.includes('cloud media') || streamServer.includes('discovery');
+                    return streamFullText.includes('bdix') || streamFullText.includes('ftp') || streamFullText.includes('dhaka') || streamFullText.includes('ctg') || streamFullText.includes('ghuri') || streamFullText.includes('ibccl') || streamFullText.includes('circle') || streamFullText.includes('roarzone') || streamFullText.includes('cloud media') || streamFullText.includes('discovery') || streamFullText.includes('tenzing');
                   }
                   if (targetId.includes('cloudstream') || targetName.includes('cloudstream')) {
                     return streamAddonId.includes('cloudstream') || streamAddonName.includes('cloudstream');
                   }
                   if (targetId.includes('hdhub') || targetName.includes('hdhub')) {
-                    return streamAddonId.includes('hdhub') || streamAddonName.includes('hdhub') || streamServer.includes('hdhub');
+                    return streamFullText.includes('hdhub');
                   }
                   if (targetId.includes('cinefreak') || targetName.includes('cinefreak')) {
-                    return streamAddonId.includes('cinefreak') || streamAddonName.includes('cinefreak') || streamServer.includes('cinefreak');
+                    return streamFullText.includes('cinefreak');
                   }
                   if (targetId.includes('flix') || targetName.includes('flix')) {
-                    return streamAddonId.includes('flix') || streamAddonName.includes('flix') || streamServer.includes('flix');
+                    return streamFullText.includes('flix');
                   }
                   if (targetId.includes('pengu') || targetName.includes('pengu')) {
-                    return streamAddonId.includes('pengu') || streamAddonName.includes('pengu') || streamServer.includes('pengu');
+                    return streamFullText.includes('pengu');
                   }
                   if (targetId.includes('mediafusion') || targetName.includes('mediafusion')) {
-                    return streamAddonId.includes('mediafusion') || streamAddonName.includes('mediafusion') || streamServer.includes('mediafusion');
+                    return streamFullText.includes('mediafusion');
                   }
                   if (targetId.includes('sootio') || targetName.includes('sootio')) {
-                    return streamAddonId.includes('sootio') || streamAddonName.includes('sootio') || streamServer.includes('sootio');
+                    return streamFullText.includes('sootio');
                   }
                   if (targetId.includes('webstreamr') || targetName.includes('webstreamr')) {
-                    return streamAddonId.includes('webstreamr') || streamAddonName.includes('webstreamr') || streamServer.includes('webstreamr');
+                    return streamFullText.includes('webstreamr');
                   }
                   return false;
                 });
@@ -964,8 +971,15 @@ export default function Detail() {
                   return (
                     <div className="py-12 text-center text-white/60">
                       <div className="text-3xl mb-2">📡</div>
-                      <p className="text-sm font-semibold">No direct streams returned from this provider for this title.</p>
-                      <p className="text-xs text-white/40 mt-1">Try clicking on another active provider pill above.</p>
+                      <p className="text-sm font-semibold">No direct streams found under this specific filter.</p>
+                      <p className="text-xs text-white/40 mt-1">Try clicking on another active provider pill above or view all available sources.</p>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedAddonForModal(null)}
+                        className="mt-4 px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-xs font-bold hover:bg-emerald-500/30 transition shadow"
+                      >
+                        Browse All {availableStreams.length} Sources
+                      </button>
                     </div>
                   );
                 }
