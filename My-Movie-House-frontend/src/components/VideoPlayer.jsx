@@ -523,7 +523,7 @@ export default function VideoPlayer({
 
     // Apply current volume/mute through refs (state changes are handled by the volume effect below)
     video.muted = isMutedRef.current;
-    video.volume = isMutedRef.current ? 0 : volumeRef.current;
+    video.volume = isMutedRef.current ? 0 : Math.max(0, Math.min(1.0, volumeRef.current));
 
     if (stallTimerRef.current) {
       clearTimeout(stallTimerRef.current);
@@ -742,15 +742,41 @@ export default function VideoPlayer({
     };
   }, [effectiveUrl, isEmbed, handleVideoError, showOsd]);
 
+  // Check whether the active stream has valid CORS (served via our proxy or local origin)
+  // If a stream is cross-origin without CORS, Web Audio API MUST NOT be attached,
+  // because browsers intentionally silence cross-origin MediaElementAudioSourceNode!
+  const isStreamCorsSafe = useCallback(() => {
+    const url = directUrl || stream?.url || effectiveUrl || '';
+    if (!url) return false;
+    if (url.startsWith('/') || url.includes('/api/proxy') || url.includes('/proxy') || url.includes('/transcode')) {
+      return true;
+    }
+    try {
+      const parsed = new URL(url, window.location.origin);
+      return parsed.origin === window.location.origin;
+    } catch {
+      return false;
+    }
+  }, [directUrl, stream?.url, effectiveUrl]);
+
   // Web Audio Context & Node Graph initialization (for >100% Boost & Audio Modes)
   const initWebAudio = () => {
     const video = videoRef.current;
-    if (!video || audioCtxRef.current) return;
+    if (!video || audioSourceNodeRef.current) return;
+
+    // Safety guard: if stream is cross-origin without proxy or CORS, do NOT attach createMediaElementSource
+    // as it will permanently silence the audio output in Chrome/Edge!
+    if (!isStreamCorsSafe()) {
+      return;
+    }
+
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
       if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      audioCtxRef.current = ctx;
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        audioCtxRef.current = new AudioCtx();
+      }
+      const ctx = audioCtxRef.current;
 
       const source = ctx.createMediaElementSource(video);
       audioSourceNodeRef.current = source;
@@ -817,7 +843,7 @@ export default function VideoPlayer({
     const video = videoRef.current;
     if (!video) return;
 
-    if (volume > 1.0) {
+    if (volume > 1.0 && isStreamCorsSafe()) {
       initWebAudio();
     }
 
@@ -825,15 +851,16 @@ export default function VideoPlayer({
       audioCtxRef.current.resume().catch(() => {});
     }
 
-    if (gainNodeRef.current) {
+    if (gainNodeRef.current && audioSourceNodeRef.current) {
       gainNodeRef.current.gain.value = isMuted ? 0 : volume;
       video.muted = isMuted;
       video.volume = 1.0;
     } else {
       video.muted = isMuted;
-      video.volume = isMuted ? 0 : Math.min(1.0, Math.max(0, volume));
+      // HTML5 video.volume must be strictly in [0, 1] range
+      video.volume = isMuted ? 0 : Math.max(0, Math.min(1.0, volume));
     }
-  }, [volume, isMuted]);
+  }, [volume, isMuted, isStreamCorsSafe]);
 
   // Synchronize Audio Mode (Normal, 8D, Hall, Bass)
   useEffect(() => {
@@ -1186,8 +1213,7 @@ export default function VideoPlayer({
         } catch {}
       }
     } else {
-      // Direct file switch via on-demand /api/transcode/stream with selected audioTrack
-      const currentPos = videoRef.current?.currentTime || 0;
+      // Direct file switch via on-demand universal HLS transcode with selected audioTrack
       const rawBase = stream?.url || directUrl || effectiveUrl;
       let baseSource = rawBase;
       if (rawBase && rawBase.includes('/api/transcode/stream')) {
@@ -1196,12 +1222,10 @@ export default function VideoPlayer({
           baseSource = u.searchParams.get('url') || rawBase;
         } catch {}
       }
-      const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(baseSource)}&audioTrack=${trackId}&start=${currentPos.toFixed(1)}`;
       setCurrentAudioTrack(trackId);
-      setIsTranscoding(true);
-      setDirectUrl(transcodeUrl);
       const tr = audioTracks.find((t) => t.id === trackId);
-      showOsd(`⚡ Audio Track: ${tr?.name || trackId}`);
+      showOsd(`⚡ Switching Audio: ${tr?.name || trackId}...`);
+      requestHlsTranscode(baseSource, trackId);
     }
     setShowAudioMenu(false);
   };
@@ -1536,7 +1560,7 @@ export default function VideoPlayer({
     if (!rect || !video || !effDuration) return;
     const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
     const target = pos * effDuration;
-    if ((isTranscoding || (directUrl && directUrl.includes('/api/transcode/stream'))) && stream?.url) {
+    if (directUrl && directUrl.includes('/api/transcode/stream') && stream?.url) {
       const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(stream.url)}&audioTrack=${currentAudioTrack || 0}&start=${Math.floor(target)}`;
       setDirectUrl(transcodeUrl);
       return;
@@ -1863,7 +1887,11 @@ export default function VideoPlayer({
             ref={videoRef}
             playsInline
             autoPlay
-            crossOrigin={directUrl && (directUrl.includes('/api/proxy/stream') || directUrl.includes('/api/transcode/stream')) ? 'anonymous' : undefined}
+            crossOrigin={
+              (effectiveUrl && (effectiveUrl.includes('/api/proxy') || effectiveUrl.includes('/proxy') || effectiveUrl.includes('/transcode') || effectiveUrl.startsWith('/')))
+                ? 'anonymous'
+                : undefined
+            }
             onTimeUpdate={handleTimeUpdate}
             onSeeked={() => {
               if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
@@ -1887,7 +1915,7 @@ export default function VideoPlayer({
                   setDuration(v.duration);
                 }
                 v.muted = isMuted;
-                v.volume = isMuted ? 0 : volume;
+                v.volume = isMuted ? 0 : Math.max(0, Math.min(1.0, volume));
                 if (v.videoWidth === 0) {
                   const checkTimer = setTimeout(() => {
                     if (videoRef.current && videoRef.current.videoWidth === 0 && !videoRef.current.paused && videoRef.current.currentTime > 2) {

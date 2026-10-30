@@ -865,5 +865,19 @@ export async function getBdixFtpStreams({ type, id, meta, deadline }) {
     ...(ctgRes.status === 'fulfilled' ? ctgRes.value : [])
   ];
 
-  return all;
+  // Wrap all BDIX FTP streams with the backend stream proxy to guarantee:
+  // 1. Full CORS headers (Access-Control-Allow-Origin: *) so Web Audio API and sound volume never get silenced
+  // 2. HTTP 206 Partial Content / Range header seeking
+  // 3. Keep externalUrl as raw direct FTP link for desktop PotPlayer/VLC
+  return all.map((st) => {
+    if (!st || !st.url) return st;
+    const directUrl = st.url;
+    const isAlreadyProxied = directUrl.includes('/api/proxy') || directUrl.includes('/proxy') || directUrl.startsWith('/api/');
+    const proxiedUrl = isAlreadyProxied ? directUrl : `/api/proxy/stream?url=${encodeURIComponent(directUrl)}`;
+    return {
+      ...st,
+      url: proxiedUrl,
+      externalUrl: st.externalUrl || directUrl
+    };
+  });
 }
