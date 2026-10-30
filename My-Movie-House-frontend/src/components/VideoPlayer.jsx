@@ -368,11 +368,25 @@ export default function VideoPlayer({
     setError('');
     showOsd('⚡ Transcoding HEVC/MKV to H.264 (HLS) for web playback...');
     try {
-      const res = await fetch(`${API_BASE}/transcode`, {
+      let res = await fetch(`${API_BASE}/api/transcode`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: srcUrl, audioTrack: track })
-      });
+      }).catch(() => null);
+
+      if (!res || !res.ok) {
+        res = await fetch(`${API_BASE}/transcode`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: srcUrl, audioTrack: track })
+        });
+      }
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
+      }
+
       const data = await res.json();
       if (data.success && data.hlsUrl) {
         const fullHls = data.hlsUrl.startsWith('http') ? data.hlsUrl : `${API_BASE}${data.hlsUrl}`;
@@ -673,7 +687,7 @@ export default function VideoPlayer({
         codecString.includes('.mkv') ||
         /\.mkv(\?|$)/i.test(codecString)
       );
-      if (isHevcOrMkv && (!canBrowserPlayHevc() || codecString.includes('.mkv')) && (!directUrl || !directUrl.includes('/transcode/hls/'))) {
+      if (isHevcOrMkv && (!canBrowserPlayHevc() || codecString.includes('.mkv')) && (!directUrl || (!directUrl.includes('/transcode/hls/') && !directUrl.includes('/api/transcode/hls/')))) {
         requestHlsTranscode(streamUrl, 0);
         return undefined;
       }
@@ -684,7 +698,7 @@ export default function VideoPlayer({
       }
 
       // Proactively probe stream via server-side ffprobe to discover audio tracks, duration, and detect HEVC
-      if (!isHls && !streamUrl.includes('/transcode/hls/') && !streamUrl.includes('/api/transcode/stream')) {
+      if (!isHls && !streamUrl.includes('/transcode/hls/') && !streamUrl.includes('/api/transcode/hls/') && !streamUrl.includes('/api/transcode/stream')) {
         const probeUrl = `${API_BASE}/api/media/probe?url=${encodeURIComponent(streamUrl)}`;
         fetch(probeUrl)
           .then((r) => r.json())
@@ -703,7 +717,7 @@ export default function VideoPlayer({
                 setAudioTracks(mapped);
               }
               // Auto-switch to HLS transcode if video is strictly confirmed as HEVC and browser cannot decode it
-              if ((data.isHevc === true || data.isMkv === true) && !canBrowserPlayHevc() && (!directUrl || !directUrl.includes('/transcode/hls/'))) {
+              if ((data.isHevc === true || data.isMkv === true) && !canBrowserPlayHevc() && (!directUrl || (!directUrl.includes('/transcode/hls/') && !directUrl.includes('/api/transcode/hls/')))) {
                 requestHlsTranscode(streamUrl, 0);
               }
             }
@@ -986,7 +1000,7 @@ export default function VideoPlayer({
 
     // Black screen / unsupported video codec detection:
     // If audio is advancing (cur > 2.5s) and video is not paused, but no frames have been rendered:
-    if (cur > 2.5 && !video.paused && !autoTranscodeAttemptedRef.current && (!directUrl || !directUrl.includes('/transcode/hls/')) && !isEmbed) {
+    if (cur > 2.5 && !video.paused && !autoTranscodeAttemptedRef.current && (!directUrl || (!directUrl.includes('/transcode/hls/') && !directUrl.includes('/api/transcode/hls/'))) && !isEmbed) {
       const q = typeof video.getVideoPlaybackQuality === 'function' ? video.getVideoPlaybackQuality() : null;
       const decodedFrames = (q && typeof q.totalVideoFrames === 'number')
         ? q.totalVideoFrames
@@ -1702,7 +1716,7 @@ export default function VideoPlayer({
             </h1>
             <div className="flex items-center gap-2 text-[10px] text-white/60">
               <span className="text-blue-300 font-semibold">{activeStreamInfo.serverName}</span>
-              {playbackMode === 'transcoded' || effectiveUrl?.includes('/transcode/hls/') ? (
+              {playbackMode === 'transcoded' || effectiveUrl?.includes('/transcode/hls/') || effectiveUrl?.includes('/api/transcode/hls/') ? (
                 <span className="rounded bg-cyan-500/20 text-cyan-300 font-bold px-2 py-0.5 border border-cyan-400/40 text-[10px] tracking-wide">
                   ⚡ Transcoded (HLS)
                 </span>
@@ -2019,7 +2033,7 @@ export default function VideoPlayer({
         {/* Live Resource Scanner Overlay (Removed in favor of clean background stream loading) */}
 
         {/* MKV / Codec Audio-Only Black Screen Warning Banner */}
-        {mkvCodecWarning && !error && !isTranscoding && (!directUrl || !directUrl.includes('/transcode/hls/')) && (
+        {mkvCodecWarning && !error && !isTranscoding && (!directUrl || (!directUrl.includes('/transcode/hls/') && !directUrl.includes('/api/transcode/hls/'))) && (
           <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm p-6 text-center animate-fadeIn">
             <div className="relative max-w-md rounded-2xl bg-[#0f172a] p-6 border border-amber-500/40 text-amber-200 shadow-2xl">
               <button

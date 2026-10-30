@@ -1186,6 +1186,14 @@ app.use('/transcode/hls', express.static(HLS_OUT_DIR, {
   }
 }));
 
+app.use('/api/transcode/hls', express.static(HLS_OUT_DIR, {
+  setHeaders: (res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+  }
+}));
+
 app.use('/out', express.static(HLS_OUT_DIR, {
   setHeaders: (res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
