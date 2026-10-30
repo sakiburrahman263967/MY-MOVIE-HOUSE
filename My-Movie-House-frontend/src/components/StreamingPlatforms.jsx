@@ -366,11 +366,12 @@ export default memo(function StreamingPlatforms() {
             <button
               key={cat.id}
               onClick={() => handleCategoryChange(cat.id)}
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-all ${
-                activeCategory === cat.id
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/40'
+              className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-all ${activeCategory === cat.id
+                  ? cat.id === 'adult'
+                    ? 'bg-rose-600 text-white shadow-md shadow-rose-600/50'
+                    : 'bg-blue-600 text-white shadow-md shadow-blue-600/40'
                   : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
-              }`}
+                }`}
             >
               {cat.label}
             </button>
@@ -421,11 +422,10 @@ export default memo(function StreamingPlatforms() {
               <div
                 key={platform.id}
                 onClick={() => setSelectedPlatform(platform)}
-                className={`group relative aspect-[16/9] w-36 sm:w-44 md:w-48 shrink-0 cursor-pointer overflow-hidden rounded-2xl border transition-all duration-300 ${
-                  isSelected
+                className={`group relative aspect-[16/9] w-36 sm:w-44 md:w-48 shrink-0 cursor-pointer overflow-hidden rounded-2xl border transition-all duration-300 ${isSelected
                     ? 'border-blue-500 shadow-lg shadow-blue-500/30 scale-102 ring-1 ring-blue-400'
                     : 'border-white/10 hover:border-white/30 hover:scale-102'
-                }`}
+                  }`}
               >
                 {/* Background Gradient */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${platform.color} opacity-90 group-hover:opacity-100 transition`} />
@@ -463,9 +463,8 @@ export default memo(function StreamingPlatforms() {
                       {platform.name}
                     </span>
                     <span
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        isSelected ? 'bg-blue-400 animate-ping' : 'bg-white/40'
-                      }`}
+                      className={`h-1.5 w-1.5 rounded-full ${isSelected ? 'bg-blue-400 animate-ping' : 'bg-white/40'
+                        }`}
                     />
                   </div>
                 </div>
@@ -757,44 +756,40 @@ export default memo(function StreamingPlatforms() {
                   <div className="flex items-center gap-2 border-b border-white/10 px-4 sm:px-6 py-2.5 bg-white/[0.02] text-xs overflow-x-auto no-scrollbar">
                     <button
                       onClick={() => setSeeMoreType('all')}
-                      className={`rounded-full px-3 py-1 font-bold transition ${
-                        seeMoreType === 'all'
+                      className={`rounded-full px-3 py-1 font-bold transition ${seeMoreType === 'all'
                           ? 'bg-blue-600 text-white shadow-md'
                           : 'bg-white/5 text-white/70 hover:bg-white/10'
-                      }`}
+                        }`}
                     >
                       All Titles ({allItems.length})
                     </button>
 
                     <button
                       onClick={() => setSeeMoreType('movie')}
-                      className={`rounded-full px-3 py-1 font-bold transition ${
-                        seeMoreType === 'movie'
+                      className={`rounded-full px-3 py-1 font-bold transition ${seeMoreType === 'movie'
                           ? 'bg-blue-600 text-white shadow-md'
                           : 'bg-white/5 text-white/70 hover:bg-white/10'
-                      }`}
+                        }`}
                     >
                       🎬 Movies ({moviesCount})
                     </button>
 
                     <button
                       onClick={() => setSeeMoreType('series')}
-                      className={`rounded-full px-3 py-1 font-bold transition ${
-                        seeMoreType === 'series'
+                      className={`rounded-full px-3 py-1 font-bold transition ${seeMoreType === 'series'
                           ? 'bg-blue-600 text-white shadow-md'
                           : 'bg-white/5 text-white/70 hover:bg-white/10'
-                      }`}
+                        }`}
                     >
                       📺 Series ({seriesCount})
                     </button>
 
                     <button
                       onClick={() => setSeeMoreType('documentary')}
-                      className={`rounded-full px-3 py-1 font-bold transition ${
-                        seeMoreType === 'documentary'
+                      className={`rounded-full px-3 py-1 font-bold transition ${seeMoreType === 'documentary'
                           ? 'bg-blue-600 text-white shadow-md'
                           : 'bg-white/5 text-white/70 hover:bg-white/10'
-                      }`}
+                        }`}
                     >
                       📄 Documentaries ({docCount})
                     </button>

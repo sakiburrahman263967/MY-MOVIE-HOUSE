@@ -21,6 +21,7 @@ import {
   getProviderStreams,
   getProviderSubtitles,
 } from './providers/index.js';
+import { getBdixFtpStreams } from './providers/bdix-ftp.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CONFIG_FILE = join(__dirname, 'config.json');
@@ -159,10 +160,17 @@ export function isEmbedStreamUrl(url) {
 
 export function isDirectPlayable(stream) {
   if (!stream || !stream.url) return false;
-  if (stream.behaviorHints?.notWebReady === true) return false;
   if (isEmbedStreamUrl(stream.url)) return false;
   const url = String(stream.url).toLowerCase();
-  return url.includes('.m3u8') || url.includes('.mp4') || url.includes('/api/proxy/stream') || !url.includes('http');
+  return (
+    url.includes('.m3u8') ||
+    url.includes('.mp4') ||
+    url.includes('/api/proxy/stream') ||
+    url.includes('pixeldrain.dev') ||
+    url.includes('pixeldrain.com') ||
+    url.includes('.mkv') ||
+    !url.includes('http')
+  );
 }
 
 export function parseStreamDetails(stream, fallbackAddonName = '', latency = 0) {
@@ -177,7 +185,8 @@ export function parseStreamDetails(stream, fallbackAddonName = '', latency = 0) 
 
   let size = stream.size;
   if (!size) {
-    const sizeMatch = fullText.match(/(\d+(?:\.\d+)?\s*(?:GB|MB|GiB|MiB))/i);
+    const cleanedText = fullText.replace(/~?[\d.]+\s*Mbps/gi, '');
+    const sizeMatch = cleanedText.match(/(\d+(?:\.\d+)?\s*(?:GB|MB|GiB|MiB))/i);
     size = sizeMatch ? sizeMatch[1].toUpperCase() : null;
   }
 
@@ -187,14 +196,40 @@ export function parseStreamDetails(stream, fallbackAddonName = '', latency = 0) 
     sound = soundMatch ? soundMatch[1] : null;
   }
 
+  const audioLangs = [];
+  const langMap = [
+    { name: 'Bangla', pattern: /\b(bangla|bengali|ben)\b/i },
+    { name: 'Hindi', pattern: /\b(hindi|hin)\b/i },
+    { name: 'English', pattern: /\b(english|eng)\b/i },
+    { name: 'Tamil', pattern: /\b(tamil|tam)\b/i },
+    { name: 'Telugu', pattern: /\b(telugu|tel)\b/i },
+    { name: 'Malayalam', pattern: /\b(malayalam|mal)\b/i },
+    { name: 'Kannada', pattern: /\b(kannada|kan)\b/i },
+    { name: 'Urdu', pattern: /\b(urdu|urd)\b/i },
+    { name: 'Korean', pattern: /\b(korean|kor)\b/i },
+    { name: 'Japanese', pattern: /\b(japanese|jap|jpn)\b/i },
+    { name: 'Spanish', pattern: /\b(spanish|spa|es)\b/i },
+    { name: 'French', pattern: /\b(french|fre|fra)\b/i },
+    { name: 'German', pattern: /\b(german|ger|deu)\b/i },
+    { name: 'Arabic', pattern: /\b(arabic|ara)\b/i }
+  ];
+
+  for (const item of langMap) {
+    if (item.pattern.test(fullText)) {
+      audioLangs.push(item.name);
+    }
+  }
+
+  const isDual = /\b(dual\s*audio|dual)\b/i.test(fullText) || audioLangs.length >= 2;
+  const isMulti = /\b(multi\s*audio|multi\s*sub|multiaudio|multi)\b/i.test(fullText) || audioLangs.length > 2;
+  const isDubbed = /\b(dubbed|dub)\b/i.test(fullText);
+
   let language = stream.language;
   if (!language) {
-    if (/dual\s*audio/i.test(fullText)) language = 'Dual Audio';
-    else if (/multi\s*(?:audio|lang)?/i.test(fullText)) language = 'Multi Audio';
-    else if (/hindi\s*\+\s*eng/i.test(fullText)) language = 'Hindi + Eng';
-    else if (/bengali|bangla/i.test(fullText)) language = 'Bengali';
-    else if (/hindi/i.test(fullText)) language = 'Hindi';
-    else if (/english/i.test(fullText)) language = 'English';
+    if (isMulti) language = 'Multi Audio';
+    else if (isDual) language = 'Dual Audio';
+    else if (audioLangs.length > 0) language = audioLangs.join(', ');
+    else language = 'Audio: unknown';
   }
 
   let serverName = stream.serverName || stream.addonName || fallbackAddonName || stream.name?.split('\n')[0] || 'Stream Server';
@@ -208,6 +243,10 @@ export function parseStreamDetails(stream, fallbackAddonName = '', latency = 0) 
     size,
     sound,
     language,
+    audioLangs,
+    isDual,
+    isMulti,
+    isDubbed,
     serverName,
     latency: typeof stream.latency === 'number' ? stream.latency : (latency || 0)
   };
@@ -604,6 +643,10 @@ export class AddonManager {
     if (cached?.href) return cached.href;
     const raw = id.replace(prefix, '');
     try {
+      const urlDecoded = decodeURIComponent(raw);
+      if (urlDecoded.startsWith('http')) return urlDecoded;
+    } catch {}
+    try {
       const decoded = Buffer.from(raw, 'base64url').toString('utf8');
       if (decoded.startsWith('http')) return decoded;
     } catch {}
@@ -719,6 +762,109 @@ export class AddonManager {
     }
   }
 
+  async scrapeFilm1kCatalog(page = 1, searchQuery = '') {
+    try {
+      let targetUrl = 'https://www.film1k.com/';
+      if (searchQuery && searchQuery.trim()) {
+        targetUrl = `https://www.film1k.com/?s=${encodeURIComponent(searchQuery.trim())}`;
+      } else if (page > 1) {
+        targetUrl = `https://www.film1k.com/page/${page}/`;
+      }
+
+      const res = await fetchWithTimeout(targetUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        }
+      }, 7000);
+      if (!res.ok) return [];
+      const html = await res.text();
+      const articles = html.match(/<article[\s\S]*?<\/article>/gi) || [];
+      const items = [];
+      for (const art of articles) {
+        const link = art.match(/href="([^"]+)"/)?.[1];
+        const title = art.match(/bookmark">([^<]+)<\/a>/)?.[1] || art.match(/title="([^"]+)"/)?.[1];
+        const poster = art.match(/data-src="([^"]+)"/)?.[1] || art.match(/src="([^"]+)"/)?.[1];
+        if (link && title) {
+          const cleanTitle = title.replace(/\s+/g, ' ').trim();
+          const id = `cs:film1k:${encodeURIComponent(link)}`;
+          const metaObj = {
+            id,
+            name: cleanTitle,
+            title: cleanTitle,
+            poster: poster || '',
+            background: poster || '',
+            description: cleanTitle,
+            type: 'movie',
+            href: link,
+            addonId: 'cloudstream-Film1K',
+            addonName: 'Film1K',
+            genres: ['Adult', 'Film1K', 'Erotica']
+          };
+          this.customMetaCache.set(id, metaObj);
+          items.push(metaObj);
+        }
+      }
+      this._persistCustomMeta();
+      return items;
+    } catch (err) {
+      console.warn('Film1K scrape error:', err.message);
+      return [];
+    }
+  }
+
+  async scrapeAzNudeCatalog(page = 1, searchQuery = '') {
+    try {
+      let targetUrl = 'https://www.aznude.com/';
+      if (searchQuery && searchQuery.trim()) {
+        targetUrl = `https://www.aznude.com/search.html?q=${encodeURIComponent(searchQuery.trim())}`;
+      }
+
+      const res = await fetchWithTimeout(targetUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        }
+      }, 7000);
+      if (!res.ok) return [];
+      const html = await res.text();
+      const blocks = html.split('class="media-list-item');
+      const items = [];
+      for (let i = 1; i < blocks.length; i++) {
+        const b = blocks[i];
+        const linkMatch = b.match(/href="([^"]+)"/)?.[1];
+        const posterMatch = b.match(/src="([^"]+)"/)?.[1] || b.match(/data-thumb="([^"]+)"/)?.[1];
+        const titleMatch = b.match(/alt="([^"]+)"/)?.[1] || b.match(/title="([^"]+)"/)?.[1];
+        if (linkMatch && titleMatch) {
+          const fullLink = linkMatch.startsWith('http') ? linkMatch : `https://www.aznude.com${linkMatch}`;
+          const fullPoster = posterMatch ? (posterMatch.startsWith('http') ? posterMatch : `https://www.aznude.com${posterMatch}`) : '';
+          const cleanTitle = titleMatch.replace(/\s+/g, ' ').trim();
+          const id = `cs:aznude:${encodeURIComponent(fullLink)}`;
+          const metaObj = {
+            id,
+            name: cleanTitle,
+            title: cleanTitle,
+            poster: fullPoster,
+            background: fullPoster,
+            description: cleanTitle,
+            type: 'movie',
+            href: fullLink,
+            addonId: 'cloudstream-AzNude',
+            addonName: 'AzNude',
+            genres: ['Adult', 'AzNude', 'Celebrity']
+          };
+          this.customMetaCache.set(id, metaObj);
+          items.push(metaObj);
+        }
+      }
+      this._persistCustomMeta();
+      return items;
+    } catch (err) {
+      console.warn('AzNude scrape error:', err.message);
+      return [];
+    }
+  }
+
   async scrapeJavCatalog(page = 1, searchQuery = '') {
     try {
       let targetUrl = `https://jav.guru/page/${page}/`;
@@ -830,11 +976,18 @@ export class AddonManager {
     const isAdult = pName.includes('porn') || pName.includes('hentai') || pName.includes('cam4') ||
       pName.includes('xxx') || pName.includes('cxxx') || pName.includes('adult') ||
       pName.includes('jav') || pName.includes('perverzija') || pName.includes('actionview') ||
-      pName.includes('desisins') || /cxxx|nsfw/i.test(pRepo);
+      pName.includes('desisins') || pName.includes('film1k') || pName.includes('aznude') ||
+      pTypes.includes('NSFW') || /cxxx|nsfw/i.test(pRepo);
 
     // If adult provider, fetch REAL items directly from the provider scrapers!
     if (isAdult) {
-      if (pName.includes('xvideos')) {
+      if (pName.includes('film1k')) {
+        const f1kItems = await this.scrapeFilm1kCatalog(page, extra.search);
+        if (f1kItems.length > 0) return f1kItems;
+      } else if (pName.includes('aznude')) {
+        const azItems = await this.scrapeAzNudeCatalog(page, extra.search);
+        if (azItems.length > 0) return azItems;
+      } else if (pName.includes('xvideos')) {
         const xvItems = await this.scrapeXvideosCatalog(page, extra.search);
         if (xvItems.length > 0) return xvItems;
       } else if (pName.includes('xnxx')) {
@@ -1285,6 +1438,76 @@ export class AddonManager {
       return streams;
     }
 
+    if (id.startsWith('cs:film1k:')) {
+      const pageUrl = this._resolveUrlFromId(id, 'cs:film1k:');
+      if (pageUrl) {
+        try {
+          const res = await fetchWithTimeout(pageUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'Referer': 'https://www.film1k.com/'
+            }
+          }, 6000);
+          const html = await res.text();
+          const iframeMatch = html.match(/<iframe[^>]*data-litespeed-src=["']([^"']+)["']/i) || html.match(/<iframe[^>]*src=["']([^"']+)["']/i);
+          if (iframeMatch) {
+            streams.push({
+              addonId: 'cloudstream-Film1K',
+              addonName: '[CloudStream] Film1K',
+              name: '[Film1K] Full HD ⚡ Embed Stream',
+              title: `${cached?.name || 'Film1K Movie'}\n⚡ Film1K Fast Video Stream\n💾 Full HD`,
+              url: iframeMatch[1],
+              behaviorHints: { notWebReady: false }
+            });
+          }
+        } catch (err) {
+          console.warn('Film1K stream extraction error:', err.message);
+        }
+      }
+      return streams;
+    }
+
+    if (id.startsWith('cs:aznude:')) {
+      const pageUrl = this._resolveUrlFromId(id, 'cs:aznude:');
+      if (pageUrl) {
+        try {
+          const res = await fetchWithTimeout(pageUrl, {
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+              'Referer': 'https://www.aznude.com/'
+            }
+          }, 6000);
+          const html = await res.text();
+          const m3u8Match = html.match(/https?:\/\/[^"'\s<>]+\.m3u8/i);
+          const mp4Matches = [...html.matchAll(/https?:\/\/[^"'\s<>]+\.mp4/gi)].map(m => m[0]);
+          if (m3u8Match) {
+            streams.push({
+              addonId: 'cloudstream-AzNude',
+              addonName: '[CloudStream] AzNude',
+              name: '[AzNude] Direct HLS ⚡',
+              title: `${cached?.name || 'AzNude Video'}\n⚡ Fast Direct Stream (HLS)\n💾 Stream`,
+              url: m3u8Match[0],
+              behaviorHints: { notWebReady: false }
+            });
+          }
+          if (mp4Matches.length > 0) {
+            const hdMp4 = mp4Matches.find(m => /_hd\.mp4/i.test(m)) || mp4Matches[0];
+            streams.push({
+              addonId: 'cloudstream-AzNude',
+              addonName: '[CloudStream] AzNude',
+              name: '[AzNude] 1080p HD MP4',
+              title: `${cached?.name || 'AzNude Video'}\nDirect High Quality MP4\n💾 MP4 HD`,
+              url: hdMp4,
+              behaviorHints: { notWebReady: false }
+            });
+          }
+        } catch (err) {
+          console.warn('AzNude stream extraction error:', err.message);
+        }
+      }
+      return streams;
+    }
+
     return streams;
   }
 
@@ -1475,13 +1698,14 @@ export class AddonManager {
             const addonIdLower = String(s.addonId || addon.id || '').toLowerCase();
             const addonNameLower = String(s.addonName || addon.name || '').toLowerCase();
             const fullText = `${s.name || ''} ${s.title || ''} ${s.externalUrl || ''}`.toLowerCase();
-            if (fullText.includes('donate') || fullText.includes('support the project') || fullText.includes('tap to donate')) {
-              // Don't drop httpstreaming direct providers
-              if (addonNameLower.includes('sootio') || addonNameLower.includes('pengu') || addonIdLower.includes('sootio') || addonIdLower.includes('pengu') || s.httpProvider === 'httpstreaming' || s.provider === 'httpstreaming') {
-                // allow
-              } else {
-                return false;
-              }
+            if (
+              fullText.includes('donate') ||
+              fullText.includes('donation') ||
+              fullText.includes('support the project') ||
+              fullText.includes('tap to donate') ||
+              fullText.includes('discord server')
+            ) {
+              return false;
             }
             return true;
           })
@@ -1604,7 +1828,29 @@ export class AddonManager {
       }
     })();
 
-    await Promise.allSettled([...addonPromises, cloudstreamPromise, providerPromise]);
+    // BDIX Direct FTP Servers provider (IBCCL 103.203.93.2/.4, Ghuri 103.96.104.6, CTGMovies, DhakaFlix)
+    const bdixPromise = (async () => {
+      const startTime = Date.now();
+      let chunkEmitted = false;
+      try {
+        const meta = await metaForId;
+        const streams = await getBdixFtpStreams({ type, id, meta, deadline: startTime + 8000 });
+        const latency = Date.now() - startTime;
+        const parsed = (streams || [])
+          .map((s) => parseStreamDetails(s, s.addonName || 'BDIX Fast FTP', latency))
+          .filter(Boolean);
+        allAccumulatedStreams.push(...parsed);
+        chunkEmitted = true;
+        onChunk({ addonId: 'bdix-ftp', addonName: 'BDIX Fast FTP Servers', status: 'ok', latency, count: parsed.length, streams: parsed });
+      } catch (err) {
+        const latency = Date.now() - startTime;
+        if (!chunkEmitted) {
+          onChunk({ addonId: 'bdix-ftp', addonName: 'BDIX Fast FTP Servers', status: 'failed', latency, count: 0, streams: [], error: err?.message });
+        }
+      }
+    })();
+
+    await Promise.allSettled([...addonPromises, cloudstreamPromise, providerPromise, bdixPromise]);
 
     const deduplicated = deduplicateStreams(allAccumulatedStreams);
     deduplicated.sort((a, b) => scoreStream(b) - scoreStream(a));

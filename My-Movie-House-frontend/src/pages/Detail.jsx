@@ -19,6 +19,7 @@ export default function Detail() {
   const [streamsLoading, setStreamsLoading] = useState(false);
   const [selectedStream, setSelectedStream] = useState(null);
   const [addonStatuses, setAddonStatuses] = useState([]);
+  const [selectedAddonForModal, setSelectedAddonForModal] = useState(null);
   const [similarItems, setSimilarItems] = useState([]);
   const [selectedActor, setSelectedActor] = useState(null);
   const [actorCredits, setActorCredits] = useState(null);
@@ -82,9 +83,22 @@ export default function Detail() {
 
     const streamTargetId = activeEpisode ? `${id}:${activeEpisode.season}:${activeEpisode.episode}` : id;
     const preferredQuality = (typeof localStorage !== 'undefined' && localStorage.getItem('mmh_preferred_quality')) || '';
+    const preferredLang = (typeof localStorage !== 'undefined' && localStorage.getItem('mmh_preferred_audio_lang')) || '';
 
     const pickBestStream = (streamList) => {
       if (!streamList || streamList.length === 0) return null;
+
+      // 1. First priority: matches preferred audio language if set
+      if (preferredLang) {
+        const langMatch = streamList.find((s) => {
+          const info = parseStreamInfo(s);
+          if (info.isMulti || info.isDual) return true;
+          return Array.isArray(info.audioLangs) && info.audioLangs.some((l) => l.toLowerCase() === preferredLang.toLowerCase());
+        });
+        if (langMatch) return langMatch;
+      }
+
+      // 2. Second priority: matches preferred quality
       if (preferredQuality) {
         const match = streamList.find((s) => {
           const q = String(s.quality || '').toLowerCase();
@@ -121,6 +135,14 @@ export default function Detail() {
               if (key && !map.has(key)) map.set(key, s);
             }
             const combined = Array.from(map.values());
+            // Sort by playable priority so MovieBox / Direct streams are always visible first
+            combined.sort((a, b) => {
+              const aDirect = a.url && (a.url.includes('/api/proxy/stream') || a.url.includes('pixeldrain') || a.url.includes('.mp4') || a.url.includes('.m3u8'));
+              const bDirect = b.url && (b.url.includes('/api/proxy/stream') || b.url.includes('pixeldrain') || b.url.includes('.mp4') || b.url.includes('.m3u8'));
+              if (aDirect && !bDirect) return -1;
+              if (!aDirect && bDirect) return 1;
+              return 0;
+            });
             setSelectedStream((current) => current || pickBestStream(combined));
             return combined;
           });
@@ -141,6 +163,13 @@ export default function Detail() {
               if (key && !map.has(key)) map.set(key, s);
             }
             const combined = Array.from(map.values());
+            combined.sort((a, b) => {
+              const aDirect = a.url && (a.url.includes('/api/proxy/stream') || a.url.includes('pixeldrain') || a.url.includes('.mp4') || a.url.includes('.m3u8'));
+              const bDirect = b.url && (b.url.includes('/api/proxy/stream') || b.url.includes('pixeldrain') || b.url.includes('.mp4') || b.url.includes('.m3u8'));
+              if (aDirect && !bDirect) return -1;
+              if (!aDirect && bDirect) return 1;
+              return 0;
+            });
             setSelectedStream((current) => current || pickBestStream(combined));
             return combined;
           });
@@ -548,35 +577,41 @@ export default function Detail() {
                 </div>
               </div>
 
-              {/* Live Per-Addon Status Indicators */}
+              {/* Live Per-Addon Status Indicators (Clickable to pop up sources) */}
               {addonStatuses.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                <div className="flex flex-wrap items-center gap-2 mb-3">
                   {addonStatuses.map((a) => (
-                    <span
+                    <button
                       key={a.addonId}
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold border ${
+                      type="button"
+                      onClick={() => setSelectedAddonForModal(a)}
+                      title={`Click to view all sources from ${a.addonName}`}
+                      className={`group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-semibold border transition-all duration-200 cursor-pointer shadow-sm hover:scale-[1.03] active:scale-95 ${
                         a.status === 'ok'
-                          ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30'
+                          ? 'bg-emerald-500/15 text-emerald-200 border-emerald-500/40 hover:bg-emerald-500/25 hover:border-emerald-400 hover:shadow-emerald-500/20 shadow-md'
                           : a.status === 'failed'
-                          ? 'bg-rose-500/10 text-rose-300 border-rose-500/30'
-                          : 'bg-amber-500/10 text-amber-300 border-amber-500/30 animate-pulse'
+                          ? 'bg-rose-500/10 text-rose-300 border-rose-500/30 hover:bg-rose-500/20'
+                          : 'bg-amber-500/10 text-amber-300 border-amber-500/30 hover:bg-amber-500/20 animate-pulse'
                       }`}
                     >
                       <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          a.status === 'ok' ? 'bg-emerald-400' : a.status === 'failed' ? 'bg-rose-400' : 'bg-amber-400 animate-ping'
+                        className={`h-2 w-2 rounded-full ${
+                          a.status === 'ok' ? 'bg-emerald-400 shadow-sm shadow-emerald-400' : a.status === 'failed' ? 'bg-rose-400' : 'bg-amber-400 animate-ping'
                         }`}
                       />
-                      <span>{a.addonName}</span>
+                      <span className="font-bold">{a.addonName}</span>
                       {typeof a.latency === 'number' && a.latency > 0 && (
                         <span className="opacity-60 text-[9px] font-mono">{a.latency}ms</span>
                       )}
                       {a.count > 0 && (
-                        <span className="rounded bg-black/40 px-1 py-0.2 text-[9px] font-mono text-emerald-400 font-bold">
+                        <span className="rounded-md bg-emerald-500/30 border border-emerald-400/50 px-1.5 py-0.5 text-[9px] font-mono text-emerald-300 font-bold group-hover:bg-emerald-400 group-hover:text-black transition">
                           {a.count}
                         </span>
                       )}
-                    </span>
+                      <span className="text-[10px] text-white/40 group-hover:text-emerald-300 transition-colors ml-0.5">
+                        ↗
+                      </span>
+                    </button>
                   ))}
                 </div>
               )}
@@ -595,8 +630,8 @@ export default function Detail() {
                   No sources found for this episode. Try selecting another episode or click &quot;Stream Now&quot;.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-60 overflow-y-auto pr-1">
-                  {availableStreams.slice(0, 24).map((s, idx) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 max-h-96 overflow-y-auto pr-1">
+                  {availableStreams.slice(0, 60).map((s, idx) => {
                     const info = parseStreamInfo(s);
                     const isSelected = selectedStream && selectedStream.url === s.url;
                     return (
@@ -621,6 +656,21 @@ export default function Detail() {
                             <span className="rounded bg-blue-500/20 px-1.5 py-0.2 text-[9px] font-black text-blue-300 border border-blue-400/30">
                               {info.resolution}
                             </span>
+                            {info.isDual && (
+                              <span className="rounded bg-purple-500/20 px-1.5 py-0.2 text-[9px] font-bold text-purple-300 border border-purple-400/30">
+                                🎧 Dual Audio
+                              </span>
+                            )}
+                            {info.isMulti && !info.isDual && (
+                              <span className="rounded bg-indigo-500/20 px-1.5 py-0.2 text-[9px] font-bold text-indigo-300 border border-indigo-400/30">
+                                🎧 Multi
+                              </span>
+                            )}
+                            {Array.isArray(info.audioLangs) && info.audioLangs.length > 0 && !info.isDual && !info.isMulti && (
+                              <span className="rounded bg-cyan-500/20 px-1.5 py-0.2 text-[9px] font-bold text-cyan-300 border border-cyan-400/30">
+                                🎙 {info.audioLangs.slice(0, 2).join(', ')}
+                              </span>
+                            )}
                           </div>
                           <p className="text-[10px] text-slate-400 truncate mt-0.5">
                             {s.title || s.description || s.name}
@@ -818,6 +868,282 @@ export default function Detail() {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Addon Sources Popup Modal ─── */}
+      {selectedAddonForModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
+          onClick={() => setSelectedAddonForModal(null)}
+        >
+          <div
+            className="relative w-full max-w-3xl max-h-[85vh] rounded-2xl bg-[#0b1329] border border-emerald-500/40 p-5 shadow-2xl flex flex-col text-left overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <span className="h-3 w-3 rounded-full bg-emerald-400 shadow-md shadow-emerald-400/50 animate-pulse" />
+                <div>
+                  <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                    <span>{selectedAddonForModal.addonName}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 font-mono font-normal">
+                      {selectedAddonForModal.count || 0} Sources Found
+                    </span>
+                  </h2>
+                  <p className="text-[11px] text-white/50 mt-0.5">
+                    Click any source card below to start playing immediately in the player.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedAddonForModal(null)}
+                className="grid h-8 w-8 place-items-center rounded-xl bg-white/10 text-white hover:bg-rose-600 hover:text-white transition font-bold text-sm shadow"
+                title="Close (Esc)"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Stream List */}
+            <div className="flex-1 overflow-y-auto py-4 pr-1 space-y-2">
+              {(() => {
+                const modalStreams = availableStreams.filter((st) => {
+                  if (st.addonId && st.addonId === selectedAddonForModal.addonId) return true;
+                  if (st.addonName && st.addonName.toLowerCase() === selectedAddonForModal.addonName.toLowerCase()) return true;
+                  if (selectedAddonForModal.addonId === 'bdix-ftp' && (
+                    st.addonName?.toLowerCase().includes('bdix') ||
+                    st.serverName?.toLowerCase().includes('bdix') ||
+                    st.serverName?.toLowerCase().includes('ftp') ||
+                    st.serverName?.toLowerCase().includes('dhaka') ||
+                    st.serverName?.toLowerCase().includes('ctg') ||
+                    st.serverName?.toLowerCase().includes('ghuri') ||
+                    st.serverName?.toLowerCase().includes('ibccl') ||
+                    st.serverName?.toLowerCase().includes('circle') ||
+                    st.serverName?.toLowerCase().includes('roarzone') ||
+                    st.serverName?.toLowerCase().includes('cloud media')
+                  )) return true;
+                  return false;
+                });
+
+                if (modalStreams.length === 0) {
+                  return (
+                    <div className="py-12 text-center text-white/60">
+                      <div className="text-3xl mb-2">📡</div>
+                      <p className="text-sm font-semibold">No direct streams returned from this provider for this title.</p>
+                      <p className="text-xs text-white/40 mt-1">Try clicking on another active provider pill above.</p>
+                    </div>
+                  );
+                }
+
+                return modalStreams.map((st, idx) => {
+                  const info = parseStreamInfo(st);
+                  const isCurrent = selectedStream && selectedStream.url === st.url;
+                  return (
+                    <div
+                      key={`modal-stream-${st.addonId}-${st.url}-${idx}`}
+                      onClick={() => {
+                        setSelectedStream(st);
+                        setShowStreams(true);
+                        setSelectedAddonForModal(null);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className={`group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
+                        isCurrent
+                          ? 'bg-emerald-600/25 border-emerald-400 text-white shadow-lg shadow-emerald-500/10'
+                          : 'bg-white/[0.04] hover:bg-emerald-600/15 border-white/10 hover:border-emerald-400/50 text-white/90 hover:text-white'
+                      }`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                          <span className="text-xs font-black text-white group-hover:text-emerald-300">
+                            {info.serverName}
+                          </span>
+                          <span className="rounded-md bg-blue-500/20 px-2 py-0.5 text-[10px] font-black text-blue-300 border border-blue-400/30">
+                            {info.resolution}
+                          </span>
+                          {info.isDual && (
+                            <span className="rounded-md bg-purple-500/20 px-2 py-0.5 text-[10px] font-bold text-purple-300 border border-purple-400/30">
+                              🎧 Dual Audio
+                            </span>
+                          )}
+                          {info.isMulti && !info.isDual && (
+                            <span className="rounded-md bg-indigo-500/20 px-2 py-0.5 text-[10px] font-bold text-indigo-300 border border-indigo-400/30">
+                              🎧 Multi Audio
+                            </span>
+                          )}
+                          {Array.isArray(info.audioLangs) && info.audioLangs.length > 0 && !info.isDual && !info.isMulti && (
+                            <span className="rounded-md bg-cyan-500/20 px-2 py-0.5 text-[10px] font-bold text-cyan-300 border border-cyan-400/30">
+                              🎙 {info.audioLangs.slice(0, 2).join(', ')}
+                            </span>
+                          )}
+                          {info.size && (
+                            <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 text-[10px] font-mono font-bold text-emerald-300 border border-emerald-400/30">
+                              💾 {info.size}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-white/70 truncate">
+                          {st.title || st.description || st.name}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <button
+                          type="button"
+                          className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-xs font-black text-white group-hover:from-emerald-500 group-hover:to-teal-500 transition shadow-md flex items-center gap-1.5"
+                        >
+                          <span>⚡</span>
+                          <span>Play Now</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── Addon Sources Popup Modal ─── */}
+      {selectedAddonForModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
+          onClick={() => setSelectedAddonForModal(null)}
+        >
+          <div
+            className="relative w-full max-w-3xl max-h-[85vh] rounded-2xl bg-[#0b1329] border border-emerald-500/40 p-5 shadow-2xl flex flex-col text-left overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <span className="h-3 w-3 rounded-full bg-emerald-400 shadow-md shadow-emerald-400/50 animate-pulse" />
+                <div>
+                  <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
+                    <span>{selectedAddonForModal.addonName}</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 font-mono font-normal">
+                      {selectedAddonForModal.count || 0} Sources Found
+                    </span>
+                  </h2>
+                  <p className="text-[11px] text-white/50 mt-0.5">
+                    Click any source card below to start playing immediately in the player.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedAddonForModal(null)}
+                className="grid h-8 w-8 place-items-center rounded-xl bg-white/10 text-white hover:bg-rose-600 hover:text-white transition font-bold text-sm shadow"
+                title="Close (Esc)"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Stream List */}
+            <div className="flex-1 overflow-y-auto py-4 pr-1 space-y-2">
+              {(() => {
+                const modalStreams = availableStreams.filter((st) => {
+                  if (st.addonId && st.addonId === selectedAddonForModal.addonId) return true;
+                  if (st.addonName && st.addonName.toLowerCase() === selectedAddonForModal.addonName.toLowerCase()) return true;
+                  if (selectedAddonForModal.addonId === 'bdix-ftp' && (
+                    st.addonName?.toLowerCase().includes('bdix') ||
+                    st.serverName?.toLowerCase().includes('bdix') ||
+                    st.serverName?.toLowerCase().includes('ftp') ||
+                    st.serverName?.toLowerCase().includes('dhaka') ||
+                    st.serverName?.toLowerCase().includes('ctg') ||
+                    st.serverName?.toLowerCase().includes('ghuri') ||
+                    st.serverName?.toLowerCase().includes('ibccl') ||
+                    st.serverName?.toLowerCase().includes('circle') ||
+                    st.serverName?.toLowerCase().includes('roarzone') ||
+                    st.serverName?.toLowerCase().includes('cloud media')
+                  )) return true;
+                  return false;
+                });
+
+                if (modalStreams.length === 0) {
+                  return (
+                    <div className="py-12 text-center text-white/60">
+                      <div className="text-3xl mb-2">📡</div>
+                      <p className="text-sm font-semibold">No direct streams returned from this provider for this title.</p>
+                      <p className="text-xs text-white/40 mt-1">Try clicking on another active provider pill above.</p>
+                    </div>
+                  );
+                }
+
+                return modalStreams.map((st, idx) => {
+                  const info = parseStreamInfo(st);
+                  const isCurrent = selectedStream && selectedStream.url === st.url;
+                  return (
+                    <div
+                      key={`modal-stream-${st.addonId}-${st.url}-${idx}`}
+                      onClick={() => {
+                        setSelectedStream(st);
+                        setShowStreams(true);
+                        setSelectedAddonForModal(null);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className={`group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
+                        isCurrent
+                          ? 'bg-emerald-600/25 border-emerald-400 text-white shadow-lg shadow-emerald-500/10'
+                          : 'bg-white/[0.04] hover:bg-emerald-600/15 border-white/10 hover:border-emerald-400/50 text-white/90 hover:text-white'
+                      }`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                          <span className="text-xs font-black text-white group-hover:text-emerald-300">
+                            {info.serverName}
+                          </span>
+                          <span className="rounded-md bg-blue-500/20 px-2 py-0.5 text-[10px] font-black text-blue-300 border border-blue-400/30">
+                            {info.resolution}
+                          </span>
+                          {info.isDual && (
+                            <span className="rounded-md bg-purple-500/20 px-2 py-0.5 text-[10px] font-bold text-purple-300 border border-purple-400/30">
+                              🎧 Dual Audio
+                            </span>
+                          )}
+                          {info.isMulti && !info.isDual && (
+                            <span className="rounded-md bg-indigo-500/20 px-2 py-0.5 text-[10px] font-bold text-indigo-300 border border-indigo-400/30">
+                              🎧 Multi Audio
+                            </span>
+                          )}
+                          {Array.isArray(info.audioLangs) && info.audioLangs.length > 0 && !info.isDual && !info.isMulti && (
+                            <span className="rounded-md bg-cyan-500/20 px-2 py-0.5 text-[10px] font-bold text-cyan-300 border border-cyan-400/30">
+                              🎙 {info.audioLangs.slice(0, 2).join(', ')}
+                            </span>
+                          )}
+                          {info.size && (
+                            <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 text-[10px] font-mono font-bold text-emerald-300 border border-emerald-400/30">
+                              💾 {info.size}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-white/70 truncate">
+                          {st.title || st.description || st.name}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <button
+                          type="button"
+                          className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-xs font-black text-white group-hover:from-emerald-500 group-hover:to-teal-500 transition shadow-md flex items-center gap-1.5"
+                        >
+                          <span>⚡</span>
+                          <span>Play Now</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>

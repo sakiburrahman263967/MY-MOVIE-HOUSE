@@ -1,7 +1,34 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import Hls from 'hls.js';
-import { progress, api, API_BASE } from '../api.js';
+import { progress, api, API_BASE, mediaPrep } from '../api.js';
 import { parseStreamDetails } from '../utils/streamParser.js';
+
+// Map ISO 639-1 / 639-2 codes to human-readable names
+function formatLanguageName(codeOrName) {
+  if (!codeOrName || typeof codeOrName !== 'string') return 'Unknown';
+  const clean = codeOrName.trim().toLowerCase();
+  const map = {
+    eng: 'English', en: 'English',
+    hin: 'Hindi', hi: 'Hindi',
+    ben: 'Bangla', bn: 'Bangla', bangla: 'Bangla', bengali: 'Bangla',
+    tam: 'Tamil', ta: 'Tamil',
+    tel: 'Telugu', te: 'Telugu',
+    mal: 'Malayalam', ml: 'Malayalam',
+    kan: 'Kannada', kn: 'Kannada',
+    urd: 'Urdu', ur: 'Urdu',
+    spa: 'Spanish', es: 'Spanish',
+    fre: 'French', fra: 'French', fr: 'French',
+    ger: 'German', deu: 'German', de: 'German',
+    ara: 'Arabic', ar: 'Arabic',
+    kor: 'Korean', ko: 'Korean',
+    jpn: 'Japanese', ja: 'Japanese',
+    por: 'Portuguese', pt: 'Portuguese',
+    rus: 'Russian', ru: 'Russian',
+    ita: 'Italian', it: 'Italian',
+    chi: 'Chinese', zho: 'Chinese', zh: 'Chinese'
+  };
+  return map[clean] || codeOrName.charAt(0).toUpperCase() + codeOrName.slice(1);
+}
 
 // Format seconds into HH:MM:SS or MM:SS
 function formatTime(seconds) {
@@ -41,6 +68,17 @@ export function isEmbedUrl(url) {
     lower.includes('jav.guru') ||
     lower.includes('eporner.com/embed')
   );
+}
+
+// Detect whether the current browser environment can natively decode HEVC / H.265 video
+export function canBrowserPlayHevc() {
+  if (typeof document === 'undefined') return false;
+  const v = document.createElement('video');
+  const canPlay = v.canPlayType('video/mp4; codecs="hev1.1.6.L93.B0"') ||
+                  v.canPlayType('video/mp4; codecs="hvc1.1.6.L93.B0"') ||
+                  v.canPlayType('video/mp4; codecs="hev1"') ||
+                  v.canPlayType('video/mp4; codecs="hvc1"');
+  return canPlay === 'probably' || canPlay === 'maybe';
 }
 
 // Simple client-side SRT parser
@@ -91,7 +129,7 @@ export default function VideoPlayer({
 
   const [internalStream, setInternalStream] = useState(initialStream);
   const [internalStreamsList, setInternalStreamsList] = useState(initialAllStreams);
-  const [isScanning, setIsScanning] = useState(!initialStream && Boolean(id));
+  const [isScanning, setIsScanning] = useState(false);
 
   useEffect(() => {
     if (initialStream) setInternalStream(initialStream);
@@ -109,10 +147,23 @@ export default function VideoPlayer({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [buffered, setBuffered] = useState(0);
-  const [volume, setVolume] = useState(1); // 0.0 to 1.0 (Clean native sound)
+  const [volume, setVolume] = useState(1); // 0.0 to 2.0 (Sound boost up to 200%)
+  const [audioMode, setAudioMode] = useState('normal'); // 'normal' | '8d' | 'hall' | 'bass'
+  const [isBuffering, setIsBuffering] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const volumeRef = useRef(volume);
   const isMutedRef = useRef(isMuted);
+
+  // Web Audio API Graph Refs
+  const audioCtxRef = useRef(null);
+  const audioSourceNodeRef = useRef(null);
+  const gainNodeRef = useRef(null);
+  const pannerNodeRef = useRef(null);
+  const bassFilterRef = useRef(null);
+  const delayNodeRef = useRef(null);
+  const delayFeedbackRef = useRef(null);
+  const delayWetGainRef = useRef(null);
+  const pannerAnimRef = useRef(null);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPip, setIsPip] = useState(false);
@@ -130,15 +181,63 @@ export default function VideoPlayer({
   const [showControlPanel, setShowControlPanel] = useState(false);
   const [activeTab, setActiveTab] = useState('video');
 
-  // Video Equalizer (Brightness, Contrast, Saturation)
-  const [brightness, setBrightness] = useState(100); // 50% - 150%
-  const [contrast, setContrast] = useState(100);     // 50% - 150%
-  const [saturation, setSaturation] = useState(100); // 0% - 200%
+  // Video Equalizer (Brightness, Contrast, Saturation, Sharpness, Sepia, Hue, Grayscale, Intensity)
+  const [eqPreset, setEqPreset] = useState(() => {
+    try {
+      return localStorage.getItem('mmh_eq_preset') || 'normal';
+    } catch {
+      return 'normal';
+    }
+  });
+  const [eqIntensity, setEqIntensity] = useState(() => {
+    try {
+      const v = localStorage.getItem('mmh_eq_intensity');
+      return v !== null ? Number(v) : 60;
+    } catch { return 60; }
+  });
+  const [brightness, setBrightness] = useState(() => {
+    try {
+      const v = localStorage.getItem('mmh_eq_brightness');
+      return v !== null ? Number(v) : 100;
+    } catch { return 100; }
+  });
+  const [contrast, setContrast] = useState(() => {
+    try {
+      const v = localStorage.getItem('mmh_eq_contrast');
+      return v !== null ? Number(v) : 100;
+    } catch { return 100; }
+  });
+  const [saturation, setSaturation] = useState(() => {
+    try {
+      const v = localStorage.getItem('mmh_eq_saturation');
+      return v !== null ? Number(v) : 100;
+    } catch { return 100; }
+  });
+  const [sharpness, setSharpness] = useState(() => {
+    try {
+      const v = localStorage.getItem('mmh_eq_sharpness');
+      return v !== null ? Number(v) : 0;
+    } catch { return 0; }
+  });
+  const [extraFilters, setExtraFilters] = useState(() => {
+    try {
+      const v = localStorage.getItem('mmh_eq_extra');
+      return v ? JSON.parse(v) : { sepia: 0, hueRotate: 0, grayscale: 0 };
+    } catch {
+      return { sepia: 0, hueRotate: 0, grayscale: 0 };
+    }
+  });
+  const [isComparing, setIsComparing] = useState(false);
   const [aspectRatio, setAspectRatio] = useState('auto');
 
   // Multi-Audio Tracks
   const [audioTracks, setAudioTracks] = useState([]);
+  const [prepJobId, setPrepJobId] = useState(null);
+  const [prepStatus, setPrepStatus] = useState(null);
   const [currentAudioTrack, setCurrentAudioTrack] = useState(0);
+  const [mkvCodecWarning, setMkvCodecWarning] = useState(false);
+  const [isTranscoding, setIsTranscoding] = useState(false);
+  const autoTranscodeAttemptedRef = useRef(false);
 
   // Subtitles (Internal + External)
   const [internalSubtitles, setInternalSubtitles] = useState([]);
@@ -259,6 +358,10 @@ export default function VideoPlayer({
   // Switch Stream Server & remember chosen quality
   const handleSwitchServer = useCallback((newStream) => {
     setInternalStream(newStream);
+    setDirectUrl(null);
+    setIsTranscoding(false);
+    setMkvCodecWarning(false);
+    autoTranscodeAttemptedRef.current = false;
     if (onSelectStream) {
       onSelectStream(newStream);
     }
@@ -278,28 +381,48 @@ export default function VideoPlayer({
       stallTimerRef.current = null;
     }
 
-    if (directUrl && directUrl !== stream?.url) {
+    // 1. If this was a transcode stream that failed, stop transcoding and move to next server
+    if (directUrl && directUrl.includes('/api/transcode/stream')) {
       failedUrlsRef.current.add(directUrl);
+      if (stream?.url) failedUrlsRef.current.add(stream.url);
       setDirectUrl(null);
-      showOsd('Direct stream failed, trying standard stream URL...');
+      setIsTranscoding(false);
+
+      const candidateStreams = allStreams.filter((s) => s?.url && !failedUrlsRef.current.has(s.url));
+      if (candidateStreams.length > 0) {
+        const nextStream = candidateStreams[0];
+        const nextInfo = parseStreamInfo(nextStream);
+        showOsd(`⚡ Transcode failed. Auto-switching to ${nextInfo.serverName} (${nextInfo.resolution})...`);
+        handleSwitchServer(nextStream);
+        return;
+      }
+      setError('All available streams failed to play. Please select another server or click Retry.');
       return;
     }
 
-    const currentSrc = effectiveUrl || stream?.url;
-    if (currentSrc && !currentSrc.includes('/api/proxy/stream') && !isEmbedUrl(currentSrc)) {
-      const proxied = `${API_BASE}/api/proxy/stream?url=${encodeURIComponent(currentSrc)}`;
-      if (!failedUrlsRef.current.has(proxied)) {
-        failedUrlsRef.current.add(currentSrc);
-        setDirectUrl(proxied);
-        showOsd('⚡ Routing stream through proxy...');
-        return;
-      }
+    // 2. If direct/proxied stream failed (HEVC, unsupported video/audio codec in browser),
+    // RESCUE IT with /api/transcode/stream once before failing!
+    const currentSrc = stream?.url || effectiveUrl;
+    if (!autoTranscodeAttemptedRef.current && currentSrc && (!directUrl || !directUrl.includes('/api/transcode/stream'))) {
+      autoTranscodeAttemptedRef.current = true;
+      const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(currentSrc)}&audioTrack=${currentAudioTrack || 0}&start=0`;
+      setIsTranscoding(true);
+      setDirectUrl(transcodeUrl);
+      setMkvCodecWarning(false);
+      showOsd('⚡ Format not supported natively. Transcoding to H.264 for playback...');
+      return;
     }
 
-    if (stream?.url) failedUrlsRef.current.add(stream.url);
-    if (directUrl) failedUrlsRef.current.add(directUrl);
+    // 3. Mark current directUrl and streamUrl as permanently failed
+    if (directUrl) {
+      failedUrlsRef.current.add(directUrl);
+      setDirectUrl(null);
+    }
+    if (stream?.url) {
+      failedUrlsRef.current.add(stream.url);
+    }
 
-    // Skip all failed streams and auto-switch to next working stream
+    // 4. Skip all failed streams and auto-switch to next working stream
     const candidateStreams = allStreams.filter((s) => s?.url && !failedUrlsRef.current.has(s.url));
     if (candidateStreams.length > 0) {
       const nextStream = candidateStreams[0];
@@ -310,7 +433,7 @@ export default function VideoPlayer({
     }
 
     setError('All available streams failed to play. Please select another server or click Retry.');
-  }, [directUrl, stream?.url, effectiveUrl, allStreams, showOsd, handleSwitchServer]);
+  }, [directUrl, stream?.url, effectiveUrl, allStreams, currentAudioTrack, showOsd, handleSwitchServer]);
 
   const handleRetryPlayback = () => {
     failedUrlsRef.current.clear();
@@ -362,6 +485,7 @@ export default function VideoPlayer({
     const isHls = streamUrl.toLowerCase().split('?')[0].endsWith('.m3u8');
     setQualityLevels([]);
     setCurrentQuality(-1);
+    setMkvCodecWarning(false);
 
     // Apply current volume/mute through refs (state changes are handled by the volume effect below)
     video.muted = isMutedRef.current;
@@ -394,12 +518,27 @@ export default function VideoPlayer({
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
         // Load Audio Tracks
         if (hls.audioTracks && hls.audioTracks.length > 0) {
-          setAudioTracks(hls.audioTracks.map((t, idx) => ({
+          const mappedTracks = hls.audioTracks.map((t, idx) => ({
             id: idx,
-            name: t.name || t.lang || `Track ${idx + 1}`,
+            name: formatLanguageName(t.name || t.lang || `Track ${idx + 1}`),
             lang: t.lang || ''
-          })));
+          }));
+          setAudioTracks(mappedTracks);
           setCurrentAudioTrack(hls.audioTrack);
+
+          // Auto-apply preferred audio language from localStorage
+          try {
+            const savedLang = localStorage.getItem('mmh_preferred_audio_lang');
+            if (savedLang) {
+              const matchIdx = mappedTracks.findIndex(
+                (tr) => tr.name.toLowerCase() === savedLang.toLowerCase() || tr.lang.toLowerCase() === savedLang.toLowerCase()
+              );
+              if (matchIdx !== -1 && matchIdx !== hls.audioTrack) {
+                hls.audioTrack = matchIdx;
+                setCurrentAudioTrack(matchIdx);
+              }
+            }
+          } catch {}
         }
         // Load Subtitle Tracks
         if (hls.subtitleTracks && hls.subtitleTracks.length > 0) {
@@ -443,12 +582,32 @@ export default function VideoPlayer({
 
       hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, (_ev, data) => {
         if (data.audioTracks && data.audioTracks.length > 0) {
-          setAudioTracks(data.audioTracks.map((t, idx) => ({
+          const mappedTracks = data.audioTracks.map((t, idx) => ({
             id: idx,
-            name: t.name || t.lang || `Track ${idx + 1}`,
+            name: formatLanguageName(t.name || t.lang || `Track ${idx + 1}`),
             lang: t.lang || ''
-          })));
+          }));
+          setAudioTracks(mappedTracks);
           setCurrentAudioTrack(hls.audioTrack);
+
+          try {
+            const savedLang = localStorage.getItem('mmh_preferred_audio_lang');
+            if (savedLang) {
+              const matchIdx = mappedTracks.findIndex(
+                (tr) => tr.name.toLowerCase() === savedLang.toLowerCase() || tr.lang.toLowerCase() === savedLang.toLowerCase()
+              );
+              if (matchIdx !== -1 && matchIdx !== hls.audioTrack) {
+                hls.audioTrack = matchIdx;
+                setCurrentAudioTrack(matchIdx);
+              }
+            }
+          } catch {}
+        }
+      });
+
+      hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, (_ev, data) => {
+        if (typeof data.id === 'number') {
+          setCurrentAudioTrack(data.id);
         }
       });
 
@@ -464,19 +623,87 @@ export default function VideoPlayer({
 
       hls.on(Hls.Events.ERROR, (_event, data) => {
         if (data.fatal) {
-          setError('Unable to play this stream directly. Please switch to another server in the top menu.');
+          handleVideoError();
         }
       });
     } else {
+      // Only transcode if stream explicitly declares HEVC and browser lacks native decoding
+      const isExplicitHevc = (
+        stream?.language === 'hevc' ||
+        stream?.quality?.toLowerCase()?.includes('hevc') ||
+        stream?.title?.toLowerCase()?.includes('x265')
+      );
+      if (isExplicitHevc && !canBrowserPlayHevc() && (!directUrl || !directUrl.includes('/api/transcode/stream'))) {
+        setIsTranscoding(true);
+        const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(streamUrl)}&audioTrack=0&start=0`;
+        setDirectUrl(transcodeUrl);
+        showOsd('⚡ Transcoding HEVC video to H.264 for web playback...');
+        return undefined;
+      }
+
       video.src = streamUrl;
       if (isHls && !video.canPlayType('application/vnd.apple.mpegurl')) {
         setError('HLS video is not natively supported in this browser.');
       }
+
+      // Proactively probe stream via server-side ffprobe to discover audio tracks, duration, and detect HEVC
+      if (!isHls && !streamUrl.includes('/api/transcode/stream')) {
+        const probeUrl = `${API_BASE}/api/media/probe?url=${encodeURIComponent(streamUrl)}`;
+        fetch(probeUrl)
+          .then((r) => r.json())
+          .then((data) => {
+            if (data?.success) {
+              if (data.duration && data.duration > 0) {
+                setDuration(data.duration);
+              }
+              if (Array.isArray(data.audioTracks) && data.audioTracks.length > 0) {
+                const mapped = data.audioTracks.map((tr) => ({
+                  id: tr.audioIdx,
+                  name: `${tr.title || tr.language} (${tr.codec?.toUpperCase() || 'Audio'}${!tr.safe ? ' ⚠️ Converting to AAC' : ''})`,
+                  lang: tr.language || '',
+                  safe: tr.safe
+                }));
+                setAudioTracks(mapped);
+              }
+              // Only auto-switch to transcode if video is strictly confirmed as HEVC and browser cannot decode it
+              if (data.isHevc === true && !canBrowserPlayHevc() && (!directUrl || !directUrl.includes('/api/transcode/stream'))) {
+                setIsTranscoding(true);
+                const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(streamUrl)}&audioTrack=0&start=0`;
+                setDirectUrl(transcodeUrl);
+                showOsd('⚡ Transcoding HEVC video to H.264 for web playback...');
+              }
+            }
+          })
+          .catch(() => {});
+      }
+
+      // Check native audio tracks for direct media (MP4/WebM/MKV)
+      const updateNativeAudioTracks = () => {
+        if (video.audioTracks && video.audioTracks.length > 0) {
+          const tracks = [];
+          let activeIndex = 0;
+          for (let i = 0; i < video.audioTracks.length; i++) {
+            const tr = video.audioTracks[i];
+            tracks.push({
+              id: i,
+              name: tr.label || tr.language || `Audio Track ${i + 1}`,
+              lang: tr.language || ''
+            });
+            if (tr.enabled) activeIndex = i;
+          }
+          setAudioTracks(tracks);
+          setCurrentAudioTrack(activeIndex);
+        }
+      };
+
+      video.addEventListener('loadedmetadata', updateNativeAudioTracks, { once: true });
+      video.addEventListener('error', handleVideoError);
     }
 
     video.play().then(() => setIsPlaying(true)).catch(() => {});
 
     return () => {
+      video.removeEventListener('error', handleVideoError);
       if (stallTimerRef.current) {
         clearTimeout(stallTimerRef.current);
         stallTimerRef.current = null;
@@ -486,13 +713,172 @@ export default function VideoPlayer({
     };
   }, [effectiveUrl, isEmbed, handleVideoError, showOsd]);
 
-  // Volume & Mute Update
+  // Web Audio Context & Node Graph initialization (for >100% Boost & Audio Modes)
+  const initWebAudio = () => {
+    const video = videoRef.current;
+    if (!video || audioCtxRef.current) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      audioCtxRef.current = ctx;
+
+      const source = ctx.createMediaElementSource(video);
+      audioSourceNodeRef.current = source;
+
+      // Gain Node (Volume Boost up to 200%)
+      const gain = ctx.createGain();
+      gain.gain.value = volume;
+      gainNodeRef.current = gain;
+
+      // Bass Boost Filter (Lowshelf 120Hz)
+      const bass = ctx.createBiquadFilter();
+      bass.type = 'lowshelf';
+      bass.frequency.value = 120;
+      bass.gain.value = 0;
+      bassFilterRef.current = bass;
+
+      // 8D Stereo Panner Node
+      let panner = null;
+      if (typeof ctx.createStereoPanner === 'function') {
+        panner = ctx.createStereoPanner();
+        panner.pan.value = 0;
+        pannerNodeRef.current = panner;
+      }
+
+      // Hall Delay / Reverb Node
+      const delay = ctx.createDelay(1.0);
+      delay.delayTime.value = 0.08;
+      delayNodeRef.current = delay;
+
+      const delayFeedback = ctx.createGain();
+      delayFeedback.gain.value = 0;
+      delayFeedbackRef.current = delayFeedback;
+
+      const delayWetGain = ctx.createGain();
+      delayWetGain.gain.value = 0;
+      delayWetGainRef.current = delayWetGain;
+
+      delay.connect(delayFeedback);
+      delayFeedback.connect(delay);
+      delay.connect(delayWetGain);
+
+      // Connect graph: source -> bass -> (panner or passthrough) -> gain -> destination
+      // And delay branch connects only when delayWetGain is above 0 (Hall mode)
+      if (panner) {
+        source.connect(bass);
+        bass.connect(panner);
+        panner.connect(gain);
+        bass.connect(delay);
+        delayWetGain.connect(gain);
+      } else {
+        source.connect(bass);
+        bass.connect(gain);
+        bass.connect(delay);
+        delayWetGain.connect(gain);
+      }
+      gain.connect(ctx.destination);
+    } catch (err) {
+      console.warn('[WebAudio] Initialization bypassed:', err.message);
+    }
+  };
+
+  // Synchronize Volume & Sound Boost (0% - 200%)
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    video.muted = isMuted;
-    video.volume = isMuted ? 0 : Math.min(1.0, Math.max(0, volume));
+
+    if (volume > 1.0) {
+      initWebAudio();
+    }
+
+    if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+      audioCtxRef.current.resume().catch(() => {});
+    }
+
+    if (gainNodeRef.current) {
+      gainNodeRef.current.gain.value = isMuted ? 0 : volume;
+      video.muted = isMuted;
+      video.volume = 1.0;
+    } else {
+      video.muted = isMuted;
+      video.volume = isMuted ? 0 : Math.min(1.0, Math.max(0, volume));
+    }
   }, [volume, isMuted]);
+
+  // Synchronize Audio Mode (Normal, 8D, Hall, Bass)
+  useEffect(() => {
+    if (audioMode !== 'normal') {
+      initWebAudio();
+    }
+    if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+      audioCtxRef.current.resume().catch(() => {});
+    }
+
+    // Cancel any existing 8D panner animation
+    if (pannerAnimRef.current) {
+      cancelAnimationFrame(pannerAnimRef.current);
+      pannerAnimRef.current = null;
+    }
+
+    const ctx = audioCtxRef.current;
+    const now = ctx ? ctx.currentTime : 0;
+
+    // Reset modes to clean base
+    if (bassFilterRef.current) {
+      if (ctx) bassFilterRef.current.gain.cancelScheduledValues(now);
+      bassFilterRef.current.gain.value = 0;
+    }
+    if (pannerNodeRef.current) {
+      if (ctx) pannerNodeRef.current.pan.cancelScheduledValues(now);
+      pannerNodeRef.current.pan.value = 0;
+    }
+    if (delayFeedbackRef.current) {
+      if (ctx) delayFeedbackRef.current.gain.cancelScheduledValues(now);
+      delayFeedbackRef.current.gain.value = 0;
+    }
+    if (delayWetGainRef.current) {
+      if (ctx) delayWetGainRef.current.gain.cancelScheduledValues(now);
+      delayWetGainRef.current.gain.value = 0;
+    }
+
+    if (audioMode === 'bass') {
+      if (bassFilterRef.current) bassFilterRef.current.gain.value = 11; // +11dB deep punch
+      showOsd('🔊 Audio Mode: Deep Bass Boost');
+    } else if (audioMode === 'hall') {
+      if (delayFeedbackRef.current) delayFeedbackRef.current.gain.value = 0.42;
+      if (delayWetGainRef.current) delayWetGainRef.current.gain.value = 0.35; // wet reverb mix
+      if (bassFilterRef.current) bassFilterRef.current.gain.value = 3;
+      showOsd('🏛️ Audio Mode: Cinema / Concert Hall');
+    } else if (audioMode === '8d') {
+      // In 8D mode: ensure zero reverb/delay bleed so there is NO echo or double voice
+      if (delayWetGainRef.current) delayWetGainRef.current.gain.value = 0;
+      if (delayFeedbackRef.current) delayFeedbackRef.current.gain.value = 0;
+      showOsd('🎧 Audio Mode: 8D AirPods / Spatial Rotation');
+      if (pannerNodeRef.current) {
+        let startTime = performance.now();
+        const animate8D = (ts) => {
+          const elapsed = (ts - startTime) / 1000;
+          // Smooth 360° stereo orbit: Left -> Center -> Right -> Center -> Left
+          const pan = Math.sin(elapsed * (2 * Math.PI / 6));
+          if (pannerNodeRef.current) {
+            pannerNodeRef.current.pan.value = pan;
+          }
+          pannerAnimRef.current = requestAnimationFrame(animate8D);
+        };
+        pannerAnimRef.current = requestAnimationFrame(animate8D);
+      }
+    } else {
+      showOsd('🎵 Audio Mode: Standard / Clean');
+    }
+
+    return () => {
+      if (pannerAnimRef.current) {
+        cancelAnimationFrame(pannerAnimRef.current);
+        pannerAnimRef.current = null;
+      }
+    };
+  }, [audioMode]);
 
   // Save Watch Progress
   useEffect(() => {
@@ -584,7 +970,14 @@ export default function VideoPlayer({
   const seekRelative = (seconds) => {
     const video = videoRef.current;
     if (!video) return;
-    const target = Math.max(0, Math.min(video.duration || 0, video.currentTime + seconds));
+    const effDuration = duration || video.duration || 0;
+    const target = Math.max(0, Math.min(effDuration, video.currentTime + seconds));
+    if ((isTranscoding || (directUrl && directUrl.includes('/api/transcode/stream'))) && stream?.url) {
+      const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(stream.url)}&audioTrack=${currentAudioTrack || 0}&start=${Math.floor(target)}`;
+      setDirectUrl(transcodeUrl);
+      showOsd(`${seconds > 0 ? '▶▶' : '◀◀'} ${seconds > 0 ? '+' : ''}${seconds}s (${formatTime(target)})`);
+      return;
+    }
     video.currentTime = target;
     showOsd(`${seconds > 0 ? '▶▶' : '◀◀'} ${seconds > 0 ? '+' : ''}${seconds}s (${formatTime(target)})`);
   };
@@ -600,12 +993,12 @@ export default function VideoPlayer({
     showOsd(`Frame: ${frames > 0 ? '+1' : '-1'} (${formatTime(video.currentTime)})`);
   };
 
-  // Adjust Volume
+  // Adjust Volume (up to 200% sound boost)
   const adjustVolume = (delta) => {
     setVolume((prev) => {
-      const next = Math.max(0, Math.min(1.0, parseFloat((prev + delta).toFixed(2))));
+      const next = Math.max(0, Math.min(2.0, parseFloat((prev + delta).toFixed(2))));
       if (next > 0 && isMuted) setIsMuted(false);
-      showOsd(`Volume: ${Math.round(next * 100)}%`);
+      showOsd(`Volume: ${Math.round(next * 100)}%${next > 1.0 ? ' ⚡ BOOSTED' : ''}`);
       return next;
     });
   };
@@ -730,7 +1123,42 @@ export default function VideoPlayer({
       hlsRef.current.audioTrack = trackId;
       setCurrentAudioTrack(trackId);
       const tr = audioTracks.find((t) => t.id === trackId);
-      showOsd(`Audio: ${tr?.name || `Track ${trackId + 1}`}`);
+      if (tr) {
+        showOsd(`Audio: ${tr.name}`);
+        try {
+          localStorage.setItem('mmh_preferred_audio_lang', tr.name);
+        } catch {}
+      }
+    } else if (videoRef.current && videoRef.current.audioTracks && videoRef.current.audioTracks.length > 0) {
+      const vTracks = videoRef.current.audioTracks;
+      for (let i = 0; i < vTracks.length; i++) {
+        vTracks[i].enabled = (i === trackId);
+      }
+      setCurrentAudioTrack(trackId);
+      const tr = audioTracks.find((t) => t.id === trackId);
+      if (tr) {
+        showOsd(`Audio: ${tr.name}`);
+        try {
+          localStorage.setItem('mmh_preferred_audio_lang', tr.name);
+        } catch {}
+      }
+    } else {
+      // Direct file switch via on-demand /api/transcode/stream with selected audioTrack
+      const currentPos = videoRef.current?.currentTime || 0;
+      const rawBase = stream?.url || directUrl || effectiveUrl;
+      let baseSource = rawBase;
+      if (rawBase && rawBase.includes('/api/transcode/stream')) {
+        try {
+          const u = new URL(rawBase, window.location.origin);
+          baseSource = u.searchParams.get('url') || rawBase;
+        } catch {}
+      }
+      const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(baseSource)}&audioTrack=${trackId}&start=${currentPos.toFixed(1)}`;
+      setCurrentAudioTrack(trackId);
+      setIsTranscoding(true);
+      setDirectUrl(transcodeUrl);
+      const tr = audioTracks.find((t) => t.id === trackId);
+      showOsd(`⚡ Audio Track: ${tr?.name || trackId}`);
     }
     setShowAudioMenu(false);
   };
@@ -787,12 +1215,92 @@ export default function VideoPlayer({
   };
 
 
+  // Presets definition
+  // Carefully balanced: subtle enhancements, zero crushed blacks, natural skin tones.
+  const EQ_PRESETS = [
+    { id: 'normal', name: 'Normal', b: 100, c: 100, s: 100, sh: 0, sepia: 0, hue: 0, gray: 0 },
+    { id: 'vivid', name: 'Vivid', b: 102, c: 108, s: 115, sh: 0, sepia: 0, hue: 0, gray: 0 },
+    { id: 'cinema', name: 'Cinema', b: 96, c: 108, s: 92, sh: 0, sepia: 4, hue: -2, gray: 0 },
+    { id: '4k', name: '4K Ultra HD', b: 102, c: 106, s: 108, sh: 25, sepia: 0, hue: 0, gray: 0 },
+    { id: 'hdr', name: 'HDR Boost', b: 100, c: 112, s: 108, sh: 20, sepia: 0, hue: 0, gray: 0 },
+    { id: 'darkroom', name: 'Dark Room', b: 109, c: 105, s: 103, sh: 0, sepia: 0, hue: 0, gray: 0 },
+    { id: 'day', name: 'Day', b: 105, c: 109, s: 107, sh: 0, sepia: 0, hue: 0, gray: 0 },
+    { id: 'anime', name: 'Anime', b: 103, c: 106, s: 124, sh: 15, sepia: 0, hue: 0, gray: 0 },
+    { id: 'eye', name: 'Eye Comfort', b: 95, c: 100, s: 97, sh: 0, sepia: 7, hue: 0, gray: 0 },
+    { id: 'bw', name: 'B&W', b: 100, c: 111, s: 0, sh: 0, sepia: 0, hue: 0, gray: 100 }
+  ];
+
+  // Helper: compute scaled preset values according to intensity (0 - 100%)
+  const scalePresetByIntensity = (preset, intensityPct) => {
+    const factor = Math.max(0, Math.min(100, intensityPct)) / 100;
+    const scale = (val, base = 100) => Math.round(base + (val - base) * factor);
+    const scaleExtra = (val) => Math.round(val * factor);
+    return {
+      b: scale(preset.b, 100),
+      c: scale(preset.c, 100),
+      s: scale(preset.s, 100),
+      sh: Math.min(50, scaleExtra(preset.sh)),
+      sepia: scaleExtra(preset.sepia),
+      hue: scaleExtra(preset.hue),
+      gray: scaleExtra(preset.gray)
+    };
+  };
+
+  const applyPreset = (p, intensityOverride) => {
+    const intensity = intensityOverride !== undefined ? intensityOverride : eqIntensity;
+    setEqPreset(p.id);
+    const scaled = scalePresetByIntensity(p, intensity);
+    setBrightness(scaled.b);
+    setContrast(scaled.c);
+    setSaturation(scaled.s);
+    setSharpness(scaled.sh);
+    setExtraFilters({ sepia: scaled.sepia, hueRotate: scaled.hue, grayscale: scaled.gray });
+    try {
+      localStorage.setItem('mmh_eq_preset', p.id);
+      localStorage.setItem('mmh_eq_intensity', String(intensity));
+      localStorage.setItem('mmh_eq_brightness', String(scaled.b));
+      localStorage.setItem('mmh_eq_contrast', String(scaled.c));
+      localStorage.setItem('mmh_eq_saturation', String(scaled.s));
+      localStorage.setItem('mmh_eq_sharpness', String(scaled.sh));
+      localStorage.setItem('mmh_eq_extra', JSON.stringify({ sepia: scaled.sepia, hueRotate: scaled.hue, grayscale: scaled.gray }));
+    } catch {}
+    showOsd(`Preset: ${p.name} (${intensity}%)`);
+  };
+
+  const handleIntensityChange = (newIntensity) => {
+    setEqIntensity(newIntensity);
+    try { localStorage.setItem('mmh_eq_intensity', String(newIntensity)); } catch {}
+    const currentP = EQ_PRESETS.find((p) => p.id === eqPreset);
+    if (currentP) {
+      applyPreset(currentP, newIntensity);
+    }
+  };
+
+  const handleManualSliderChange = (type, val) => {
+    setEqPreset('custom');
+    try { localStorage.setItem('mmh_eq_preset', 'custom'); } catch {}
+    if (type === 'brightness') {
+      setBrightness(val);
+      try { localStorage.setItem('mmh_eq_brightness', String(val)); } catch {}
+    } else if (type === 'contrast') {
+      setContrast(val);
+      try { localStorage.setItem('mmh_eq_contrast', String(val)); } catch {}
+    } else if (type === 'saturation') {
+      setSaturation(val);
+      try { localStorage.setItem('mmh_eq_saturation', String(val)); } catch {}
+    } else if (type === 'sharpness') {
+      const capped = Math.min(50, Math.max(0, val));
+      setSharpness(capped);
+      try { localStorage.setItem('mmh_eq_sharpness', String(capped)); } catch {}
+    }
+  };
+
   // Reset Video Filters
   const resetFilters = () => {
-    setBrightness(100);
-    setContrast(100);
-    setSaturation(100);
-    showOsd('Reset Video Colors (100%)');
+    setEqIntensity(60);
+    try { localStorage.setItem('mmh_eq_intensity', '60'); } catch {}
+    applyPreset(EQ_PRESETS[0], 60);
+    showOsd('Reset Video Colors (Normal)');
   };
 
   // Launch Desktop PotPlayer
@@ -981,9 +1489,16 @@ export default function VideoPlayer({
   const handleSeekbarClick = (e) => {
     const rect = seekbarRef.current?.getBoundingClientRect();
     const video = videoRef.current;
-    if (!rect || !video || !video.duration) return;
+    const effDuration = duration || video?.duration || 0;
+    if (!rect || !video || !effDuration) return;
     const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    video.currentTime = pos * video.duration;
+    const target = pos * effDuration;
+    if ((isTranscoding || (directUrl && directUrl.includes('/api/transcode/stream'))) && stream?.url) {
+      const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(stream.url)}&audioTrack=${currentAudioTrack || 0}&start=${Math.floor(target)}`;
+      setDirectUrl(transcodeUrl);
+      return;
+    }
+    video.currentTime = target;
   };
 
   const handleSeekbarMouseMove = (e) => {
@@ -998,8 +1513,27 @@ export default function VideoPlayer({
     }
   };
 
-  // CSS Filter string for video element
-  const filterStyle = `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturation}%)`;
+  // Compute dynamic sharpness matrix kernel: center value is 1 + 4*k, neighbors are -k
+  // Scaled moderately for subtle edge refinement without ringing or artifacts (capped at 50% slider)
+  const safeSharpness = Math.min(50, Math.max(0, sharpness));
+  const k = (safeSharpness / 100) * 0.9;
+  const sharpenKernel = `0 -${k.toFixed(2)} 0 -${k.toFixed(2)} ${(1 + 4 * k).toFixed(2)} -${k.toFixed(2)} 0 -${k.toFixed(2)} 0`;
+
+  // CSS Filter string for video element (disabled during Compare hold, or if strictly normal 100/100/100/0)
+  const isDefaultFilter = brightness === 100 && contrast === 100 && saturation === 100 && safeSharpness === 0 && !extraFilters.sepia && !extraFilters.hueRotate && !extraFilters.grayscale;
+  
+  let filterStyle = 'none';
+  if (!isComparing && !isDefaultFilter) {
+    const parts = [];
+    if (safeSharpness > 0) parts.push('url(#video-sharpen)');
+    if (brightness !== 100) parts.push(`brightness(${brightness}%)`);
+    if (contrast !== 100) parts.push(`contrast(${contrast}%)`);
+    if (saturation !== 100) parts.push(`saturate(${saturation}%)`);
+    if (extraFilters.sepia) parts.push(`sepia(${extraFilters.sepia}%)`);
+    if (extraFilters.hueRotate) parts.push(`hue-rotate(${extraFilters.hueRotate}deg)`);
+    if (extraFilters.grayscale) parts.push(`grayscale(${extraFilters.grayscale}%)`);
+    filterStyle = parts.join(' ') || 'none';
+  }
 
   const getAspectClass = () => {
     switch (aspectRatio) {
@@ -1047,6 +1581,16 @@ export default function VideoPlayer({
         !isControlsVisible && isPlaying ? 'cursor-none' : 'cursor-default'
       }`}
     >
+      {/* Inline SVG Sharpness Convolution Filter */}
+      <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden="true">
+        <filter id="video-sharpen" x="0%" y="0%" width="100%" height="100%">
+          <feConvolveMatrix
+            order="3 3"
+            preserveAlpha="true"
+            kernelMatrix={sharpenKernel}
+          />
+        </filter>
+      </svg>
       <input
         ref={fileInputRef}
         type="file"
@@ -1086,7 +1630,7 @@ export default function VideoPlayer({
             </h1>
             <div className="flex items-center gap-2 text-[10px] text-white/60">
               <span className="text-blue-300 font-semibold">{activeStreamInfo.serverName}</span>
-              {directUrl ? (
+              {directUrl && !directUrl.includes('/api/transcode/stream') ? (
                 <span className="rounded bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.2 border border-emerald-400/30">
                   ⚡ PotPlayer Native
                 </span>
@@ -1158,7 +1702,7 @@ export default function VideoPlayer({
                   <div className="mt-1 space-y-1">
                     {allStreams.map((s, idx) => {
                       const info = parseStreamInfo(s);
-                      const isCurrent = (s.url && s.url === stream.url) || idx === 0;
+                      const isCurrent = stream && s.url ? s.url === stream.url : idx === 0;
 
                       return (
                         <button
@@ -1272,9 +1816,13 @@ export default function VideoPlayer({
             ref={videoRef}
             playsInline
             autoPlay
+            crossOrigin={directUrl && (directUrl.includes('/api/proxy/stream') || directUrl.includes('/api/transcode/stream')) ? 'anonymous' : undefined}
             onTimeUpdate={handleTimeUpdate}
+            onWaiting={() => setIsBuffering(true)}
+            onCanPlay={() => setIsBuffering(false)}
             onPlaying={() => {
               setIsPlaying(true);
+              setIsBuffering(false);
               if (stallTimerRef.current) {
                 clearTimeout(stallTimerRef.current);
                 stallTimerRef.current = null;
@@ -1283,9 +1831,29 @@ export default function VideoPlayer({
             onLoadedMetadata={() => {
               const v = videoRef.current;
               if (v) {
-                setDuration(v.duration || 0);
+                if (v.duration && Number.isFinite(v.duration) && v.duration > 0) {
+                  setDuration(v.duration);
+                }
                 v.muted = isMuted;
                 v.volume = isMuted ? 0 : volume;
+                if (v.videoWidth === 0) {
+                  const checkTimer = setTimeout(() => {
+                    if (videoRef.current && videoRef.current.videoWidth === 0 && !videoRef.current.paused && videoRef.current.currentTime > 2) {
+                      if (!autoTranscodeAttemptedRef.current && stream?.url && (!directUrl || !directUrl.includes('/api/transcode/stream'))) {
+                        autoTranscodeAttemptedRef.current = true;
+                        const currentPos = Math.max(0, Math.floor(videoRef.current.currentTime || 0));
+                        const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(stream.url)}&audioTrack=${currentAudioTrack || 0}&start=${currentPos}`;
+                        setIsTranscoding(true);
+                        setDirectUrl(transcodeUrl);
+                        setMkvCodecWarning(false);
+                        showOsd('⚡ Converting to H.264 for web playback...');
+                      } else if (!directUrl?.includes('/api/transcode/stream')) {
+                        setMkvCodecWarning(true);
+                      }
+                    }
+                  }, 4000);
+                  return () => clearTimeout(checkTimer);
+                }
               }
             }}
             onEnded={() => setIsPlaying(false)}
@@ -1317,6 +1885,24 @@ export default function VideoPlayer({
           </div>
         )}
 
+        {/* Live Buffering / Stall Overlay Spinner */}
+        {!isEmbed && isBuffering && !isScanning && (
+          <div className="pointer-events-none absolute inset-0 z-25 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px] animate-fadeIn">
+            <div className="relative flex items-center justify-center">
+              <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin shadow-lg" />
+              <div className="absolute inset-0 grid place-items-center text-lg sm:text-xl font-black text-amber-400 animate-pulse">
+                ⏳
+              </div>
+            </div>
+            <div className="mt-3 flex items-center gap-2 rounded-full bg-black/80 px-4 py-1.5 border border-amber-500/30 shadow-xl backdrop-blur-md">
+              <span className="h-2 w-2 rounded-full bg-amber-400 animate-ping" />
+              <span className="text-xs font-bold tracking-wider text-amber-300 uppercase">
+                Buffering Stream...
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Big Center Play/Pause Ripple on Click */}
         {!isEmbed && !isPlaying && (
           <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/30">
@@ -1328,34 +1914,70 @@ export default function VideoPlayer({
           </div>
         )}
 
-        {/* Live Resource Scanner Overlay */}
-        {isScanning && (
-          <div className="absolute inset-0 z-40 flex flex-col items-center justify-center bg-[#070b14]/95 p-6 backdrop-blur-xl animate-fadeIn text-center">
-            <div className="relative mb-5">
-              <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-full border-4 border-amber-500/20 border-t-amber-400 animate-spin" />
-              <div className="absolute inset-0 grid place-items-center text-xl sm:text-2xl animate-pulse">
-                ⚡
+        {/* Live Resource Scanner Overlay (Removed in favor of clean background stream loading) */}
+
+        {/* MKV / Codec Audio-Only Black Screen Warning Banner */}
+        {mkvCodecWarning && !error && !isTranscoding && (!directUrl || !directUrl.includes('/api/transcode/stream')) && (
+          <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm p-6 text-center animate-fadeIn">
+            <div className="relative max-w-md rounded-2xl bg-[#0f172a] p-6 border border-amber-500/40 text-amber-200 shadow-2xl">
+              <button
+                type="button"
+                onClick={() => setMkvCodecWarning(false)}
+                title="Dismiss Warning (✕)"
+                className="absolute top-3 right-3 grid h-8 w-8 place-items-center rounded-full bg-white/10 text-white/80 hover:bg-amber-600 hover:text-white transition text-sm font-bold shadow-lg"
+              >
+                ✕
+              </button>
+              <div className="text-3xl mb-2">🎬 ⚠️</div>
+              <p className="text-base font-black text-white mb-1">Video Codec Not Supported in Browser</p>
+              <p className="text-xs text-amber-200/90 mb-4 leading-relaxed">
+                Sound is playing, but this video is encoded in <span className="font-bold text-amber-300">MKV / HEVC (H.265)</span> which web browsers cannot display natively.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                <button
+                  onClick={() => {
+                    const raw = stream?.url;
+                    if (raw) {
+                      const currentPos = Math.max(0, Math.floor(videoRef.current?.currentTime || 0));
+                      const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(raw)}&audioTrack=${currentAudioTrack || 0}&start=${currentPos}`;
+                      setIsTranscoding(true);
+                      setDirectUrl(transcodeUrl);
+                      setMkvCodecWarning(false);
+                      showOsd('⚡ Converting to H.264 for browser playback...');
+                    }
+                  }}
+                  className="w-full sm:w-auto rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-500 transition shadow-md flex items-center justify-center gap-1.5"
+                >
+                  <span>⚡ Transcode & Play in Browser (H.264)</span>
+                </button>
+                {allStreams.length > 1 && (
+                  <button
+                    onClick={() => {
+                      setMkvCodecWarning(false);
+                      const altStreams = allStreams.filter(
+                        (s) => s?.url && s.url !== stream?.url && !failedUrlsRef.current.has(s.url)
+                      );
+                      if (altStreams.length > 0) {
+                        handleSwitchServer(altStreams[0]);
+                      } else {
+                        setShowServerMenu(true);
+                      }
+                    }}
+                    className="w-full sm:w-auto rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-500 transition shadow-md flex items-center justify-center gap-1.5"
+                  >
+                    <span>⚡ Try Next MP4 / HLS Server</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    setMkvCodecWarning(false);
+                    launchDesktopPotPlayer();
+                  }}
+                  className="w-full sm:w-auto rounded-xl bg-amber-500 px-4 py-2.5 text-xs font-bold text-black hover:bg-amber-400 transition shadow-md flex items-center justify-center gap-1.5"
+                >
+                  <span>⚡ Desktop PotPlayer (Full Video)</span>
+                </button>
               </div>
-            </div>
-            <h2 className="text-sm sm:text-base md:text-lg font-black text-white tracking-wide">
-              Scanning Live Streaming Sources...
-            </h2>
-            <p className="mt-2 text-xs text-amber-300 font-semibold animate-pulse max-w-md">
-              Hunting live streams & size details across MovieLinkBD (BDIX), HDHub4u, CineFreak, PenguPlay, Sootio...
-            </p>
-            <div className="mt-5 flex flex-wrap justify-center gap-2 max-w-md">
-              <span className="rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-3 py-1 border border-emerald-500/30">
-                🇧🇩 MovieLinkBD BDIX
-              </span>
-              <span className="rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold px-3 py-1 border border-amber-500/30">
-                ⚡ HDHub4u (HubCloud)
-              </span>
-              <span className="rounded-full bg-blue-500/20 text-blue-300 text-[10px] font-bold px-3 py-1 border border-blue-500/30">
-                🎬 CineFreak & UHD
-              </span>
-              <span className="rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-bold px-3 py-1 border border-indigo-500/30">
-                🐧 PenguPlay & Sootio
-              </span>
             </div>
           </div>
         )}
@@ -1569,11 +2191,11 @@ export default function VideoPlayer({
                 )}
               </button>
 
-              <div className="flex items-center gap-1.5 w-16 sm:w-24" onKeyDown={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-1.5 w-20 sm:w-28" onKeyDown={(e) => e.stopPropagation()}>
                 <input
                   type="range"
                   min="0"
-                  max="1"
+                  max="2"
                   step="0.05"
                   value={isMuted ? 0 : volume}
                   onKeyDown={(e) => {
@@ -1593,7 +2215,7 @@ export default function VideoPlayer({
                   }}
                   className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-white/20 accent-amber-400"
                 />
-                <span className="text-[10px] font-mono text-white/70 w-7">
+                <span className={`text-[10px] font-mono min-w-8 ${volume > 1.0 ? 'text-amber-300 font-bold' : 'text-white/70'}`}>
                   {isMuted ? '0%' : `${Math.round(volume * 100)}%`}
                 </span>
               </div>
@@ -1635,21 +2257,93 @@ export default function VideoPlayer({
 
               {/* Color & Equalizer Popover Panel */}
               {showColorPopover && (
-                <div className="absolute right-0 bottom-full mb-2 w-72 rounded-2xl bg-[#0e1424]/95 backdrop-blur-2xl border border-amber-400/40 shadow-2xl p-4 z-50 animate-fadeIn text-xs text-white">
+                <div className="absolute right-0 bottom-full mb-2 w-80 rounded-2xl bg-[#0e1424]/95 backdrop-blur-2xl border border-amber-400/40 shadow-2xl p-4 z-50 animate-fadeIn text-xs text-white">
                   <div className="flex items-center justify-between pb-2 border-b border-white/10 mb-3">
-                    <span className="font-bold text-amber-300 uppercase tracking-wider text-[11px]">
-                      Video Equalizer
-                    </span>
-                    <button
-                      onClick={resetFilters}
-                      title="Reset all to 100% (W)"
-                      className="text-[10px] text-white/60 hover:text-white font-mono underline"
-                    >
-                      Reset (W)
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-amber-300 uppercase tracking-wider text-[11px]">
+                        Video Equalizer
+                      </span>
+                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-amber-200">
+                        {eqPreset === 'custom' ? 'Custom' : (EQ_PRESETS.find(p => p.id === eqPreset)?.name || 'Custom')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {/* Hold to Compare button */}
+                      <button
+                        type="button"
+                        onMouseDown={() => setIsComparing(true)}
+                        onMouseUp={() => setIsComparing(false)}
+                        onMouseLeave={() => setIsComparing(false)}
+                        onTouchStart={() => setIsComparing(true)}
+                        onTouchEnd={() => setIsComparing(false)}
+                        title="Hold to see original video without filters"
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded transition select-none ${
+                          isComparing
+                            ? 'bg-amber-500 text-black'
+                            : 'bg-white/10 text-white/80 hover:bg-white/20'
+                        }`}
+                      >
+                        👁️ Hold Compare
+                      </button>
+                      <button
+                        onClick={resetFilters}
+                        title="Reset all to Normal (W)"
+                        className="text-[10px] text-white/60 hover:text-white font-mono underline"
+                      >
+                        Reset (W)
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-3">
+                    {/* Presets Chips (scrollable row) */}
+                    <div>
+                      <span className="block text-[10px] uppercase font-bold text-white/50 mb-1.5">Color & Cinema Presets</span>
+                      <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin scrollable-container" data-scrollable="true">
+                        {EQ_PRESETS.map((p) => {
+                          const isActive = eqPreset === p.id;
+                          return (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => applyPreset(p)}
+                              className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-bold transition border ${
+                                isActive
+                                  ? 'bg-amber-500 text-black border-amber-400 shadow-sm'
+                                  : 'bg-white/5 hover:bg-white/15 text-white/80 border-white/10'
+                              }`}
+                            >
+                              {p.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Preset Intensity Scaling Slider */}
+                    <div className="bg-white/[0.04] p-2.5 rounded-xl border border-white/10">
+                      <div className="flex justify-between items-center text-white/80 mb-1">
+                        <span className="font-semibold text-amber-300 flex items-center gap-1">
+                          <span>Preset Intensity</span>
+                          <span className="text-[9px] text-white/50">({eqIntensity === 0 ? 'Original' : eqIntensity === 100 ? '100% Full' : 'Scaled'})</span>
+                        </span>
+                        <span className="font-mono text-amber-300 font-bold">{eqIntensity}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={eqIntensity}
+                        onChange={(e) => handleIntensityChange(Number(e.target.value))}
+                        className="w-full accent-amber-400 cursor-pointer"
+                      />
+                      <div className="flex justify-between text-[9px] text-white/40 mt-0.5">
+                        <span>0% (Original)</span>
+                        <span>60% (Natural)</span>
+                        <span>100% (Full)</span>
+                      </div>
+                    </div>
+
                     {/* Brightness */}
                     <div>
                       <div className="flex justify-between text-white/70 mb-1">
@@ -1661,7 +2355,7 @@ export default function VideoPlayer({
                         min="50"
                         max="150"
                         value={brightness}
-                        onChange={(e) => setBrightness(Number(e.target.value))}
+                        onChange={(e) => handleManualSliderChange('brightness', Number(e.target.value))}
                         className="w-full accent-amber-400"
                       />
                     </div>
@@ -1677,7 +2371,7 @@ export default function VideoPlayer({
                         min="50"
                         max="150"
                         value={contrast}
-                        onChange={(e) => setContrast(Number(e.target.value))}
+                        onChange={(e) => handleManualSliderChange('contrast', Number(e.target.value))}
                         className="w-full accent-amber-400"
                       />
                     </div>
@@ -1693,37 +2387,33 @@ export default function VideoPlayer({
                         min="0"
                         max="200"
                         value={saturation}
-                        onChange={(e) => setSaturation(Number(e.target.value))}
+                        onChange={(e) => handleManualSliderChange('saturation', Number(e.target.value))}
                         className="w-full accent-amber-400"
                       />
                     </div>
 
-                    {/* Quick Presets */}
-                    <div className="grid grid-cols-4 gap-1 pt-1 text-[10px] font-bold">
-                      <button
-                        onClick={() => { setBrightness(100); setContrast(100); setSaturation(100); }}
-                        className="py-1 rounded bg-white/10 hover:bg-white/20"
-                      >
-                        Normal
-                      </button>
-                      <button
-                        onClick={() => { setBrightness(110); setContrast(120); setSaturation(130); }}
-                        className="py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-400/30"
-                      >
-                        Vivid
-                      </button>
-                      <button
-                        onClick={() => { setBrightness(95); setContrast(115); setSaturation(105); }}
-                        className="py-1 rounded bg-white/10 hover:bg-white/20"
-                      >
-                        Cinema
-                      </button>
-                      <button
-                        onClick={() => { setBrightness(100); setContrast(120); setSaturation(0); }}
-                        className="py-1 rounded bg-white/10 hover:bg-white/20"
-                      >
-                        B&W
-                      </button>
+                    {/* Sharpness (GPU Convolution) */}
+                    <div>
+                      <div className="flex justify-between text-white/70 mb-1">
+                        <span className="flex items-center gap-1">
+                          <span>Sharpness (GPU)</span>
+                          {sharpness > 0 && <span className="text-[9px] text-amber-400">⚡ Active</span>}
+                        </span>
+                        <span className="font-mono text-amber-300 font-bold">{sharpness}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="50"
+                        value={Math.min(50, sharpness)}
+                        onChange={(e) => handleManualSliderChange('sharpness', Number(e.target.value))}
+                        className="w-full accent-amber-400"
+                      />
+                      <div className="flex justify-between text-[9px] text-white/40 mt-0.5">
+                        <span>0% (Off)</span>
+                        <span>25% (Subtle 4K)</span>
+                        <span>50% (Max Safe)</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1739,16 +2429,19 @@ export default function VideoPlayer({
                   setShowColorPopover(false);
                   setShowSubtitleMenu(false);
                 }}
-                title="Select Audio Track (Language)"
+                title={audioTracks.length > 1 ? 'Select Audio Track (Language)' : 'This source has one audio track. Pick another source for another language.'}
+                aria-label="Select Audio Language Track"
                 className={`rounded-lg px-2.5 py-1 text-xs font-bold border transition flex items-center gap-1 ${
                   showAudioMenu
                     ? 'bg-blue-600 text-white border-blue-400'
-                    : 'bg-white/10 text-white/80 hover:bg-white/20 border-white/15'
+                    : audioTracks.length > 1
+                    ? 'bg-white/10 text-white hover:bg-white/20 border-white/20'
+                    : 'bg-white/5 text-white/60 hover:bg-white/10 border-white/10'
                 }`}
               >
                 <span>🎙 Audio</span>
-                {audioTracks.length > 0 && (
-                  <span className="rounded bg-black/40 px-1 py-0.2 text-[9px] text-blue-300 font-mono">
+                {audioTracks.length > 1 && (
+                  <span className="rounded bg-black/40 px-1 py-0.2 text-[9px] text-blue-300 font-mono font-bold">
                     {audioTracks.length}
                   </span>
                 )}
@@ -1771,8 +2464,11 @@ export default function VideoPlayer({
 
                   <div className="mt-1.5 space-y-1">
                     {audioTracks.length === 0 ? (
-                      <div className="px-2 py-1.5 text-[11px] text-white/60 bg-white/5 rounded-lg">
-                        Direct Stream Track Active
+                      <div className="px-2 py-2 text-[11px] text-white/70 bg-white/5 rounded-lg space-y-1">
+                        <p className="font-semibold text-white/90">Single Audio Track Active</p>
+                        <p className="text-[10px] text-white/50 leading-tight">
+                          This source has one audio track. Pick another source for another language.
+                        </p>
                       </div>
                     ) : (
                       audioTracks.map((track) => (
@@ -2140,6 +2836,35 @@ export default function VideoPlayer({
           <div className="p-4 space-y-4 max-h-80 overflow-y-auto text-xs text-white">
             {activeTab === 'video' && (
               <div className="space-y-3.5">
+                {/* Presets Chips in Control Panel */}
+                <div>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="text-white/70 font-bold">Picture Presets</span>
+                    <span className="text-[10px] font-mono text-amber-300">
+                      {eqPreset === 'custom' ? 'Custom' : (EQ_PRESETS.find(p => p.id === eqPreset)?.name || 'Custom')}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin scrollable-container" data-scrollable="true">
+                    {EQ_PRESETS.map((p) => {
+                      const isActive = eqPreset === p.id;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => applyPreset(p)}
+                          className={`shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-bold transition border ${
+                            isActive
+                              ? 'bg-amber-500 text-black border-amber-400'
+                              : 'bg-white/5 hover:bg-white/15 text-white/80 border-white/10'
+                          }`}
+                        >
+                          {p.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <div>
                   <div className="flex justify-between text-white/70 mb-1">
                     <span>Brightness (E / R)</span>
@@ -2150,7 +2875,7 @@ export default function VideoPlayer({
                     min="50"
                     max="150"
                     value={brightness}
-                    onChange={(e) => setBrightness(Number(e.target.value))}
+                    onChange={(e) => handleManualSliderChange('brightness', Number(e.target.value))}
                     className="w-full accent-amber-400"
                   />
                 </div>
@@ -2165,7 +2890,7 @@ export default function VideoPlayer({
                     min="50"
                     max="150"
                     value={contrast}
-                    onChange={(e) => setContrast(Number(e.target.value))}
+                    onChange={(e) => handleManualSliderChange('contrast', Number(e.target.value))}
                     className="w-full accent-amber-400"
                   />
                 </div>
@@ -2180,43 +2905,139 @@ export default function VideoPlayer({
                     min="0"
                     max="200"
                     value={saturation}
-                    onChange={(e) => setSaturation(Number(e.target.value))}
+                    onChange={(e) => handleManualSliderChange('saturation', Number(e.target.value))}
+                    className="w-full accent-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-white/70 mb-1">
+                    <span className="flex items-center gap-1">
+                      <span>Sharpness (GPU)</span>
+                      {sharpness > 0 && <span className="text-[9px] text-amber-400">⚡ Active</span>}
+                    </span>
+                    <span className="font-mono text-amber-300">{sharpness}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={sharpness}
+                    onChange={(e) => handleManualSliderChange('sharpness', Number(e.target.value))}
                     className="w-full accent-amber-400"
                   />
                 </div>
 
                 <div className="pt-2 flex gap-2">
+                  {/* Compare button in control panel */}
+                  <button
+                    type="button"
+                    onMouseDown={() => setIsComparing(true)}
+                    onMouseUp={() => setIsComparing(false)}
+                    onMouseLeave={() => setIsComparing(false)}
+                    onTouchStart={() => setIsComparing(true)}
+                    onTouchEnd={() => setIsComparing(false)}
+                    className={`flex-1 py-1.5 rounded-lg font-bold transition select-none ${
+                      isComparing
+                        ? 'bg-amber-500 text-black'
+                        : 'bg-white/10 hover:bg-white/20 text-white'
+                    }`}
+                  >
+                    👁️ Hold Compare
+                  </button>
                   <button
                     onClick={resetFilters}
                     className="flex-1 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 font-bold text-white transition"
                   >
-                    Reset Colors (W)
+                    Reset (W)
                   </button>
                   <button
                     onClick={captureSnapshot}
                     className="flex-1 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-300 font-bold transition"
                   >
-                    Capture Snapshot (S)
+                    Snapshot (S)
                   </button>
                 </div>
               </div>
             )}
 
             {activeTab === 'audio' && (
-              <div className="space-y-3">
-                <div className="flex justify-between text-white/70 mb-1">
-                  <span>Native Volume</span>
-                  <span className="font-mono text-amber-300 font-bold">{Math.round(volume * 100)}%</span>
+              <div className="space-y-3.5">
+                <div>
+                  <div className="flex justify-between text-white/70 mb-1">
+                    <span>Master Volume / Boost (0% - 200%)</span>
+                    <span className={`font-mono font-bold ${volume > 1.0 ? 'text-amber-300' : 'text-white'}`}>
+                      {Math.round(volume * 100)}%{volume > 1.0 ? ' ⚡ 200% BOOST' : ''}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="2"
+                    step="0.05"
+                    value={volume}
+                    onChange={(e) => setVolume(parseFloat(e.target.value))}
+                    className="w-full accent-amber-400"
+                  />
+                  <div className="flex justify-between text-[10px] text-white/40 mt-0.5">
+                    <span>0%</span>
+                    <span>100% (Clean)</span>
+                    <span className="text-amber-300 font-semibold">200% (Boost)</span>
+                  </div>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={volume}
-                  onChange={(e) => setVolume(parseFloat(e.target.value))}
-                  className="w-full accent-amber-400"
-                />
+
+                <div className="pt-2 border-t border-white/10">
+                  <span className="block text-white/70 mb-2 font-bold">🎧 Sound Modes & Spatial Effects</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setAudioMode('normal')}
+                      className={`p-2 rounded-lg text-left transition border ${
+                        audioMode === 'normal'
+                          ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold'
+                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="text-xs">🎵 Clean / Standard</div>
+                      <div className="text-[10px] text-white/50">Original pure sound</div>
+                    </button>
+
+                    <button
+                      onClick={() => setAudioMode('bass')}
+                      className={`p-2 rounded-lg text-left transition border ${
+                        audioMode === 'bass'
+                          ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold'
+                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="text-xs">🔊 Deep Bass Boost</div>
+                      <div className="text-[10px] text-white/50">+11dB punch & rumble</div>
+                    </button>
+
+                    <button
+                      onClick={() => setAudioMode('8d')}
+                      className={`p-2 rounded-lg text-left transition border ${
+                        audioMode === '8d'
+                          ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold'
+                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="text-xs">🎧 8D Mode (AirPods)</div>
+                      <div className="text-[10px] text-white/50">360° dynamic rotation</div>
+                    </button>
+
+                    <button
+                      onClick={() => setAudioMode('hall')}
+                      className={`p-2 rounded-lg text-left transition border ${
+                        audioMode === 'hall'
+                          ? 'bg-amber-500/20 border-amber-400 text-amber-300 font-bold'
+                          : 'bg-white/5 border-white/10 text-white/70 hover:bg-white/10'
+                      }`}
+                    >
+                      <div className="text-xs">🏛️ Big Cinema Hall</div>
+                      <div className="text-[10px] text-white/50">Immersive room reverb</div>
+                    </button>
+                  </div>
+                </div>
 
                 <div className="pt-2 border-t border-white/10">
                   <span className="block text-white/70 mb-1 font-bold">Select Audio Language Track</span>

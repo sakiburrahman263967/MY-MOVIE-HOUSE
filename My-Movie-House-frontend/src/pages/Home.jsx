@@ -24,13 +24,20 @@ const isAdultCat = (cat) => {
     t.includes('xhamster') ||
     t.includes('perverzija') ||
     t.includes('actionview') ||
-    t.includes('desisins')
+    t.includes('desisins') ||
+    t.includes('film1k') ||
+    t.includes('aznude') ||
+    t.includes('erotic') ||
+    t.includes('nude') ||
+    t.includes('nsfw') ||
+    (Array.isArray(cat.genres) && cat.genres.some((g) => /adult|erotica|nsfw/i.test(g)))
   );
 };
 
 export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentCategory = searchParams.get('cat') || 'all';
+  const [showAllAdult, setShowAllAdult] = useState(false);
 
   const [allCatalogs, setAllCatalogs] = useState([]);
   const [sliderItems, setSliderItems] = useState([]);
@@ -91,7 +98,21 @@ export default function Home() {
     if (allCatalogs.length === 0) return [];
 
     if (currentCategory === 'adult') {
-      return allCatalogs.filter(isAdultCat);
+      const adultCats = allCatalogs.filter(isAdultCat);
+      if (showAllAdult) return adultCats;
+
+      // Curate top 12 adult channels: prioritize Film1K, AzNude, Eporner, Xvideos, XNXX, JavGuru
+      const priorityOrder = ['film1k', 'aznude', 'eporner', 'xvideos', 'xnxx', 'jav', 'superjav', 'hentai'];
+      const sorted = [...adultCats].sort((a, b) => {
+        const aKey = `${a.addonId} ${a.name}`.toLowerCase();
+        const bKey = `${b.addonId} ${b.name}`.toLowerCase();
+        const aIndex = priorityOrder.findIndex((p) => aKey.includes(p));
+        const bIndex = priorityOrder.findIndex((p) => bKey.includes(p));
+        const aVal = aIndex === -1 ? 999 : aIndex;
+        const bVal = bIndex === -1 ? 999 : bIndex;
+        return aVal - bVal;
+      });
+      return sorted.slice(0, 12);
     }
     if (currentCategory === 'movies') {
       return allCatalogs.filter((c) => c.type === 'movie' && !isAdultCat(c));
@@ -106,11 +127,31 @@ export default function Home() {
     // Default "all" view: Curated mix of Movies, Series, Adult (Eporner, Xvideos, XNXX, JavGuru) and CloudStream
     const regularMovies = allCatalogs.filter((c) => c.type === 'movie' && !isAdultCat(c) && !c.addonId?.startsWith('cloudstream')).slice(0, 5);
     const regularSeries = allCatalogs.filter((c) => (c.type === 'series' || c.type === 'tv') && !isAdultCat(c) && !c.addonId?.startsWith('cloudstream')).slice(0, 4);
-    const adultMix = allCatalogs.filter(isAdultCat).slice(0, 6);
+    // Adult mix removed to keep regular home strictly clean
     const cloudstreamMix = allCatalogs.filter((c) => c.addonId?.startsWith('cloudstream') && !isAdultCat(c)).slice(0, 4);
 
-    return [...regularMovies, ...regularSeries, ...adultMix, ...cloudstreamMix];
-  }, [allCatalogs, currentCategory]);
+    // Clean Home view: NO adult content on regular home
+    let savedSections = null;
+    try {
+      const raw = localStorage.getItem('home_catalog_sections');
+      if (raw) savedSections = JSON.parse(raw);
+    } catch {}
+
+    if (Array.isArray(savedSections) && savedSections.length > 0) {
+      const nonAdultMap = new Map();
+      allCatalogs.forEach((c) => {
+        if (!isAdultCat(c)) nonAdultMap.set(getCatalogKey(c), c);
+      });
+      const userSelected = [];
+      for (const key of savedSections) {
+        const cat = nonAdultMap.get(key);
+        if (cat) userSelected.push(cat);
+      }
+      if (userSelected.length > 0) return userSelected.slice(0, 12);
+    }
+
+    return [...regularMovies, ...regularSeries, ...cloudstreamMix].slice(0, 12);
+  }, [allCatalogs, currentCategory, showAllAdult]);
 
   const prevSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev - 1 + sliderItems.length) % sliderItems.length);
@@ -386,7 +427,7 @@ export default function Home() {
       )}
 
       {/* Category Pills Navigation */}
-      <div className="mb-6 flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+      <div id="category-pills" className="mb-6 flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
         {[
           { id: 'all', label: '🍿 All Content', color: 'blue' },
           { id: 'movies', label: '🎬 Movies', color: 'blue' },
@@ -407,12 +448,52 @@ export default function Home() {
                     : 'bg-blue-600 text-white shadow-lg shadow-blue-600/40'
                   : 'bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10'
               }`}
+              style={
+                isActive && tab.id === 'adult'
+                  ? {
+                      backgroundColor: '#e11d48',
+                      color: '#ffffff',
+                      boxShadow: '0 4px 14px rgba(225, 29, 72, 0.45)'
+                    }
+                  : undefined
+              }
             >
               <span>{tab.label}</span>
             </button>
           );
         })}
       </div>
+
+      {/* Adult Category Controlled Filter Header */}
+      {currentCategory === 'adult' && (
+        <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl bg-gradient-to-r from-rose-950/40 via-slate-900/40 to-slate-950/40 border border-rose-500/30 p-4 shadow-lg backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-rose-600/30 text-rose-300 font-bold border border-rose-500/40 text-base">
+              🔞
+            </span>
+            <div>
+              <h2 className="text-xs sm:text-sm font-bold text-white flex items-center gap-2">
+                <span>{showAllAdult ? 'All Adult & NSFW Channels' : 'Curated Top Adult Channels'}</span>
+                <span className="rounded-full bg-rose-500/25 px-2 py-0.5 text-[10px] font-bold text-rose-300 border border-rose-400/30">
+                  {displayedCatalogs.length} Channels
+                </span>
+              </h2>
+              <p className="text-[11px] text-slate-300 mt-0.5">
+                {showAllAdult
+                  ? 'Showing all installed adult catalogs.'
+                  : 'Showing curated top 12 channels (Film1K, AzNude, Eporner, Xvideos, XNXX, JavGuru).'}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowAllAdult((prev) => !prev)}
+            className="self-start sm:self-center shrink-0 rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-95 text-white px-3.5 py-1.5 text-xs font-bold transition shadow-md shadow-rose-600/30 border border-rose-400/40"
+          >
+            {showAllAdult ? '⚡ Switch to Top 12 Curated' : '📂 Show All 40+ Channels'}
+          </button>
+        </div>
+      )}
 
       {/* Catalog Content Rows */}
       {displayedCatalogs.map((catalog) => (

@@ -4,64 +4,6 @@ import { api } from '../api.js';
 /* ── Popular Addon Presets ── */
 const ADDON_PRESETS = [
   {
-    id: 'tmdb-preset',
-    group: 'TMDB',
-    color: 'from-blue-600/20 to-blue-950/20',
-    accent: '#01b4e4',
-    icon: '🎬',
-    name: 'TMDB Addon',
-    description: 'Official TMDB catalog: trending movies & series, top-rated, upcoming, popular. No API key needed.',
-    url: 'https://94c8cb9f702d-tmdb-addon.baby-beamup.club/manifest.json',
-    badge: 'Free · No Key',
-    fields: [],
-  },
-  {
-    id: 'tmdb-catalog',
-    group: 'TMDB',
-    color: 'from-blue-600/20 to-blue-950/20',
-    accent: '#01b4e4',
-    icon: '🔑',
-    name: 'TMDB with API Key',
-    description: 'Full TMDB catalog with your own API key — unlocks personalized lists, watchlists & account sync.',
-    urlTemplate: 'https://94c8cb9f702d-tmdb-addon.baby-beamup.club/{API_KEY}/manifest.json',
-    badge: 'Requires Key',
-    fields: [
-      { key: 'API_KEY', label: 'TMDB API Key', placeholder: 'e.g. 1cf50e6248dc27062...', type: 'text' },
-    ],
-  },
-  {
-    id: 'trakt-preset',
-    group: 'Trakt.tv',
-    color: 'from-red-600/20 to-red-950/20',
-    accent: '#ed1c24',
-    icon: '📺',
-    name: 'Trakt.tv Addon',
-    description: 'Trakt scrobbling & lists: trending, popular, anticipated movies and shows from Trakt community.',
-    url: 'https://trakt.tv/manifest.json',
-    badge: 'Community Lists',
-    fields: [],
-    altUrls: [
-      { label: 'Stremio-Trakt (main)', url: 'https://stremio-trakt-addon.onrender.com/manifest.json' },
-      { label: 'Deflix Trakt', url: 'https://deflix.tv/stremio-addon/trakt/manifest.json' },
-    ],
-  },
-  {
-    id: 'nuvio-preset',
-    group: 'Nuvio',
-    color: 'from-violet-600/20 to-violet-950/20',
-    accent: '#7c3aed',
-    icon: '💜',
-    name: 'Nuvio Streams',
-    description: 'Nuvio addon — curated streaming sources for movies & series with multi-source fallback.',
-    url: 'https://nuvio.cyou/manifest.json',
-    badge: 'Multi-Source',
-    fields: [],
-    altUrls: [
-      { label: 'Nuvio Main', url: 'https://nuvio.cyou/manifest.json' },
-      { label: 'Nuvio Backup', url: 'https://api.nuvio.cyou/manifest.json' },
-    ],
-  },
-  {
     id: 'torrentio-preset',
     group: 'Torrentio',
     color: 'from-amber-600/20 to-amber-950/20',
@@ -73,9 +15,45 @@ const ADDON_PRESETS = [
     badge: 'Multi-Quality 4K/HD',
     fields: [],
   },
+  {
+    id: 'cyberflix-preset',
+    group: 'CyberFlix',
+    color: 'from-blue-600/20 to-blue-950/20',
+    accent: '#3b82f6',
+    icon: '🌟',
+    name: 'CyberFlix Catalog',
+    description: 'Curated catalogs across Netflix, Disney+, Apple TV+, HBO Max, Amazon Prime, and trending streaming charts.',
+    url: 'https://cyberflix.elfhosted.com/manifest.json',
+    badge: 'Popular Catalogs',
+    fields: [],
+  },
+  {
+    id: 'kitsu-preset',
+    group: 'Anime Kitsu',
+    color: 'from-rose-600/20 to-rose-950/20',
+    accent: '#f43f5e',
+    icon: '🌸',
+    name: 'Anime Kitsu',
+    description: 'Comprehensive Anime catalog from Kitsu.io with trending, top-rated, and seasonal anime releases.',
+    url: 'https://anime-kitsu.strem.fun/manifest.json',
+    badge: 'Anime Catalog',
+    fields: [],
+  },
+  {
+    id: 'mediafusion-preset',
+    group: 'MediaFusion',
+    color: 'from-purple-600/20 to-purple-950/20',
+    accent: '#a855f7',
+    icon: '🚀',
+    name: 'MediaFusion | ElfHosted',
+    description: 'Multi-source streams including live TV, movies, sports, and international regional catalogs.',
+    url: 'https://mediafusion.elfhosted.com/manifest.json',
+    badge: 'Multi-Source',
+    fields: [],
+  },
 ];
 
-const GROUP_ORDER = ['TMDB', 'Torrentio', 'Trakt.tv', 'Nuvio'];
+const GROUP_ORDER = ['Torrentio', 'CyberFlix', 'Anime Kitsu', 'MediaFusion'];
 
 const PRESET_CS_REPOS = [
   {
@@ -91,13 +69,6 @@ const PRESET_CS_REPOS = [
     url: "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/refs/heads/builds/repo.json",
     badge: "🔥 86 Plugins",
     accent: "#f59e0b",
-  },
-  {
-    name: "Hexated CloudStream Extensions",
-    description: "Popular multi-source scrapers for international movies, TV series, and anime.",
-    url: "https://raw.githubusercontent.com/recloudstream/cloudstream-extensions-hexated/master/repo.json",
-    badge: "Multi-Source",
-    accent: "#6366f1",
   }
 ];
 
@@ -826,374 +797,300 @@ export default function Settings() {
         </p>
       </div>
 
-      {/* ══════════════════════════════════════════════ */}
-      {/*  TMDB API CONFIGURATION (PERSISTENT ON DISK)   */}
-      {/* ══════════════════════════════════════════════ */}
-      <section className="spatial-card mb-8 rounded-3xl p-6 sm:p-8 border border-white/15">
-        <div className="flex items-center gap-2.5 mb-2">
-          <span className="grid h-8 w-8 place-items-center rounded-xl bg-blue-600/30 text-blue-300 font-bold border border-blue-400/30">
-            🎬
+
+      {/* ─── VisionOS Quick Jump Bar ─── */}
+      <div className="sticky top-16 z-30 mb-8 flex items-center justify-between gap-2 rounded-2xl border border-white/10 bg-[#0f1422]/90 p-2 backdrop-blur-xl shadow-xl">
+        <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
+          <a
+            href="#section-imports"
+            className="rounded-xl px-3.5 py-2 text-white/80 hover:text-white hover:bg-white/10 transition flex items-center gap-1.5"
+          >
+            <span>📥</span>
+            <span>1. All Imports & Add</span>
+          </a>
+          <a
+            href="#section-resources"
+            className="rounded-xl px-3.5 py-2 text-white/80 hover:text-white hover:bg-white/10 transition flex items-center gap-1.5"
+          >
+            <span>⚡</span>
+            <span>2. Resources ({addons.length + iptvPlaylists.length + csRepos.length})</span>
+          </a>
+          <a
+            href="#section-catalogs"
+            className="rounded-xl px-3.5 py-2 text-white/80 hover:text-white hover:bg-white/10 transition flex items-center gap-1.5"
+          >
+            <span>📚</span>
+            <span>3. Home Catalogs ({enabledSectionKeys.size})</span>
+          </a>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/*  STAGE 1: ALL IMPORTS & ADDS (সব Import ও Add অপশন উপরে)   */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <div id="section-imports" className="mb-14 scroll-mt-24 space-y-8">
+        <div className="flex items-center gap-2.5 border-b border-white/10 pb-3">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-600/30 text-blue-300 font-bold border border-blue-400/30 text-lg">
+            📥
           </span>
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-white">TMDB API Configuration</h2>
+            <h2 className="text-xl sm:text-2xl font-black text-white">1. Add & Import Hub</h2>
             <p className="text-xs text-slate-300">
-              Your TMDB API Key powers official movie/series catalogs, high-res posters, and streaming providers. Saved permanently on disk.
+              All Addon, Live TV, CloudStream Repositories & API imports in one place.
             </p>
           </div>
         </div>
 
-        <form onSubmit={handleSaveTmdbKey} className="mt-4 space-y-3">
-          <div>
-            <label className="block text-xs font-semibold text-slate-200 mb-1.5">
-              TMDB API Key (v3 auth)
-            </label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="text"
-                value={inputTmdbKey}
-                onChange={(e) => setInputTmdbKey(e.target.value)}
-                placeholder="e.g. 1cf50e6248dc270629e802686245c2c8"
-                className="flex-1 spatial-input rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/35 font-mono"
-              />
-              <button
-                type="submit"
-                disabled={savingTmdbKey || !inputTmdbKey.trim()}
-                className="btn-spatial-blue shrink-0 rounded-xl px-5 py-2.5 text-xs sm:text-sm font-bold shadow-md disabled:opacity-50"
-              >
-                {savingTmdbKey ? 'Verifying...' : 'Save & Verify Key'}
-              </button>
-            </div>
-          </div>
-
-          {tmdbKeyMessage.text && (
-            <div className={`rounded-xl p-3 text-xs font-semibold border ${
-              tmdbKeyMessage.type === 'success'
-                ? 'bg-emerald-950/50 text-emerald-300 border-emerald-500/40'
-                : 'bg-rose-950/50 text-rose-300 border-rose-500/40'
-            }`}>
-              {tmdbKeyMessage.text}
-            </div>
-          )}
-
-          <div className="flex flex-wrap items-center justify-between text-[11px] text-white/50 pt-1">
-            <span>
-              Status: <strong className="text-emerald-400 font-semibold">{currentTmdbKey ? 'Active (Saved in config.json)' : 'Default Key Active'}</strong>
-            </span>
-            <a
-              href="https://www.themoviedb.org/settings/api"
-              target="_blank"
-              rel="noreferrer"
-              className="text-blue-400 hover:underline"
-            >
-              Get Free TMDB API Key ↗
-            </a>
-          </div>
-        </form>
-      </section>
-
-      {/* ══════════════════════════════════════════════ */}
-      {/*  CLOUDSTREAM REPOSITORIES & EXTENSIONS         */}
-      {/* ══════════════════════════════════════════════ */}
-      <section className="spatial-card mb-10 rounded-3xl p-6 sm:p-8 border border-emerald-500/25 bg-gradient-to-br from-emerald-950/15 via-black/40 to-slate-950/40">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <div className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-400/30 text-lg">
-              ⚡
-            </span>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg sm:text-xl font-bold text-white">CloudStream & BDIX Extensions</h2>
-                <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-400/30">
-                  Direct Scraping & FTP
-                </span>
-              </div>
-              <p className="text-xs text-slate-300">
-                Install CloudStream .json repositories (like Redowan's BDIX repo) to stream directly from DhakaFlix, ICC FTP, MoviesFlix, EmwBD, and more.
-              </p>
-            </div>
-          </div>
-
+        {/* 1.1 ADD STREMIO ADDON (QUICK INSTALL PRESETS + CUSTOM MANIFEST) */}
+        <div className="space-y-6">
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleToggleCsMaster}
-              className={`rounded-xl px-4 py-2 text-xs font-bold border transition-all flex items-center gap-2 ${
-                csMasterEnabled
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 shadow-lg shadow-emerald-500/10'
-                  : 'bg-rose-500/20 text-rose-300 border-rose-400/40'
-              }`}
-            >
-              <span className={`h-2.5 w-2.5 rounded-full ${csMasterEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`} />
-              <span>{csMasterEnabled ? 'CloudStream Engine: Active' : 'CloudStream Engine: Paused'}</span>
-            </button>
+            <span className="h-4 w-1.5 rounded-full bg-violet-500 shadow-sm shadow-violet-500/50" />
+            <h3 className="text-base sm:text-lg font-bold text-white">Step 1.1: Add Stremio Addon (Presets & Custom)</h3>
           </div>
+      {/* ══════════════════════════════════════════════ */}
+      <section className="mb-10">
+        <div className="mb-4 flex items-center gap-2.5">
+          <span className="h-4 w-1.5 rounded-full bg-violet-500 shadow-sm shadow-violet-500/50" />
+          <h2 className="text-lg sm:text-xl font-bold text-white">Quick Install</h2>
+          <span className="chip rounded-full px-2.5 py-0.5 text-[10px] font-bold text-violet-300">
+            One-Click Setup
+          </span>
         </div>
 
-        {/* Preset Quick Repos */}
-        <div className="mb-6 grid gap-3 sm:grid-cols-2">
-          {PRESET_CS_REPOS.map((preset) => {
-            const isInstalled = csRepos.some((r) => r.url === preset.url || r.rawUrl === preset.url);
-            return (
-              <div
-                key={preset.url}
-                className={`rounded-2xl border p-4 transition-all duration-200 ${
-                  isInstalled
-                    ? 'border-emerald-500/40 bg-emerald-950/20'
-                    : 'border-white/10 bg-white/[0.03] hover:border-white/20'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-white">{preset.name}</span>
-                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-bold text-emerald-300 border border-white/15">
-                        {preset.badge}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-xs text-white/60 leading-relaxed">
-                      {preset.description}
-                    </p>
-                  </div>
-                </div>
+        {presetSuccess && (
+          <div className="mb-4 rounded-xl bg-emerald-950/50 p-3 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
+            ✓ {presetSuccess}
+          </div>
+        )}
+        {presetError && (
+          <div className="mb-4 rounded-xl bg-rose-950/40 p-3 border border-rose-500/30 text-rose-300 text-xs font-medium">
+            {presetError}
+          </div>
+        )}
 
-                <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-2.5">
-                  <span className="truncate text-[10px] font-mono text-white/40 max-w-[200px]">
-                    {preset.url}
-                  </span>
-                  {isInstalled ? (
-                    <span className="rounded-lg bg-emerald-500/20 border border-emerald-400/30 px-3 py-1 text-[11px] font-bold text-emerald-300">
-                      ✓ Installed
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      disabled={csSubmitting}
-                      onClick={() => handleAddCsRepo(preset.url)}
-                      className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 text-[11px] font-bold transition disabled:opacity-50"
-                    >
-                      {csSubmitting ? 'Installing...' : '+ 1-Click Install'}
-                    </button>
-                  )}
-                </div>
+        {GROUP_ORDER.map((group) => {
+          const groupPresets = ADDON_PRESETS.filter((p) => p.group === group);
+          const groupAccent = groupPresets[0]?.accent || '#3b82f6';
+          return (
+            <div key={group} className="mb-6">
+              {/* Group Header */}
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-base font-extrabold text-white">{groupPresets[0]?.icon} {group}</span>
+                <div className="h-px flex-1 bg-white/8" />
               </div>
-            );
-          })}
-        </div>
 
-        {/* Add custom repo form */}
-        <form onSubmit={(e) => { e.preventDefault(); handleAddCsRepo(); }} className="space-y-3 mb-6">
-          <label className="block text-xs font-semibold text-slate-200">
-            Install Custom CloudStream Repository
-          </label>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              type="url"
-              value={csUrl}
-              onChange={(e) => setCsUrl(e.target.value)}
-              placeholder="https://raw.githubusercontent.com/.../repo.json or .../manifest.json"
-              className="flex-1 spatial-input rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/35 font-mono"
-            />
-            <button
-              type="submit"
-              disabled={csSubmitting || !csUrl.trim()}
-              className="btn-spatial-blue shrink-0 rounded-xl px-5 py-2.5 text-xs sm:text-sm font-bold shadow-md disabled:opacity-50 !bg-emerald-600 hover:!bg-emerald-500"
-            >
-              {csSubmitting ? 'Fetching Repo…' : 'Add Repository'}
-            </button>
-          </div>
-          <p className="text-[11px] text-white/50">
-            Supports official CloudStream repo URLs, GitHub links, and auto-strips accidental <code>/manifest.json</code> suffixes.
-          </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {groupPresets.map((preset) => {
+                  const installed = isInstalled(preset);
+                  const isExpanded = expandedPreset === preset.id;
+                  const fields = presetFields[preset.id] || {};
+                  const needsFields = preset.fields?.length > 0;
+                  const hasAlts = preset.altUrls?.length > 0;
+                  const activeUrl = selectedAlt[preset.id] || preset.url || preset.altUrls?.[0]?.url || '';
 
-          {csMessage.text && (
-            <div className={`rounded-xl p-3 text-xs font-semibold border ${
-              csMessage.type === 'success'
-                ? 'bg-emerald-950/50 text-emerald-300 border-emerald-500/40'
-                : 'bg-rose-950/50 text-rose-300 border-rose-500/40'
-            }`}>
-              {csMessage.text}
-            </div>
-          )}
-        </form>
-
-        {/* Installed CloudStream Repos & Plugin Toggles */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white/80">
-              Installed Repositories ({csRepos.length})
-            </h3>
-            {csLoading && (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
-            )}
-          </div>
-
-          {csRepos.length === 0 && !csLoading && (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 text-center text-xs text-white/40">
-              No CloudStream repositories installed yet. Click "1-Click Install" above on Redowan's BDIX Repo to start!
-            </div>
-          )}
-
-          {csRepos.map((repo) => {
-            const isExpanded = expandedRepoId === repo.id;
-            const enabledPluginsCount = (repo.plugins || []).filter((p) => p.enabled !== false).length;
-
-            return (
-              <div
-                key={repo.id}
-                className="rounded-2xl border border-white/15 bg-black/40 overflow-hidden shadow-lg transition-all"
-              >
-                {/* Repo Header */}
-                <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.02] border-b border-white/10">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 mb-1">
-                      <h4 className="font-bold text-white text-base">{repo.name}</h4>
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                        repo.enabled !== false
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
-                          : 'bg-white/5 text-white/40 border border-white/10'
-                      }`}>
-                        {repo.enabled !== false ? '● Active' : '○ Disabled'}
-                      </span>
-                      <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-300 border border-blue-400/30">
-                        {enabledPluginsCount} / {(repo.plugins || []).length} Extensions Active
-                      </span>
-                    </div>
-                    {repo.description && (
-                      <p className="text-xs text-white/60 mb-1">{repo.description}</p>
-                    )}
-                    <span className="text-[10px] font-mono text-white/35 truncate block max-w-md">
-                      {repo.url}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleCsRepo(repo.id)}
-                      className="btn-glass rounded-xl px-3 py-1.5 text-xs font-semibold text-white/80 hover:text-white"
+                  return (
+                    <div
+                      key={preset.id}
+                      className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
+                        installed
+                          ? 'border-emerald-500/30 bg-emerald-950/10'
+                          : isExpanded
+                          ? 'border-blue-500/40 bg-white/[0.04]'
+                          : 'border-white/10 bg-white/[0.02] hover:border-white/20'
+                      }`}
                     >
-                      {repo.enabled !== false ? 'Disable Repo' : 'Enable Repo'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setExpandedRepoId(isExpanded ? null : repo.id)}
-                      className="rounded-xl bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-bold text-white transition"
-                    >
-                      {isExpanded ? 'Hide Extensions ▲' : 'Manage Extensions ▼'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveCsRepo(repo.id)}
-                      className="btn-glass rounded-xl px-3 py-1.5 text-xs font-bold text-rose-300 hover:!bg-rose-950/50 hover:border-rose-400/40"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </div>
+                      {/* Card Top */}
+                      <div className={`bg-gradient-to-br ${preset.color} p-4`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                              <span className="text-sm font-black text-white">{preset.name}</span>
+                              <span
+                                className="rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+                                style={{ background: `${groupAccent}30`, color: groupAccent, border: `1px solid ${groupAccent}40` }}
+                              >
+                                {preset.badge}
+                              </span>
+                              {installed && (
+                                <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold text-emerald-400 border border-emerald-400/30">
+                                  ✓ Installed
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-white/60 leading-relaxed line-clamp-2">
+                              {preset.description}
+                            </p>
+                          </div>
+                        </div>
 
-                {/* Plugins List (Collapsible) */}
-                {isExpanded && (
-                  <div className="p-4 bg-black/20">
-                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs">
-                      <span className="text-white/60">Toggle individual scrapers & FTP servers (Total: {(repo.plugins || []).length}):</span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleEnableAllPlugins(repo.id)}
-                          className="rounded-lg bg-emerald-600/30 hover:bg-emerald-600 border border-emerald-400/30 px-2.5 py-1 text-[11px] font-bold text-emerald-300 hover:text-white transition"
-                        >
-                          ✓ Enable All
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDisableAllPlugins(repo.id)}
-                          className="rounded-lg bg-rose-600/20 hover:bg-rose-600 border border-rose-400/30 px-2.5 py-1 text-[11px] font-bold text-rose-300 hover:text-white transition"
-                        >
-                          ✕ Disable All
-                        </button>
+                        {/* Alt URL selector */}
+                        {hasAlts && isExpanded && (
+                          <div className="mt-3">
+                            <label className="block text-[10px] font-semibold text-white/50 mb-1.5">
+                              Select Server
+                            </label>
+                            <div className="flex flex-wrap gap-1.5">
+                              {preset.altUrls.map((alt) => (
+                                <button
+                                  key={alt.url}
+                                  onClick={() => setSelectedAlt((s) => ({ ...s, [preset.id]: alt.url }))}
+                                  className={`rounded-lg px-2.5 py-1 text-[10px] font-semibold border transition-all ${
+                                    (selectedAlt[preset.id] || preset.altUrls[0]?.url) === alt.url
+                                      ? 'bg-blue-600 border-blue-400/60 text-white'
+                                      : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                                  }`}
+                                >
+                                  {alt.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Field inputs (e.g. API Key) */}
+                        {needsFields && isExpanded && (
+                          <div className="mt-3 space-y-2">
+                            {preset.fields.map((field) => (
+                              <div key={field.key}>
+                                <label className="block text-[10px] font-semibold text-white/50 mb-1">
+                                  {field.label}
+                                </label>
+                                <input
+                                  type={field.type || 'text'}
+                                  value={fields[field.key] || ''}
+                                  onChange={(e) =>
+                                    setPresetFields((s) => ({
+                                      ...s,
+                                      [preset.id]: { ...s[preset.id], [field.key]: e.target.value },
+                                    }))
+                                  }
+                                  placeholder={field.placeholder}
+                                  className="w-full rounded-lg bg-black/30 border border-white/15 px-3 py-1.5 text-xs text-white placeholder-white/25 outline-none focus:border-blue-500"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card Actions */}
+                      <div className="flex items-center gap-2 px-4 py-2.5 bg-black/10 border-t border-white/5">
+                        {/* URL preview */}
+                        {isExpanded && (
+                          <span className="flex-1 truncate text-[9px] font-mono text-white/30">
+                            {activeUrl}
+                          </span>
+                        )}
+
+                        {!isExpanded && (
+                          <span className="flex-1 text-[10px] text-white/40">
+                            {installed ? 'Already in your addon list' : (needsFields || hasAlts ? 'Click Configure to set up' : 'Ready to install')}
+                          </span>
+                        )}
+
+                        {!installed && (
+                          <>
+                            {(needsFields || hasAlts) && (
+                              <button
+                                onClick={() => setExpandedPreset(isExpanded ? null : preset.id)}
+                                className="rounded-lg bg-white/8 border border-white/12 px-3 py-1.5 text-[10px] font-bold text-white/70 hover:bg-white/15 hover:text-white transition"
+                              >
+                                {isExpanded ? 'Collapse' : 'Configure'}
+                              </button>
+                            )}
+                            <button
+                              disabled={presetInstalling === preset.id}
+                              onClick={() => {
+                                if (needsFields || hasAlts) {
+                                  if (!isExpanded) {
+                                    setExpandedPreset(preset.id);
+                                    return;
+                                  }
+                                }
+                                installPreset(preset);
+                              }}
+                              className="rounded-lg px-3 py-1.5 text-[10px] font-bold text-white transition disabled:opacity-60 disabled:cursor-wait"
+                              style={{ background: `${groupAccent}cc`, border: `1px solid ${groupAccent}60` }}
+                            >
+                              {presetInstalling === preset.id ? 'Installing…' : '+ Install'}
+                            </button>
+                          </>
+                        )}
+                        {installed && (
+                          <span className="rounded-lg bg-emerald-500/15 border border-emerald-400/25 px-3 py-1.5 text-[10px] font-bold text-emerald-400">
+                            ✓ Active
+                          </span>
+                        )}
                       </div>
                     </div>
-
-                    <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-3">
-                      {(repo.plugins || []).map((plugin) => {
-                        const pluginId = plugin.internalName || plugin.name;
-                        const isPluginActive = plugin.enabled !== false;
-                        const isBangla = plugin.language === 'bn' || (plugin.name && (plugin.name.toLowerCase().includes('dhaka') || plugin.name.toLowerCase().includes('icc') || plugin.name.toLowerCase().includes('emw')));
-
-                        return (
-                          <div
-                            key={pluginId}
-                            onClick={() => handleToggleCsPlugin(repo.id, pluginId)}
-                            className={`flex cursor-pointer items-center justify-between rounded-xl border p-3 transition-all ${
-                              isPluginActive
-                                ? 'border-emerald-500/35 bg-emerald-950/15 hover:border-emerald-500/50'
-                                : 'border-white/10 bg-white/[0.01] opacity-60 hover:opacity-100 hover:border-white/20'
-                            }`}
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                              {plugin.iconUrl ? (
-                                <img
-                                  src={plugin.iconUrl}
-                                  alt={plugin.name}
-                                  className="h-7 w-7 rounded-lg object-contain bg-black/40 p-0.5 border border-white/10 shrink-0"
-                                  onError={(e) => { e.target.style.display = 'none'; }}
-                                />
-                              ) : (
-                                <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/10 text-xs font-bold text-white/80">
-                                  {plugin.name.charAt(0)}
-                                </div>
-                              )}
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-1.5">
-                                  <span className="truncate text-xs font-bold text-white">
-                                    {plugin.name}
-                                  </span>
-                                  {isBangla && (
-                                    <span className="rounded bg-emerald-500/20 text-emerald-300 px-1 py-0.2 text-[8px] font-bold shrink-0">
-                                      🇧🇩 BDIX
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-1 text-[10px] text-white/40">
-                                  <span>{plugin.language ? plugin.language.toUpperCase() : 'MULTI'}</span>
-                                  {plugin.tvTypes?.length > 0 && (
-                                    <>
-                                      <span>·</span>
-                                      <span className="truncate">{plugin.tvTypes.slice(0, 2).join(', ')}</span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleToggleCsPlugin(repo.id, pluginId);
-                              }}
-                              className={`shrink-0 rounded-lg px-2.5 py-1 text-[10px] font-bold transition ${
-                                isPluginActive
-                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40'
-                                  : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10 hover:text-white'
-                              }`}
-                            >
-                              {isPluginActive ? '✓ ON' : 'OFF'}
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </section>
-
       {/* ══════════════════════════════════════════════ */}
-      {/*  LIVE TV & IPTV (M3U / M3U8 / XTREAM CODES)    */}
+      <form onSubmit={addAddon} className="spatial-card rounded-3xl p-6 sm:p-8 border border-white/15 mb-10">
+        <div className="flex items-center gap-2.5 mb-5">
+          <span className="grid h-8 w-8 place-items-center rounded-xl bg-blue-600/30 text-blue-300 font-bold border border-blue-400/30">
+            +
+          </span>
+          <h2 className="text-lg sm:text-xl font-bold text-white">Install Custom Addon</h2>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="mb-2 block text-xs sm:text-sm font-semibold text-slate-200" htmlFor="addon-url">
+              Manifest URL <span className="text-blue-400">*</span>
+            </label>
+            <input
+              id="addon-url"
+              required
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://v3-cinemeta.strem.io/manifest.json"
+              className="w-full spatial-input rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-white/35"
+            />
+            <p className="mt-1.5 text-[11px] text-slate-400">Enter the HTTPS or HTTP link ending in /manifest.json</p>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-xs sm:text-sm font-semibold text-slate-200" htmlFor="addon-name">
+              Custom Name <span className="text-xs text-white/40 font-normal">(optional)</span>
+            </label>
+            <input
+              id="addon-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. My Favorite Movies Addon"
+              className="w-full spatial-input rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-white/35"
+            />
+          </div>
+        </div>
+
+        {error && (
+          <div className="mt-4 rounded-xl bg-rose-950/40 p-3 border border-rose-500/30 text-rose-300 text-xs font-medium">
+            {error}
+          </div>
+        )}
+
+        <button
+          disabled={submitting}
+          className="btn-spatial-blue mt-6 rounded-xl px-7 py-3 text-xs sm:text-sm font-bold shadow-md disabled:cursor-wait disabled:opacity-60"
+        >
+          {submitting ? 'Verifying Manifest…' : 'Install Addon'}
+        </button>
+      </form>
+        </div>
+
+        {/* 1.2 ADD LIVE TV & IPTV (M3U / M3U8 / XTREAM) */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="h-4 w-1.5 rounded-full bg-red-500 shadow-sm shadow-red-500/50" />
+            <h3 className="text-base sm:text-lg font-bold text-white">Step 1.2: Add Live TV & IPTV Channels</h3>
+          </div>
       {/* ══════════════════════════════════════════════ */}
       <section className="spatial-card mb-10 rounded-3xl p-6 sm:p-8 border border-red-500/30 bg-gradient-to-br from-red-950/20 via-black/45 to-slate-950/45 shadow-2xl">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
@@ -1427,101 +1324,228 @@ export default function Settings() {
             </div>
           )}
         </div>
+        </section>
+        </div>
 
-        {/* ─── Installed Playlists List ─── */}
-        <div className="mt-8 border-t border-white/10 pt-5">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-white">Active Playlists</span>
-              <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-white/70">
-                {iptvPlaylists.length}
-              </span>
-            </div>
-            <span className="text-[11px] text-white/40">
-              Streams play instantly inside My-Movie-House player
+        {/* 1.3 ADD CLOUDSTREAM & BDIX REPOSITORIES */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="h-4 w-1.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
+            <h3 className="text-base sm:text-lg font-bold text-white">Step 1.3: Add CloudStream & BDIX Repository</h3>
+          </div>
+      {/* ══════════════════════════════════════════════ */}
+      <section className="spatial-card mb-10 rounded-3xl p-6 sm:p-8 border border-emerald-500/25 bg-gradient-to-br from-emerald-950/15 via-black/40 to-slate-950/40">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-400/30 text-lg">
+              ⚡
             </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg sm:text-xl font-bold text-white">CloudStream & BDIX Extensions</h2>
+                <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-400/30">
+                  Direct Scraping & FTP
+                </span>
+              </div>
+              <p className="text-xs text-slate-300">
+                Install CloudStream .json repositories (like Redowan's BDIX repo) to stream directly from DhakaFlix, ICC FTP, MoviesFlix, EmwBD, and more.
+              </p>
+            </div>
           </div>
 
-          {iptvPlaylists.length === 0 ? (
-            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 text-center text-xs text-white/50">
-              No IPTV playlists added yet. Click one of the 1-Click presets above or add your M3U link to get started!
-            </div>
-          ) : (
-            <div className="space-y-2.5">
-              {iptvPlaylists.map((pl) => {
-                const isActive = pl.enabled !== false;
-                return (
-                  <div
-                    key={pl.id}
-                    className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border p-4 transition-all duration-200 ${
-                      isActive
-                        ? 'border-red-500/40 bg-red-950/20 shadow-md shadow-red-950/30'
-                        : 'border-white/10 bg-white/[0.02] opacity-60'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3 min-w-0">
-                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-red-600/20 text-red-300 border border-red-500/30 text-base font-bold">
-                        {pl.type === 'xtream' ? '🔑' : '📡'}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleToggleCsMaster}
+              className={`rounded-xl px-4 py-2 text-xs font-bold border transition-all flex items-center gap-2 ${
+                csMasterEnabled
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 shadow-lg shadow-emerald-500/10'
+                  : 'bg-rose-500/20 text-rose-300 border-rose-400/40'
+              }`}
+            >
+              <span className={`h-2.5 w-2.5 rounded-full ${csMasterEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`} />
+              <span>{csMasterEnabled ? 'CloudStream Engine: Active' : 'CloudStream Engine: Paused'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Preset Quick Repos */}
+        <div className="mb-6 grid gap-3 sm:grid-cols-2">
+          {PRESET_CS_REPOS.map((preset) => {
+            const isInstalled = csRepos.some((r) => r.url === preset.url || r.rawUrl === preset.url);
+            return (
+              <div
+                key={preset.url}
+                className={`rounded-2xl border p-4 transition-all duration-200 ${
+                  isInstalled
+                    ? 'border-emerald-500/40 bg-emerald-950/20'
+                    : 'border-white/10 bg-white/[0.03] hover:border-white/20'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-white">{preset.name}</span>
+                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-bold text-emerald-300 border border-white/15">
+                        {preset.badge}
                       </span>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h4 className="text-xs sm:text-sm font-bold text-white truncate">
-                            {pl.name}
-                          </h4>
-                          <span className="rounded-md bg-white/10 px-1.5 py-0.2 text-[9px] uppercase font-bold text-white/70 font-mono">
-                            {pl.type}
-                          </span>
-                          {pl.builtin && (
-                            <span className="rounded-md bg-blue-500/20 text-blue-300 px-1.5 py-0.2 text-[9px] font-bold">
-                              Preset
-                            </span>
-                          )}
-                          {pl.channelCount > 0 && (
-                            <span className="rounded-full bg-emerald-500/20 text-emerald-300 px-2 py-0.2 text-[10px] font-bold border border-emerald-500/30">
-                              {pl.channelCount} Channels
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-white/50 truncate max-w-md font-mono">
-                          {pl.url || pl.serverUrl || (pl.type === 'raw' ? 'Local M3U File / Text' : 'IPTV')}
-                        </p>
-                      </div>
                     </div>
-
-                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleIptv(pl.id)}
-                        className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
-                          isActive
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 hover:bg-emerald-500/30'
-                            : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10 hover:text-white'
-                        }`}
-                      >
-                        {isActive ? '✓ Active' : 'Disabled'}
-                      </button>
-
-                      {!pl.builtin && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveIptv(pl.id)}
-                          title="Remove Playlist"
-                          className="rounded-xl bg-rose-600/20 hover:bg-rose-600 border border-rose-500/30 px-2.5 py-1.5 text-xs font-bold text-rose-300 hover:text-white transition"
-                        >
-                          ✕ Delete
-                        </button>
-                      )}
-                    </div>
+                    <p className="mt-1 text-xs text-white/60 leading-relaxed">
+                      {preset.description}
+                    </p>
                   </div>
-                );
-              })}
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-2.5">
+                  <span className="truncate text-[10px] font-mono text-white/40 max-w-[200px]">
+                    {preset.url}
+                  </span>
+                  {isInstalled ? (
+                    <span className="rounded-lg bg-emerald-500/20 border border-emerald-400/30 px-3 py-1 text-[11px] font-bold text-emerald-300">
+                      ✓ Installed
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={csSubmitting}
+                      onClick={() => handleAddCsRepo(preset.url)}
+                      className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 text-[11px] font-bold transition disabled:opacity-50"
+                    >
+                      {csSubmitting ? 'Installing...' : '+ 1-Click Install'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Add custom repo form */}
+        <form onSubmit={(e) => { e.preventDefault(); handleAddCsRepo(); }} className="space-y-3 mb-6">
+          <label className="block text-xs font-semibold text-slate-200">
+            Install Custom CloudStream Repository
+          </label>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="url"
+              value={csUrl}
+              onChange={(e) => setCsUrl(e.target.value)}
+              placeholder="https://raw.githubusercontent.com/.../repo.json or .../manifest.json"
+              className="flex-1 spatial-input rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/35 font-mono"
+            />
+            <button
+              type="submit"
+              disabled={csSubmitting || !csUrl.trim()}
+              className="btn-spatial-blue shrink-0 rounded-xl px-5 py-2.5 text-xs sm:text-sm font-bold shadow-md disabled:opacity-50 !bg-emerald-600 hover:!bg-emerald-500"
+            >
+              {csSubmitting ? 'Fetching Repo…' : 'Add Repository'}
+            </button>
+          </div>
+          <p className="text-[11px] text-white/50">
+            Supports official CloudStream repo URLs, GitHub links, and auto-strips accidental <code>/manifest.json</code> suffixes.
+          </p>
+
+          {csMessage.text && (
+            <div className={`rounded-xl p-3 text-xs font-semibold border ${
+              csMessage.type === 'success'
+                ? 'bg-emerald-950/50 text-emerald-300 border-emerald-500/40'
+                : 'bg-rose-950/50 text-rose-300 border-rose-500/40'
+            }`}>
+              {csMessage.text}
             </div>
           )}
+        </form>
+        </section>
         </div>
-      </section>
 
+        {/* 1.4 TMDB API KEY CONFIGURATION */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="h-4 w-1.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
+            <h3 className="text-base sm:text-lg font-bold text-white">Step 1.4: TMDB API Key Configuration</h3>
+          </div>
       {/* ══════════════════════════════════════════════ */}
-      {/*  ALL SOURCES & PROVIDERS (SEARCH & ON/OFF)     */}
+      <section className="spatial-card mb-8 rounded-3xl p-6 sm:p-8 border border-white/15">
+        <div className="flex items-center gap-2.5 mb-2">
+          <span className="grid h-8 w-8 place-items-center rounded-xl bg-blue-600/30 text-blue-300 font-bold border border-blue-400/30">
+            🎬
+          </span>
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold text-white">TMDB API Configuration</h2>
+            <p className="text-xs text-slate-300">
+              Your TMDB API Key powers official movie/series catalogs, high-res posters, and streaming providers. Saved permanently on disk.
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSaveTmdbKey} className="mt-4 space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+              TMDB API Key (v3 auth)
+            </label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={inputTmdbKey}
+                onChange={(e) => setInputTmdbKey(e.target.value)}
+                placeholder="e.g. 1cf50e6248dc270629e802686245c2c8"
+                className="flex-1 spatial-input rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/35 font-mono"
+              />
+              <button
+                type="submit"
+                disabled={savingTmdbKey || !inputTmdbKey.trim()}
+                className="btn-spatial-blue shrink-0 rounded-xl px-5 py-2.5 text-xs sm:text-sm font-bold shadow-md disabled:opacity-50"
+              >
+                {savingTmdbKey ? 'Verifying...' : 'Save & Verify Key'}
+              </button>
+            </div>
+          </div>
+
+          {tmdbKeyMessage.text && (
+            <div className={`rounded-xl p-3 text-xs font-semibold border ${
+              tmdbKeyMessage.type === 'success'
+                ? 'bg-emerald-950/50 text-emerald-300 border-emerald-500/40'
+                : 'bg-rose-950/50 text-rose-300 border-rose-500/40'
+            }`}>
+              {tmdbKeyMessage.text}
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between text-[11px] text-white/50 pt-1">
+            <span>
+              Status: <strong className="text-emerald-400 font-semibold">{currentTmdbKey ? 'Active (Saved in config.json)' : 'Default Key Active'}</strong>
+            </span>
+            <a
+              href="https://www.themoviedb.org/settings/api"
+              target="_blank"
+              rel="noreferrer"
+              className="text-blue-400 hover:underline"
+            >
+              Get Free TMDB API Key ↗
+            </a>
+          </div>
+        </form>
+      </section>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/*  STAGE 2: RESOURCES & PROVIDERS (রিসোর্স ও ইনস্টলড ইঞ্জিন)   */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <div id="section-resources" className="mb-14 scroll-mt-24 space-y-8">
+        <div className="flex items-center gap-2.5 border-b border-white/10 pb-3">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-600/30 text-emerald-300 font-bold border border-emerald-400/30 text-lg">
+            ⚡
+          </span>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-white">2. Active Resources & Providers</h2>
+            <p className="text-xs text-slate-300">
+              Real-time monitoring, live latency status, and management of all installed providers, addons, and playlists.
+            </p>
+          </div>
+        </div>
+
+        {/* 2.1 ALL SOURCES & PROVIDERS LIVE DASHBOARD */}
       {/* ══════════════════════════════════════════════ */}
       <section className="spatial-card mb-10 rounded-3xl p-6 sm:p-8 border border-blue-500/30 bg-gradient-to-br from-blue-950/20 via-black/50 to-slate-950/50 shadow-2xl">
         {/* Header */}
@@ -1711,250 +1735,7 @@ export default function Settings() {
         )}
       </section>
 
-      {/* ══════════════════════════════════════════════ */}
-      {/*  QUICK INSTALL — TMDB / Trakt.tv / Nuvio      */}
-      {/* ══════════════════════════════════════════════ */}
-      <section className="mb-10">
-        <div className="mb-4 flex items-center gap-2.5">
-          <span className="h-4 w-1.5 rounded-full bg-violet-500 shadow-sm shadow-violet-500/50" />
-          <h2 className="text-lg sm:text-xl font-bold text-white">Quick Install</h2>
-          <span className="chip rounded-full px-2.5 py-0.5 text-[10px] font-bold text-violet-300">
-            One-Click Setup
-          </span>
-        </div>
-
-        {presetSuccess && (
-          <div className="mb-4 rounded-xl bg-emerald-950/50 p-3 border border-emerald-500/30 text-emerald-300 text-xs font-semibold">
-            ✓ {presetSuccess}
-          </div>
-        )}
-        {presetError && (
-          <div className="mb-4 rounded-xl bg-rose-950/40 p-3 border border-rose-500/30 text-rose-300 text-xs font-medium">
-            {presetError}
-          </div>
-        )}
-
-        {GROUP_ORDER.map((group) => {
-          const groupPresets = ADDON_PRESETS.filter((p) => p.group === group);
-          const groupAccent = groupPresets[0]?.accent || '#3b82f6';
-          return (
-            <div key={group} className="mb-6">
-              {/* Group Header */}
-              <div className="mb-3 flex items-center gap-2">
-                <span className="text-base font-extrabold text-white">{groupPresets[0]?.icon} {group}</span>
-                <div className="h-px flex-1 bg-white/8" />
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                {groupPresets.map((preset) => {
-                  const installed = isInstalled(preset);
-                  const isExpanded = expandedPreset === preset.id;
-                  const fields = presetFields[preset.id] || {};
-                  const needsFields = preset.fields?.length > 0;
-                  const hasAlts = preset.altUrls?.length > 0;
-                  const activeUrl = selectedAlt[preset.id] || preset.url || preset.altUrls?.[0]?.url || '';
-
-                  return (
-                    <div
-                      key={preset.id}
-                      className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
-                        installed
-                          ? 'border-emerald-500/30 bg-emerald-950/10'
-                          : isExpanded
-                          ? 'border-blue-500/40 bg-white/[0.04]'
-                          : 'border-white/10 bg-white/[0.02] hover:border-white/20'
-                      }`}
-                    >
-                      {/* Card Top */}
-                      <div className={`bg-gradient-to-br ${preset.color} p-4`}>
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                              <span className="text-sm font-black text-white">{preset.name}</span>
-                              <span
-                                className="rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider"
-                                style={{ background: `${groupAccent}30`, color: groupAccent, border: `1px solid ${groupAccent}40` }}
-                              >
-                                {preset.badge}
-                              </span>
-                              {installed && (
-                                <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[9px] font-bold text-emerald-400 border border-emerald-400/30">
-                                  ✓ Installed
-                                </span>
-                              )}
-                            </div>
-                            <p className="text-[11px] text-white/60 leading-relaxed line-clamp-2">
-                              {preset.description}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Alt URL selector */}
-                        {hasAlts && isExpanded && (
-                          <div className="mt-3">
-                            <label className="block text-[10px] font-semibold text-white/50 mb-1.5">
-                              Select Server
-                            </label>
-                            <div className="flex flex-wrap gap-1.5">
-                              {preset.altUrls.map((alt) => (
-                                <button
-                                  key={alt.url}
-                                  onClick={() => setSelectedAlt((s) => ({ ...s, [preset.id]: alt.url }))}
-                                  className={`rounded-lg px-2.5 py-1 text-[10px] font-semibold border transition-all ${
-                                    (selectedAlt[preset.id] || preset.altUrls[0]?.url) === alt.url
-                                      ? 'bg-blue-600 border-blue-400/60 text-white'
-                                      : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
-                                  }`}
-                                >
-                                  {alt.label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Field inputs (e.g. API Key) */}
-                        {needsFields && isExpanded && (
-                          <div className="mt-3 space-y-2">
-                            {preset.fields.map((field) => (
-                              <div key={field.key}>
-                                <label className="block text-[10px] font-semibold text-white/50 mb-1">
-                                  {field.label}
-                                </label>
-                                <input
-                                  type={field.type || 'text'}
-                                  value={fields[field.key] || ''}
-                                  onChange={(e) =>
-                                    setPresetFields((s) => ({
-                                      ...s,
-                                      [preset.id]: { ...s[preset.id], [field.key]: e.target.value },
-                                    }))
-                                  }
-                                  placeholder={field.placeholder}
-                                  className="w-full rounded-lg bg-black/30 border border-white/15 px-3 py-1.5 text-xs text-white placeholder-white/25 outline-none focus:border-blue-500"
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Card Actions */}
-                      <div className="flex items-center gap-2 px-4 py-2.5 bg-black/10 border-t border-white/5">
-                        {/* URL preview */}
-                        {isExpanded && (
-                          <span className="flex-1 truncate text-[9px] font-mono text-white/30">
-                            {activeUrl}
-                          </span>
-                        )}
-
-                        {!isExpanded && (
-                          <span className="flex-1 text-[10px] text-white/40">
-                            {installed ? 'Already in your addon list' : (needsFields || hasAlts ? 'Click Configure to set up' : 'Ready to install')}
-                          </span>
-                        )}
-
-                        {!installed && (
-                          <>
-                            {(needsFields || hasAlts) && (
-                              <button
-                                onClick={() => setExpandedPreset(isExpanded ? null : preset.id)}
-                                className="rounded-lg bg-white/8 border border-white/12 px-3 py-1.5 text-[10px] font-bold text-white/70 hover:bg-white/15 hover:text-white transition"
-                              >
-                                {isExpanded ? 'Collapse' : 'Configure'}
-                              </button>
-                            )}
-                            <button
-                              disabled={presetInstalling === preset.id}
-                              onClick={() => {
-                                if (needsFields || hasAlts) {
-                                  if (!isExpanded) {
-                                    setExpandedPreset(preset.id);
-                                    return;
-                                  }
-                                }
-                                installPreset(preset);
-                              }}
-                              className="rounded-lg px-3 py-1.5 text-[10px] font-bold text-white transition disabled:opacity-60 disabled:cursor-wait"
-                              style={{ background: `${groupAccent}cc`, border: `1px solid ${groupAccent}60` }}
-                            >
-                              {presetInstalling === preset.id ? 'Installing…' : '+ Install'}
-                            </button>
-                          </>
-                        )}
-                        {installed && (
-                          <span className="rounded-lg bg-emerald-500/15 border border-emerald-400/25 px-3 py-1.5 text-[10px] font-bold text-emerald-400">
-                            ✓ Active
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })}
-      </section>
-
-      {/* ══════════════════════════════════════════════ */}
-      {/*  MANUAL INSTALL                               */}
-      {/* ══════════════════════════════════════════════ */}
-      <form onSubmit={addAddon} className="spatial-card rounded-3xl p-6 sm:p-8 border border-white/15 mb-10">
-        <div className="flex items-center gap-2.5 mb-5">
-          <span className="grid h-8 w-8 place-items-center rounded-xl bg-blue-600/30 text-blue-300 font-bold border border-blue-400/30">
-            +
-          </span>
-          <h2 className="text-lg sm:text-xl font-bold text-white">Install Custom Addon</h2>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="mb-2 block text-xs sm:text-sm font-semibold text-slate-200" htmlFor="addon-url">
-              Manifest URL <span className="text-blue-400">*</span>
-            </label>
-            <input
-              id="addon-url"
-              required
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://v3-cinemeta.strem.io/manifest.json"
-              className="w-full spatial-input rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-white/35"
-            />
-            <p className="mt-1.5 text-[11px] text-slate-400">Enter the HTTPS or HTTP link ending in /manifest.json</p>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-xs sm:text-sm font-semibold text-slate-200" htmlFor="addon-name">
-              Custom Name <span className="text-xs text-white/40 font-normal">(optional)</span>
-            </label>
-            <input
-              id="addon-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. My Favorite Movies Addon"
-              className="w-full spatial-input rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-white/35"
-            />
-          </div>
-        </div>
-
-        {error && (
-          <div className="mt-4 rounded-xl bg-rose-950/40 p-3 border border-rose-500/30 text-rose-300 text-xs font-medium">
-            {error}
-          </div>
-        )}
-
-        <button
-          disabled={submitting}
-          className="btn-spatial-blue mt-6 rounded-xl px-7 py-3 text-xs sm:text-sm font-bold shadow-md disabled:cursor-wait disabled:opacity-60"
-        >
-          {submitting ? 'Verifying Manifest…' : 'Install Addon'}
-        </button>
-      </form>
-
-      {/* ══════════════════════════════════════════════ */}
-      {/*  INSTALLED ADDONS LIST                        */}
+        {/* 2.2 INSTALLED STREMIO ADDONS LIST */}
       {/* ══════════════════════════════════════════════ */}
       <section>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -2048,8 +1829,364 @@ export default function Settings() {
         )}
       </section>
 
-      {/* ══════════════════════════════════════════════ */}
-      {/*  HOME CATALOG SECTIONS MANAGER (GROUPED ACCORDION) */}
+        {/* 2.3 ACTIVE LIVE TV PLAYLISTS */}
+        <section className="spatial-card mb-8 rounded-3xl p-6 sm:p-8 border border-red-500/30 bg-gradient-to-br from-red-950/20 via-black/45 to-slate-950/45 shadow-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-2xl bg-red-600/30 text-red-300 font-bold border border-red-500/40 text-xl shadow-lg">
+                📡
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg sm:text-xl font-black text-white">Active Live TV Playlists</h3>
+                  <span className="rounded-full bg-red-500/20 px-2.5 py-0.5 text-[11px] font-bold text-red-300 border border-red-400/30">
+                    {iptvPlaylists.length} Playlists
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300">
+                  Live broadcast channels playable in browser with HLS.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={handleRefreshIptvChannels}
+                disabled={iptvRefreshing}
+                className="btn-glass flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold text-white hover:bg-white/15 disabled:opacity-50"
+                title="Reload and verify channels from all active playlists"
+              >
+                <span className={iptvRefreshing ? 'animate-spin' : ''}>🔄</span>
+                <span>{iptvRefreshing ? 'Refreshing...' : 'Refresh Channels'}</span>
+              </button>
+              <a
+                href="/iptv"
+                className="btn-spatial-blue flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold shadow-md shadow-blue-600/30"
+              >
+                <span>📺</span> Open Live TV Page
+              </a>
+            </div>
+          </div>
+        {/* ─── Installed Playlists List ─── */}
+        <div className="mt-8 border-t border-white/10 pt-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-white">Active Playlists</span>
+              <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-white/70">
+                {iptvPlaylists.length}
+              </span>
+            </div>
+            <span className="text-[11px] text-white/40">
+              Streams play instantly inside My-Movie-House player
+            </span>
+          </div>
+
+          {iptvPlaylists.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 text-center text-xs text-white/50">
+              No IPTV playlists added yet. Click one of the 1-Click presets above or add your M3U link to get started!
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {iptvPlaylists.map((pl) => {
+                const isActive = pl.enabled !== false;
+                return (
+                  <div
+                    key={pl.id}
+                    className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border p-4 transition-all duration-200 ${
+                      isActive
+                        ? 'border-red-500/40 bg-red-950/20 shadow-md shadow-red-950/30'
+                        : 'border-white/10 bg-white/[0.02] opacity-60'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3 min-w-0">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-red-600/20 text-red-300 border border-red-500/30 text-base font-bold">
+                        {pl.type === 'xtream' ? '🔑' : '📡'}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h4 className="text-xs sm:text-sm font-bold text-white truncate">
+                            {pl.name}
+                          </h4>
+                          <span className="rounded-md bg-white/10 px-1.5 py-0.2 text-[9px] uppercase font-bold text-white/70 font-mono">
+                            {pl.type}
+                          </span>
+                          {pl.builtin && (
+                            <span className="rounded-md bg-blue-500/20 text-blue-300 px-1.5 py-0.2 text-[9px] font-bold">
+                              Preset
+                            </span>
+                          )}
+                          {pl.channelCount > 0 && (
+                            <span className="rounded-full bg-emerald-500/20 text-emerald-300 px-2 py-0.2 text-[10px] font-bold border border-emerald-500/30">
+                              {pl.channelCount} Channels
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-white/50 truncate max-w-md font-mono">
+                          {pl.url || pl.serverUrl || (pl.type === 'raw' ? 'Local M3U File / Text' : 'IPTV')}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleIptv(pl.id)}
+                        className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                          isActive
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 hover:bg-emerald-500/30'
+                            : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10 hover:text-white'
+                        }`}
+                      >
+                        {isActive ? '✓ Active' : 'Disabled'}
+                      </button>
+
+                      {!pl.builtin && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveIptv(pl.id)}
+                          title="Remove Playlist"
+                          className="rounded-xl bg-rose-600/20 hover:bg-rose-600 border border-rose-500/30 px-2.5 py-1.5 text-xs font-bold text-rose-300 hover:text-white transition"
+                        >
+                          ✕ Delete
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
+        {/* 2.4 INSTALLED CLOUDSTREAM REPOSITORIES & EXTENSIONS */}
+        <section className="spatial-card mb-8 rounded-3xl p-6 sm:p-8 border border-emerald-500/25 bg-gradient-to-br from-emerald-950/15 via-black/40 to-slate-950/40 shadow-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-2.5">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-400/30 text-lg">
+                ⚡
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg sm:text-xl font-bold text-white">Installed CloudStream Repositories & Scrapers</h3>
+                  <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-400/30">
+                    {csRepos.length} Repos Installed
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300">
+                  Manage individual scraping plugins, BDIX mirrors, and FTP providers.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleToggleCsMaster}
+                className={`rounded-xl px-4 py-2 text-xs font-bold border transition-all flex items-center gap-2 ${
+                  csMasterEnabled
+                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 shadow-lg shadow-emerald-500/10'
+                    : 'bg-rose-500/20 text-rose-300 border-rose-400/40'
+                }`}
+              >
+                <span className={`h-2.5 w-2.5 rounded-full ${csMasterEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`} />
+                <span>{csMasterEnabled ? 'CloudStream Engine: Active' : 'CloudStream Engine: Paused'}</span>
+              </button>
+            </div>
+          </div>
+        {/* Installed CloudStream Repos & Plugin Toggles */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-white/80">
+              Installed Repositories ({csRepos.length})
+            </h3>
+            {csLoading && (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+            )}
+          </div>
+
+          {csRepos.length === 0 && !csLoading && (
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 text-center text-xs text-white/40">
+              No CloudStream repositories installed yet. Click "1-Click Install" above on Redowan's BDIX Repo to start!
+            </div>
+          )}
+
+          {csRepos.map((repo) => {
+            const isExpanded = expandedRepoId === repo.id;
+            const enabledPluginsCount = (repo.plugins || []).filter((p) => p.enabled !== false).length;
+
+            return (
+              <div
+                key={repo.id}
+                className="rounded-2xl border border-white/15 bg-black/40 overflow-hidden shadow-lg transition-all"
+              >
+                {/* Repo Header */}
+                <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white/[0.02] border-b border-white/10">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                      <h4 className="font-bold text-white text-base">{repo.name}</h4>
+                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        repo.enabled !== false
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
+                          : 'bg-white/5 text-white/40 border border-white/10'
+                      }`}>
+                        {repo.enabled !== false ? '● Active' : '○ Disabled'}
+                      </span>
+                      <span className="rounded-full bg-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-300 border border-blue-400/30">
+                        {enabledPluginsCount} / {(repo.plugins || []).length} Extensions Active
+                      </span>
+                    </div>
+                    {repo.description && (
+                      <p className="text-xs text-white/60 mb-1">{repo.description}</p>
+                    )}
+                    <span className="text-[10px] font-mono text-white/35 truncate block max-w-md">
+                      {repo.url}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleCsRepo(repo.id)}
+                      className="btn-glass rounded-xl px-3 py-1.5 text-xs font-semibold text-white/80 hover:text-white"
+                    >
+                      {repo.enabled !== false ? 'Disable Repo' : 'Enable Repo'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedRepoId(isExpanded ? null : repo.id)}
+                      className="rounded-xl bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-bold text-white transition"
+                    >
+                      {isExpanded ? 'Hide Extensions ▲' : 'Manage Extensions ▼'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCsRepo(repo.id)}
+                      className="btn-glass rounded-xl px-3 py-1.5 text-xs font-bold text-rose-300 hover:!bg-rose-950/50 hover:border-rose-400/40"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+
+                {/* Plugins List (Collapsible) */}
+                {isExpanded && (
+                  <div className="p-4 bg-black/20">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <span className="text-white/60">Toggle individual scrapers & FTP servers (Total: {(repo.plugins || []).length}):</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEnableAllPlugins(repo.id)}
+                          className="rounded-lg bg-emerald-600/30 hover:bg-emerald-600 border border-emerald-400/30 px-2.5 py-1 text-[11px] font-bold text-emerald-300 hover:text-white transition"
+                        >
+                          ✓ Enable All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDisableAllPlugins(repo.id)}
+                          className="rounded-lg bg-rose-600/20 hover:bg-rose-600 border border-rose-400/30 px-2.5 py-1 text-[11px] font-bold text-rose-300 hover:text-white transition"
+                        >
+                          ✕ Disable All
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-3">
+                      {(repo.plugins || []).map((plugin) => {
+                        const pluginId = plugin.internalName || plugin.name;
+                        const isPluginActive = plugin.enabled !== false;
+                        const isBangla = plugin.language === 'bn' || (plugin.name && (plugin.name.toLowerCase().includes('dhaka') || plugin.name.toLowerCase().includes('icc') || plugin.name.toLowerCase().includes('emw')));
+
+                        return (
+                          <div
+                            key={pluginId}
+                            onClick={() => handleToggleCsPlugin(repo.id, pluginId)}
+                            className={`flex cursor-pointer items-center justify-between rounded-xl border p-3 transition-all ${
+                              isPluginActive
+                                ? 'border-emerald-500/35 bg-emerald-950/15 hover:border-emerald-500/50'
+                                : 'border-white/10 bg-white/[0.01] opacity-60 hover:opacity-100 hover:border-white/20'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                              {plugin.iconUrl ? (
+                                <img
+                                  src={plugin.iconUrl}
+                                  alt={plugin.name}
+                                  className="h-7 w-7 rounded-lg object-contain bg-black/40 p-0.5 border border-white/10 shrink-0"
+                                  onError={(e) => { e.target.style.display = 'none'; }}
+                                />
+                              ) : (
+                                <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/10 text-xs font-bold text-white/80">
+                                  {plugin.name.charAt(0)}
+                                </div>
+                              )}
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="truncate text-xs font-bold text-white">
+                                    {plugin.name}
+                                  </span>
+                                  {isBangla && (
+                                    <span className="rounded bg-emerald-500/20 text-emerald-300 px-1 py-0.2 text-[8px] font-bold shrink-0">
+                                      🇧🇩 BDIX
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1 text-[10px] text-white/40">
+                                  <span>{plugin.language ? plugin.language.toUpperCase() : 'MULTI'}</span>
+                                  {plugin.tvTypes?.length > 0 && (
+                                    <>
+                                      <span>·</span>
+                                      <span className="truncate">{plugin.tvTypes.slice(0, 2).join(', ')}</span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleCsPlugin(repo.id, pluginId);
+                              }}
+                              className={`shrink-0 rounded-lg px-2.5 py-1 text-[10px] font-bold transition ${
+                                isPluginActive
+                                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/40'
+                                  : 'bg-white/5 text-white/40 border border-white/10 hover:bg-white/10 hover:text-white'
+                              }`}
+                            >
+                              {isPluginActive ? '✓ ON' : 'OFF'}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════ */}
+      {/*  STAGE 3: HOME CATALOG SECTIONS (ক্যাটালগ সাজানোর অপশন)     */}
+      {/* ═══════════════════════════════════════════════════════════ */}
+      <div id="section-catalogs" className="scroll-mt-24">
+        <div className="flex items-center gap-2.5 border-b border-white/10 pb-3 mb-6">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-purple-600/30 text-purple-300 font-bold border border-purple-400/30 text-lg">
+            📚
+          </span>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-white">3. Home Catalog Sections Manager</h2>
+            <p className="text-xs text-slate-300">
+              Customize and order which sections and rows appear on the Home page.
+            </p>
+          </div>
+        </div>
       {/* ══════════════════════════════════════════════ */}
       <section className="mt-12">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -2297,6 +2434,7 @@ export default function Settings() {
           })()
         )}
       </section>
+      </div>
     </div>
   );
 }

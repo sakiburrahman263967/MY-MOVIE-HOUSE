@@ -46,37 +46,9 @@
       "enabled": true
     },
     {
-      "id": "e45846af-44a9-4268-a394-77ffe4f43a75",
-      "name": "[HS+] Sootio",
-      "url": "https://sooti.info/%7B%22DebridServices%22%3A%5B%7B%22provider%22%3A%22httpstreaming%22%2C%22http4khdhub%22%3Atrue%2C%22httpHDHub4u%22%3Atrue%2C%22httpUHDMovies%22%3Atrue%2C%22httpMoviesDrive%22%3Atrue%2C%22httpMKVCinemas%22%3Atrue%2C%22httpMalluMv%22%3Atrue%2C%22httpCineDoze%22%3Atrue%2C%22httpVixSrc%22%3Atrue%2C%22httpMoviesMod%22%3Atrue%2C%22httpMoviesLeech%22%3Atrue%2C%22httpAnimeFlix%22%3Atrue%2C%22http111477%22%3Afalse%2C%22httpXDMovies%22%3Afalse%2C%22httpPixeldrain%22%3Atrue%2C%22httpMkvBase%22%3Atrue%2C%22httpVadapav%22%3Afalse%2C%22enableProxy%22%3Afalse%2C%22proxyUrl%22%3A%22%22%2C%22proxyPassword%22%3A%22%22%7D%5D%2C%22Languages%22%3A%5B%5D%2C%22Resolutions%22%3A%5B%221080p%22%2C%22720p%22%2C%22480p%22%5D%2C%22Scrapers%22%3A%5B%221337x%22%2C%22knaben%22%2C%22torrents-csv%22%2C%22rarbg%22%2C%22extto%22%2C%22limetorrents%22%5D%2C%22IndexerScrapers%22%3A%5B%22stremthru%22%5D%2C%22ScrapersConfigured%22%3Atrue%2C%22minSize%22%3A0%2C%22maxSize%22%3A10%2C%22ShowCatalog%22%3Atrue%2C%22ProxyApplyAll%22%3Afalse%2C%22DebridProvider%22%3A%22httpstreaming%22%7D/manifest.json",
-      "enabled": true,
-      "builtin": false
-    },
-    {
-      "id": "18a6d408-340c-4eec-b35c-7964a5eba56e",
-      "name": "PenguPlay",
-      "url": "https://pengu.uk/%7B%22auth_token%22%3A%22aob9jrv4e3YEABGwmp1ouV0Fdmb9xwhsaU4tlW8KRLs%22%7D/manifest.json",
-      "enabled": true,
-      "builtin": false
-    },
-    {
       "id": "b43213ea-da8d-47a7-b8d7-c61c839a7697",
       "name": "Porn Tube",
       "url": "https://ptube.ers.pw/eyJ0YlRva2VuIjoiIiwicmRUb2tlbiI6IiIsImVhc3luZXdzVXNlcm5hbWUiOiIiLCJlYXN5bmV3c1Bhc3N3b3JkIjoiIiwic2l0ZXMiOltdLCJyZXNvbHV0aW9ucyI6WyJIRCIsIkZ1bGxIRCJdLCJoaWRlVG9ycmVudHMiOmZhbHNlLCJzaG93T2xkQ2F0YWxvZyI6ZmFsc2UsInZyIjpmYWxzZSwidGltZXN0YW1wIjoxNzg2OTY5NzUwfQ==/manifest.json",
-      "enabled": true,
-      "builtin": false
-    },
-    {
-      "id": "79b181a6-a58c-427a-a733-2c446b1d89a2",
-      "name": "WebStreamrMBG",
-      "url": "https://87d6a6ef6b58-webstreamrmbg.baby-beamup.club/%7B%22multi%22%3A%22on%22%2C%22hi%22%3A%22on%22%2C%22excludeResolution_2160p%22%3A%22on%22%2C%22excludeResolution_1440p%22%3A%22on%22%7D/manifest.json",
-      "enabled": true,
-      "builtin": false
-    },
-    {
-      "id": "96aa9cd9-8f8b-4536-a630-bdff8eb3aa53",
-      "name": "AIOStreams | ElfHosted",
-      "url": "https://aiostreams.elfhosted.com/stremio/79388bcd-9d57-42fb-b6a9-ae02f135a53b/eyJpIjoiZy9lRmxXNnRBYTZsTFMvdVp3bXJEZz09IiwiZSI6Im5MbVVIVVpPeGg0QS83VmowR3A0M1puaGdtN0pROGtFeUFvMWYyd0dZR0E9IiwidCI6ImEifQ/manifest.json",
       "enabled": true,
       "builtin": false
     },
@@ -88,9 +60,9 @@
       "builtin": false
     },
     {
-      "id": "dd8cc6f7-8da8-48b5-a98c-afe80b0e4686",
-      "name": "sooti",
-      "url": "https://mediafusion.elfhosted.com/manifest.json",
+      "id": "ceee95c8-4ea3-49d8-9f8e-60132411a199",
+      "name": "Flix-Streams Free",
+      "url": "https://free.flixnest.app/eNqNUUluwzAM_IvOCZDIttD6K0VBMBJdC6EkV4vTBf171SxNmuTQkyAOZzCc-RRAKZHPFhnYzgQ0118CZA47MJxyJHQJPOVdiFvR51hoIWCIRJD0SA5FL-RKqpWScnlgLwfLmeJyCunnmRuxEGcpjZleQrSURP_0_AcZ0XtiONBvYOs1F0OApnAW_YCcqhXyuGGCdjuasWxOBo9Tg5bfXcg2-GvkJHs1vxvHf3YuwjI2ks5XpL29tvxO72hAmkLMx7utT7m2ANbUgAcLre6wC4q6N4WqUVE9tsN6Vk37oDqlpVw79VpzvlDL1hEMITqsXsRajrfwR_BUsSmG2RqKwEEj17UpkrPFHbzlGVxTIIUS9b60cyfi-esbJhnVYA/manifest.json",
       "enabled": true,
       "builtin": false
     }
@@ -99,1730 +71,19 @@
     "0763568f-74a1-434c-8130-fac180fd8036:movie:discover_all_movies",
     "0763568f-74a1-434c-8130-fac180fd8036:series:discover_all_series",
     "cloudstream-Zinkmovies:series:cs_Zinkmovies_series",
-    "cloudstream-JAVPoint:movie:cs_JAVPoint_movies",
-    "cloudstream-Cinefreak:movie:cs_Cinefreak_movies",
-    "cloudstream-9kMovies:movie:cs_9kMovies_movies",
-    "tmdb-builtin:movie:tmdb_trending_movies",
-    "tmdb-builtin:movie:tmdb_upcoming_movies",
-    "tmdb-builtin:series:tmdb_trending_series",
-    "tmdb-builtin:movie:tmdb_scifi_movies",
-    "tmdb-builtin:movie:tmdb_animation",
-    "tmdb-builtin:movie:tmdb_hindi_cinema",
-    "tmdb-builtin:series:tmdb_kdrama_series",
-    "tmdb-builtin:series:tmdb_anime_series",
-    "cloudstream-actionviewphotography:movie:cs_actionviewphotography_movies",
-    "cloudstream-AllPornStream:movie:cs_AllPornStream_movies",
-    "cloudstream-AnimeIdHentai:movie:cs_AnimeIdHentai_movies",
-    "cloudstream-Asianpinay:movie:cs_Asianpinay_movies",
-    "cloudstream-Desisins:movie:cs_Desisins_movies",
-    "cloudstream-DesiXFlix:movie:cs_DesiXFlix_movies",
-    "cloudstream-XNXX:movie:cs_XNXX_movies",
-    "cloudstream-XPrimeHub:movie:cs_XPrimeHub_movies",
-    "cloudstream-Xvideos:movie:cs_Xvideos_movies",
-    "cloudstream-Xhamster:movie:cs_Xhamster_movies",
-    "cloudstream-Xmovies4u:movie:cs_Xmovies4u_movies",
-    "cloudstream-Uncut99:movie:cs_Uncut99_movies",
-    "cloudstream-18EU:movie:cs_18EU_movies",
-    "cloudstream-AZNude:movie:cs_AZNude_movies",
+    "cinemeta:movie:top",
+    "cinemeta:series:top",
+    "cinemeta:movie:year",
+    "cinemeta:series:year",
+    "cinemeta:movie:imdbRating",
+    "cinemeta:series:imdbRating",
+    "cinemeta:series:last-videos",
+    "cinemeta:series:calendar-videos",
     "cloudstream-Film1K:movie:cs_Film1K_movies",
-    "cloudstream-TurkHub:movie:cs_TurkHub_movies"
+    "b43213ea-da8d-47a7-b8d7-c61c839a7697:movie:tpdb_catalog"
   ],
-  "updatedAt": "2026-10-21T12:40:02.157Z",
+  "updatedAt": "2026-10-30T11:06:55.862Z",
   "cloudstreamRepos": [
-    {
-      "id": "cs-repo-phisher",
-      "name": "Phisher Repo",
-      "description": "Phisher Repository",
-      "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/refs/heads/builds/repo.json",
-      "enabled": true,
-      "builtin": true,
-      "plugins": [
-        {
-          "id": "AllMovieLandProvider",
-          "name": "AllMovieLandProvider",
-          "internalName": "AllMovieLandProvider",
-          "description": "Indian MultiLanguage Provider (Mostly Hindi)",
-          "language": "hi",
-          "tvTypes": [
-            "Movie",
-            "TvSeries",
-            "Cartoon"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/LikDev-256/likdev256-tamil-providers/master/AllMovieLandProvider/icon.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/AllMovieLandProvider.cs3",
-          "version": 25,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 85605,
-          "enabled": false
-        },
-        {
-          "id": "AllWish",
-          "name": "AllWish",
-          "internalName": "AllWish",
-          "description": "Anime from all-wish.me",
-          "language": "en",
-          "tvTypes": [
-            "All"
-          ],
-          "iconUrl": "https://all-wish.me/assets/logo.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/AllWish.cs3",
-          "version": 18,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 71993,
-          "enabled": false
-        },
-        {
-          "id": "Anichi",
-          "name": "Anichi",
-          "internalName": "Anichi",
-          "description": "AllManga/Mkissa Source",
-          "language": "en",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "OVA"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/Allanime.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Anichi.cs3",
-          "version": 29,
-          "authors": [
-            "Hexated,Phisher98"
-          ],
-          "fileSize": 209794,
-          "enabled": false
-        },
-        {
-          "id": "Anikage",
-          "name": "Anikage",
-          "internalName": "Anikage",
-          "description": "",
-          "language": "en",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "OVA"
-          ],
-          "iconUrl": "https://a.favicon.im/anikage.cc?larger=true",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Anikage.cs3",
-          "version": 8,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 59497,
-          "enabled": false
-        },
-        {
-          "id": "AniKoto",
-          "name": "AniKoto",
-          "internalName": "AniKoto",
-          "description": "AniKoto",
-          "language": "en",
-          "tvTypes": [
-            "Anime",
-            "AnimeMovie"
-          ],
-          "iconUrl": "https://anikototv.to/AnikotoTheme/assets/images/favicon.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/AniKoto.cs3",
-          "version": 6,
-          "authors": [
-            "phisher98"
-          ],
-          "fileSize": 81777,
-          "enabled": false
-        },
-        {
-          "id": "Anilight",
-          "name": "Anilight",
-          "internalName": "Anilight",
-          "description": "Anilight Anime Provider",
-          "language": "en",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "OVA"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/anilight.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Anilight.cs3",
-          "version": 4,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 95159,
-          "enabled": false
-        },
-        {
-          "id": "Animeav1",
-          "name": "Animeav1",
-          "internalName": "Animeav1",
-          "description": "(Mexican) Anime Extension",
-          "language": "mx",
-          "tvTypes": [
-            "Movie",
-            "Anime",
-            "AnimeMovie"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/animeav1.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Animeav1.cs3",
-          "version": 9,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 46518,
-          "enabled": false
-        },
-        {
-          "id": "AnimeCloud",
-          "name": "AnimeCloud",
-          "internalName": "AnimeCloud",
-          "description": "German (Lang) Anime",
-          "language": "de",
-          "tvTypes": [
-            "Anime"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/AnimeCloud.jpg",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/AnimeCloud.cs3",
-          "version": 11,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 63764,
-          "enabled": false
-        },
-        {
-          "id": "AnimeDekhoProvider",
-          "name": "AnimeDekhoProvider",
-          "internalName": "AnimeDekhoProvider",
-          "description": "Includes AnimeDekho,OnePace(DUB,SUB) and HindiSubAnime",
-          "language": "hi",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "Cartoon"
-          ],
-          "iconUrl": "https://animedekho.tv/wp-content/uploads/2026/10/AnimeDekho-Logo.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/AnimeDekhoProvider.cs3",
-          "version": 72,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 147328,
-          "enabled": false
-        },
-        {
-          "id": "Animedubhindi",
-          "name": "Animedubhindi",
-          "internalName": "Animedubhindi",
-          "description": "Anime in Multi Lang",
-          "language": "hi",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "Cartoon"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=animedubhindi.cc&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Animedubhindi.cs3",
-          "version": 9,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 86517,
-          "enabled": false
-        },
-        {
-          "id": "Animekhor",
-          "name": "Animekhor",
-          "internalName": "Animekhor",
-          "description": "Anime and Movies includes (Donghuaword)",
-          "language": "zh",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=animekhor.org&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Animekhor.cs3",
-          "version": 13,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 50899,
-          "enabled": false
-        },
-        {
-          "id": "Animenosub",
-          "name": "Animenosub",
-          "internalName": "Animenosub",
-          "description": "Anime and Movies",
-          "language": "en",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "Cartoon"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=animenosub.to&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Animenosub.cs3",
-          "version": 12,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 82499,
-          "enabled": false
-        },
-        {
-          "id": "AnimePahe",
-          "name": "AnimePahe",
-          "internalName": "AnimePahe",
-          "description": "Animes (SUB/DUB)",
-          "language": "en",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "OVA"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/animepahe.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/AnimePahe.cs3",
-          "version": 47,
-          "authors": [
-            "Cloudburst,Lorem Ipsum,Phisher98"
-          ],
-          "fileSize": 154972,
-          "enabled": false
-        },
-        {
-          "id": "Animesalt",
-          "name": "Animesalt",
-          "internalName": "Animesalt",
-          "description": "Anime/Cartoon in Hindi",
-          "language": "hi",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "Cartoon"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=animesalt.ac&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Animesalt.cs3",
-          "version": 18,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 76588,
-          "enabled": false
-        },
-        {
-          "id": "Animexin",
-          "name": "Animexin",
-          "internalName": "Animexin",
-          "description": "Anime and Movies",
-          "language": "en",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "Cartoon"
-          ],
-          "iconUrl": "https://a.favicon.im/animexin.dev?larger=true",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Animexin.cs3",
-          "version": 16,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 80612,
-          "enabled": false
-        },
-        {
-          "id": "AniSnatch",
-          "name": "AniSnatch",
-          "internalName": "AniSnatch",
-          "description": "AniSnatch - Watch Anime Online Free",
-          "language": "en",
-          "tvTypes": [
-            "Anime",
-            "AnimeMovie",
-            "OVA"
-          ],
-          "iconUrl": "https://a.favicon.im/anisnatch.to?larger=true",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/AniSnatch.cs3",
-          "version": 2,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 119148,
-          "enabled": false
-        },
-        {
-          "id": "AniVortex",
-          "name": "AniVortex",
-          "internalName": "AniVortex",
-          "description": "AniVortex — Anime, movies & TV series streaming",
-          "language": "hi",
-          "tvTypes": [
-            "Anime",
-            "AnimeMovie",
-            "OVA",
-            "TvSeries",
-            "Movie"
-          ],
-          "iconUrl": "https://anivortex.in/images/anivortex_logo_transparent.webp",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/AniVortex.cs3",
-          "version": 10,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 139303,
-          "enabled": false
-        },
-        {
-          "id": "Aniworld",
-          "name": "Aniworld",
-          "internalName": "Aniworld",
-          "description": "Include: Serienstream (Login Required under Extension Settings)",
-          "language": "de",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "OVA"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=aniworld.to&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Aniworld.cs3",
-          "version": 15,
-          "authors": [
-            "Phisher98,Hexated"
-          ],
-          "fileSize": 88698,
-          "enabled": false
-        },
-        {
-          "id": "Anizone",
-          "name": "Anizone",
-          "internalName": "Anizone",
-          "description": "Anizone.to streams latest anime content in multiple language.",
-          "language": "en",
-          "tvTypes": [
-            "Anime"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/anizone.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Anizone.cs3",
-          "version": 10,
-          "authors": [
-            "ycngmn"
-          ],
-          "fileSize": 59427,
-          "enabled": false
-        },
-        {
-          "id": "BanglaPlex",
-          "name": "BanglaPlex",
-          "internalName": "BanglaPlex",
-          "description": "BanglaPlex",
-          "language": "bn",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=banglaplex.click&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/BanglaPlex.cs3",
-          "version": 8,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 48886,
-          "enabled": true
-        },
-        {
-          "id": "Chikianimation",
-          "name": "Chikianimation",
-          "internalName": "Chikianimation",
-          "description": "English anime and donghua from chikianimation.com",
-          "language": "zh",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime"
-          ],
-          "iconUrl": "https://chikianimation.com/wp-content/uploads/2026/03/logo.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Chikianimation.cs3",
-          "version": 2,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 80865,
-          "enabled": false
-        },
-        {
-          "id": "Cinefreak",
-          "name": "Cinefreak",
-          "internalName": "Cinefreak",
-          "description": "Bangla/Hindi Movies/Series",
-          "language": "bn",
-          "tvTypes": [
-            "Movie",
-            "TvSeries",
-            "Anime"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/cinefreak.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Cinefreak.cs3",
-          "version": 21,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 210527,
-          "enabled": false
-        },
-        {
-          "id": "Cinemacity",
-          "name": "Cinemacity",
-          "internalName": "Cinemacity",
-          "description": "Watch Movies & TvSeries (Multi-Lang/Audio)",
-          "language": "en",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=cinemacity.cc&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Cinemacity.cs3",
-          "version": 27,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 132882,
-          "enabled": false
-        },
-        {
-          "id": "Coflix",
-          "name": "Coflix",
-          "internalName": "Coflix",
-          "description": "Movies,Series and Anime French Extension ",
-          "language": "fr",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/Coflix.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Coflix.cs3",
-          "version": 19,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 55994,
-          "enabled": true
-        },
-        {
-          "id": "Comix",
-          "name": "Comix",
-          "internalName": "Comix",
-          "description": "Comix — Read Manga, Manhwa, and Comics directly in CloudStream with custom reader.",
-          "language": "en",
-          "tvTypes": [
-            "Others",
-            "Anime"
-          ],
-          "iconUrl": "https://comix.to/assets/uploads/35595e3de3c99889c1bd2c56f3e3714fc0c457.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Comix.cs3",
-          "version": 3,
-          "authors": [
-            "phisher98"
-          ],
-          "fileSize": 106893,
-          "enabled": false
-        },
-        {
-          "id": "Desicinemas",
-          "name": "Desicinemas",
-          "internalName": "Desicinemas",
-          "description": "Contains BollyZone",
-          "language": "hi",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://desicinemas.to&size=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Desicinemas.cs3",
-          "version": 19,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 71128,
-          "enabled": false
-        },
-        {
-          "id": "Donghuastream",
-          "name": "Donghuastream",
-          "internalName": "Donghuastream",
-          "description": "Contains SeaTV (Chinese)",
-          "language": "zh",
-          "tvTypes": [
-            "Anime"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/Kohi-den/extensions-source/927f9c68fd64ce52f6212ae633d0f0585eca3545/src/en/donghuastream/res/mipmap-xxxhdpi/ic_launcher.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Donghuastream.cs3",
-          "version": 22,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 68292,
-          "enabled": false
-        },
-        {
-          "id": "DoraBash",
-          "name": "DoraBash",
-          "internalName": "DoraBash",
-          "description": "Doremon Show in Hindi",
-          "language": "hi",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "Cartoon"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=dorabash.in&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/DoraBash.cs3",
-          "version": 14,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 121612,
-          "enabled": false
-        },
-        {
-          "id": "DudeFilms",
-          "name": "DudeFilms",
-          "internalName": "DudeFilms",
-          "description": "Watch Movies & TvSeries (Multi-Lang)",
-          "language": "hi",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/dudefilms.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/DudeFilms.cs3",
-          "version": 13,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 102622,
-          "enabled": true
-        },
-        {
-          "id": "Fibwatch",
-          "name": "Fibwatch",
-          "internalName": "Fibwatch",
-          "description": "",
-          "language": "bn",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://f.pondit.xyz/fibwatch-logo.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Fibwatch.cs3",
-          "version": 12,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 71564,
-          "enabled": true
-        },
-        {
-          "id": "Fivemovierulz",
-          "name": "Fivemovierulz",
-          "internalName": "Fivemovierulz",
-          "description": "Movies & Series",
-          "language": "hi",
-          "tvTypes": [
-            "TvSeries",
-            "Movie"
-          ],
-          "iconUrl": "https://i.ibb.co/SwQRhsn/20241016-074942.jpg",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Fivemovierulz.cs3",
-          "version": 8,
-          "authors": [
-            "darkdemon",
-            "Dilip"
-          ],
-          "fileSize": 40291,
-          "enabled": false
-        },
-        {
-          "id": "FourKHDHub",
-          "name": "FourKHDHub",
-          "internalName": "FourKHDHub",
-          "description": "4K Movies Extension by HDHUB4U",
-          "language": "en",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/4KHDHUB-Bright-Logo.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/FourKHDHub.cs3",
-          "version": 41,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 99011,
-          "enabled": true
-        },
-        {
-          "id": "GoldenAudiobooks",
-          "name": "GoldenAudiobooks",
-          "internalName": "GoldenAudiobooks",
-          "description": "GoldenAudiobooks — Free online audiobooks streaming with chapter navigation.",
-          "language": "en",
-          "tvTypes": [
-            "Others"
-          ],
-          "iconUrl": "https://a.favicon.im/goldenaudiobooks.com?larger=true",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/GoldenAudiobooks.cs3",
-          "version": 1,
-          "authors": [
-            "phisher98",
-            "Anonymous Contributor"
-          ],
-          "fileSize": 42280,
-          "enabled": false
-        },
-        {
-          "id": "Goojara",
-          "name": "Goojara",
-          "internalName": "Goojara",
-          "description": "Movies and Series (Mostly 720p)",
-          "language": "en",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=goojara.to/&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Goojara.cs3",
-          "version": 5,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 70500,
-          "enabled": false
-        },
-        {
-          "id": "HDhub4u",
-          "name": "HDhub4u",
-          "internalName": "HDhub4u",
-          "description": "",
-          "language": "hi",
-          "tvTypes": [
-            "Movie",
-            "TvSeries",
-            "Anime"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/HDHUB.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/HDhub4u.cs3",
-          "version": 57,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 115526,
-          "enabled": true
-        },
-        {
-          "id": "Hdmovie2",
-          "name": "Hdmovie2",
-          "internalName": "Hdmovie2",
-          "description": "Hdmovie2",
-          "language": "hi",
-          "tvTypes": [
-            "TvSeries",
-            "Movie"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/hdmovie2.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Hdmovie2.cs3",
-          "version": 6,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 72257,
-          "enabled": true
-        },
-        {
-          "id": "HiAnime",
-          "name": "HiAnime",
-          "internalName": "HiAnime",
-          "description": "",
-          "language": "en",
-          "tvTypes": [
-            "Anime",
-            "OVA"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=hianime.at&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/HiAnime.cs3",
-          "version": 2,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 87083,
-          "enabled": true
-        },
-        {
-          "id": "Hindmoviez",
-          "name": "Hindmoviez",
-          "internalName": "Hindmoviez",
-          "description": "Watch Movies & TvSeries (Multi-Lang)",
-          "language": "hi",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/hindmoviez.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Hindmoviez.cs3",
-          "version": 17,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 86273,
-          "enabled": false
-        },
-        {
-          "id": "IdlixProvider",
-          "name": "IdlixProvider",
-          "internalName": "IdlixProvider",
-          "description": "",
-          "language": "id",
-          "tvTypes": [
-            "TvSeries",
-            "Movie",
-            "Anime",
-            "AsianDrama"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/idlix.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/IdlixProvider.cs3",
-          "version": 17,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 91776,
-          "enabled": false
-        },
-        {
-          "id": "IPTVPlayer",
-          "name": "IPTVPlayer",
-          "internalName": "IPTVPlayer",
-          "description": "IPTV Player",
-          "language": "hi",
-          "tvTypes": [
-            "Live"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/IPTV.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/IPTVPlayer.cs3",
-          "version": 9,
-          "authors": [
-            "Phisher98,Adippe"
-          ],
-          "fileSize": 46940,
-          "enabled": false
-        },
-        {
-          "id": "IStreamFlare",
-          "name": "IStreamFlare",
-          "internalName": "IStreamFlare",
-          "description": "Movies/Series/Anime",
-          "language": "hi",
-          "tvTypes": [
-            "AsianDrama",
-            "TvSeries",
-            "Anime",
-            "Movie",
-            "Cartoon",
-            "AnimeMovie"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/streamflare.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/IStreamFlare.cs3",
-          "version": 6,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 86373,
-          "enabled": false
-        },
-        {
-          "id": "Jellyfin",
-          "name": "Jellyfin",
-          "internalName": "Jellyfin",
-          "description": "Jellyfin is a Free Software Media System that puts you in control of managing and streaming your media",
-          "language": "en",
-          "tvTypes": [
-            "AsianDrama",
-            "TvSeries",
-            "Anime",
-            "Movie",
-            "Cartoon",
-            "AnimeMovie"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/jellyfin.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Jellyfin.cs3",
-          "version": 7,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 98981,
-          "enabled": false
-        },
-        {
-          "id": "Kartoons",
-          "name": "Kartoons",
-          "internalName": "Kartoons",
-          "description": "Kartoons (Cartoon & Animes)",
-          "language": "hi",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "Cartoon"
-          ],
-          "iconUrl": "https://kartoons.me/logo.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Kartoons.cs3",
-          "version": 6,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 125244,
-          "enabled": false
-        },
-        {
-          "id": "Kickassanime",
-          "name": "Kickassanime",
-          "internalName": "Kickassanime",
-          "description": "",
-          "language": "en",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "OVA"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/KAA.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Kickassanime.cs3",
-          "version": 29,
-          "authors": [
-            "Phisher98,Hexated"
-          ],
-          "fileSize": 88441,
-          "enabled": false
-        },
-        {
-          "id": "KisskhProvider",
-          "name": "KisskhProvider",
-          "internalName": "KisskhProvider",
-          "description": "",
-          "language": "en",
-          "tvTypes": [
-            "AsianDrama",
-            "TvSeries",
-            "Anime",
-            "Movie"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=kisskh.co&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/KisskhProvider.cs3",
-          "version": 24,
-          "authors": [
-            "Phisher98,Hexated,Peerless"
-          ],
-          "fileSize": 70144,
-          "enabled": false
-        },
-        {
-          "id": "Latanime",
-          "name": "Latanime",
-          "internalName": "Latanime",
-          "description": "(Mexican) Anime Extension",
-          "language": "mx",
-          "tvTypes": [
-            "Movie",
-            "Anime",
-            "AnimeMovie"
-          ],
-          "iconUrl": "https://latanime.org/img/logito.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Latanime.cs3",
-          "version": 5,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 42041,
-          "enabled": false
-        },
-        {
-          "id": "LayarKacaProvider",
-          "name": "LayarKacaProvider",
-          "internalName": "LayarKacaProvider",
-          "description": "",
-          "language": "id",
-          "tvTypes": [
-            "AsianDrama",
-            "TvSeries",
-            "Movie"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=d21.team&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/LayarKacaProvider.cs3",
-          "version": 10,
-          "authors": [
-            "Hexated,Phisher98"
-          ],
-          "fileSize": 80668,
-          "enabled": false
-        },
-        {
-          "id": "MassTamilanProvider",
-          "name": "MassTamilanProvider",
-          "internalName": "MassTamilanProvider",
-          "description": "Indian Multi-language Music Provider",
-          "language": "ta",
-          "tvTypes": [
-            "Music",
-            "Movie"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/LikDev-256/likdev256-tamil-providers/master/MassTamilanProvider/icon.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/MassTamilanProvider.cs3",
-          "version": 9,
-          "authors": [
-            "Phisher98,LikDev-256"
-          ],
-          "fileSize": 44415,
-          "enabled": false
-        },
-        {
-          "id": "Megakino",
-          "name": "Megakino",
-          "internalName": "Megakino",
-          "description": "Movies,Series and Anime German Extension ",
-          "language": "de",
-          "tvTypes": [
-            "Movie,Anime,Cartoon"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/Megakino.jpg",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Megakino.cs3",
-          "version": 6,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 46978,
-          "enabled": false
-        },
-        {
-          "id": "Microtv",
-          "name": "Microtv",
-          "internalName": "Microtv",
-          "description": "Watch short vertical dramas & reels from multiple Indian short platforms",
-          "language": "hi",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/MicroTV.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Microtv.cs3",
-          "version": 3,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 65305,
-          "enabled": false
-        },
-        {
-          "id": "MovieBoxProvider",
-          "name": "MovieBoxProvider",
-          "internalName": "MovieBoxProvider",
-          "description": "Multi Language Movies and Series Provider",
-          "language": "hi",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/moviebox.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/MovieBoxProvider.cs3",
-          "version": 37,
-          "authors": [
-            "NivinCNC,Phisher98"
-          ],
-          "fileSize": 157871,
-          "enabled": true
-        },
-        {
-          "id": "Movies4u",
-          "name": "Movies4u",
-          "internalName": "Movies4u",
-          "description": "Movies4u",
-          "language": "hi",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/movies4u.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Movies4u.cs3",
-          "version": 18,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 122141,
-          "enabled": true
-        },
-        {
-          "id": "MPlayerProvider",
-          "name": "MPlayerProvider",
-          "internalName": "MPlayerProvider",
-          "description": "Indian Movies/Series/Kdrama(Hindi Dubbed)",
-          "language": "hi",
-          "tvTypes": [
-            "AsianDrama",
-            "TvSeries",
-            "Movie"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=www.mxplayer.in&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/MPlayerProvider.cs3",
-          "version": 9,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 121358,
-          "enabled": false
-        },
-        {
-          "id": "MultiMoviesProvider",
-          "name": "MultiMoviesProvider",
-          "internalName": "MultiMoviesProvider",
-          "description": "Indian Multi-language HD Provider",
-          "language": "hi",
-          "tvTypes": [
-            "Movie",
-            "TvSeries",
-            "Anime"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/LikDev-256/likdev256-tamil-providers/master/MultiMoviesProvider/icon.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/MultiMoviesProvider.cs3",
-          "version": 55,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 143827,
-          "enabled": false
-        },
-        {
-          "id": "Netcinez",
-          "name": "Netcinez",
-          "internalName": "Netcinez",
-          "description": "Movies,Series and Anime Portuguese Extension ",
-          "language": "pt-br",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://cdn.bcdn.zip/wp-content/uploads/2017/04/nc-header-responsive.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Netcinez.cs3",
-          "version": 5,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 43438,
-          "enabled": false
-        },
-        {
-          "id": "ObejrzyjTo",
-          "name": "ObejrzyjTo",
-          "internalName": "ObejrzyjTo",
-          "description": "Obejrzyj.to - Polski serwis z darmowymi filmami i serialami online",
-          "language": "pl",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://www.obejrzyj.to/favicon/icon-512x512.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/ObejrzyjTo.cs3",
-          "version": 3,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 141081,
-          "enabled": false
-        },
-        {
-          "id": "OHLI24",
-          "name": "OHLI24",
-          "internalName": "OHLI24",
-          "description": "Anime and movies with Korean subtitles only (no Korean audio)",
-          "language": "ko",
-          "tvTypes": [
-            "AsianDrama",
-            "TvSeries",
-            "Movie"
-          ],
-          "iconUrl": "https://ani.ohli24.com/img/logo@2x.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/OHLI24.cs3",
-          "version": 7,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 46821,
-          "enabled": false
-        },
-        {
-          "id": "OnePace",
-          "name": "OnePace",
-          "internalName": "OnePace",
-          "description": "One Pace",
-          "language": "en",
-          "tvTypes": [
-            "Anime"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/onepace.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/OnePace.cs3",
-          "version": 23,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 67688,
-          "enabled": false
-        },
-        {
-          "id": "OneTouchTV",
-          "name": "OneTouchTV",
-          "internalName": "OneTouchTV",
-          "description": "Asian Dramas",
-          "language": "en",
-          "tvTypes": [
-            "AsianDrama",
-            "TvSeries"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=onetouchtv.xyz/&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/OneTouchTV.cs3",
-          "version": 5,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 89807,
-          "enabled": false
-        },
-        {
-          "id": "Pencurimovie",
-          "name": "Pencurimovie",
-          "internalName": "Pencurimovie",
-          "description": "Pencurimovie ",
-          "language": "id",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://ww21.pencurimovie.sbs&size=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Pencurimovie.cs3",
-          "version": 8,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 41968,
-          "enabled": false
-        },
-        {
-          "id": "Pinoymoviepedia",
-          "name": "Pinoymoviepedia",
-          "internalName": "Pinoymoviepedia",
-          "description": "Contains Bluray7",
-          "language": "fil",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://pinoymoviepedia.ru&size=16",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Pinoymoviepedia.cs3",
-          "version": 5,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 49180,
-          "enabled": false
-        },
-        {
-          "id": "Piratexplay",
-          "name": "Piratexplay",
-          "internalName": "Piratexplay",
-          "description": "Anime/Cartoon in Hindi",
-          "language": "hi",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "Cartoon"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/piratexplay.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Piratexplay.cs3",
-          "version": 5,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 92102,
-          "enabled": false
-        },
-        {
-          "id": "Pmsm",
-          "name": "Pmsm",
-          "internalName": "Pmsm",
-          "description": "PMSM (Pencuri Movie Sub Malay)",
-          "language": "id",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://ww192.pencurimoviesubmalay.motorcycles&size=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Pmsm.cs3",
-          "version": 8,
-          "authors": [
-            "Phisher98,Duro92"
-          ],
-          "fileSize": 60229,
-          "enabled": false
-        },
-        {
-          "id": "PublicSportsIPTV",
-          "name": "PublicSportsIPTV",
-          "internalName": "PublicSportsIPTV",
-          "description": "Sports Live Streams (FanCode)",
-          "language": "en",
-          "tvTypes": [
-            "Live"
-          ],
-          "iconUrl": "https://www.thestatesman.com/wp-content/uploads/2021/05/fancode.jpg",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/PublicSportsIPTV.cs3",
-          "version": 5,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 51270,
-          "enabled": false
-        },
-        {
-          "id": "QuickIPTV",
-          "name": "QuickIPTV",
-          "internalName": "QuickIPTV",
-          "description": "Includes PirateIPTV,Sports IPTV,Japanese IPTV,Sony IPTV",
-          "language": "en",
-          "tvTypes": [
-            "Live"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=github.com&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/QuickIPTV.cs3",
-          "version": 8,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 50999,
-          "enabled": false
-        },
-        {
-          "id": "Reanime",
-          "name": "Reanime",
-          "internalName": "Reanime",
-          "description": "",
-          "language": "en",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "OVA"
-          ],
-          "iconUrl": "https://reanime.to/favicon.ico",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Reanime.cs3",
-          "version": 3,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 105258,
-          "enabled": false
-        },
-        {
-          "id": "RingZ",
-          "name": "RingZ",
-          "internalName": "RingZ",
-          "description": "Ringz App",
-          "language": "hi",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "Cartoon"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/Ringz.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/RingZ.cs3",
-          "version": 12,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 57082,
-          "enabled": false
-        },
-        {
-          "id": "ShowBox",
-          "name": "ShowBox",
-          "internalName": "ShowBox",
-          "description": "ShowBox (Retrieve the cookie using Login with Google to properly utilize ShowBox.",
-          "language": "en",
-          "tvTypes": [
-            "AsianDrama",
-            "Anime",
-            "TvSeries",
-            "Movie"
-          ],
-          "iconUrl": "https://miro.medium.com/v2/1*DyU8bmnyyEiJbFROEXO2VA.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/ShowBox.cs3",
-          "version": 10,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 148725,
-          "enabled": false
-        },
-        {
-          "id": "StreamPlay",
-          "name": "StreamPlay",
-          "internalName": "StreamPlay",
-          "description": "#1 best extention based on MultiAPI",
-          "language": "en",
-          "tvTypes": [
-            "AsianDrama",
-            "TvSeries",
-            "Anime",
-            "Movie",
-            "Cartoon",
-            "AnimeMovie"
-          ],
-          "iconUrl": "https://i3.wp.com/yt3.googleusercontent.com/ytc/AIdro_nCBArSmvOc6o-k2hTYpLtQMPrKqGtAw_nC20rxm70akA=s900-c-k-c0x00ffffff-no-rj?ssl=1",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/StreamPlay.cs3",
-          "version": 692,
-          "authors": [
-            "Phisher98",
-            "Hexated"
-          ],
-          "fileSize": 2060358,
-          "enabled": false
-        },
-        {
-          "id": "StremioAddon",
-          "name": "StremioAddon",
-          "internalName": "StremioAddon",
-          "description": "[!] Requires Setup \n- Allows you to use any Stremio addon by pasting their manifest.json url",
-          "language": "en",
-          "tvTypes": [
-            "TvSeries",
-            "Movie",
-            "Torrent"
-          ],
-          "iconUrl": "https://files.catbox.moe/ol63rm.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/StremioAddon.cs3",
-          "version": 16,
-          "authors": [
-            "Hexated,phisher98,erynith"
-          ],
-          "fileSize": 111059,
-          "enabled": false
-        },
-        {
-          "id": "StremioX",
-          "name": "StremioX",
-          "internalName": "StremioX",
-          "description": "[!] Requires Setup \n- StremioX allows you to use stream addons \n- StremioC allows you to use catalog addons",
-          "language": "en",
-          "tvTypes": [
-            "TvSeries",
-            "Movie"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/hexated/cloudstream-extensions-hexated/master/StremioX/icon.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/StremioX.cs3",
-          "version": 27,
-          "authors": [
-            "Hexated,phisher98"
-          ],
-          "fileSize": 208865,
-          "enabled": false
-        },
-        {
-          "id": "SuperStream",
-          "name": "SuperStream",
-          "internalName": "SuperStream",
-          "description": "SuperStream (Retrieve the cookie using Login with Google to properly utilize SuperStream.",
-          "language": "en",
-          "tvTypes": [
-            "AsianDrama",
-            "TvSeries",
-            "Anime",
-            "Movie",
-            "Cartoon",
-            "AnimeMovie"
-          ],
-          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://www.showbox.media/&size=256",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/SuperStream.cs3",
-          "version": 38,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 174562,
-          "enabled": false
-        },
-        {
-          "id": "Tamilblasters",
-          "name": "Tamilblasters",
-          "internalName": "Tamilblasters",
-          "description": "Movies & Series",
-          "language": "ta",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://i.postimg.cc/FRwFFtyT/logo.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Tamilblasters.cs3",
-          "version": 12,
-          "authors": [
-            "rockhero1234,phisher98"
-          ],
-          "fileSize": 57816,
-          "enabled": false
-        },
-        {
-          "id": "ToonHub",
-          "name": "ToonHub",
-          "internalName": "ToonHub",
-          "description": "ToonHub4u Multi Language",
-          "language": "hi",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "Cartoon"
-          ],
-          "iconUrl": "https://toonhub4u.co/wp-content/uploads/2024/02/Untitled.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/ToonHub.cs3",
-          "version": 12,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 54043,
-          "enabled": false
-        },
-        {
-          "id": "Toonstream",
-          "name": "Toonstream",
-          "internalName": "Toonstream",
-          "description": "ToonStream Multi Language",
-          "language": "hi",
-          "tvTypes": [
-            "AnimeMovie",
-            "Anime",
-            "Cartoon"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/toonstream.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Toonstream.cs3",
-          "version": 10,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 70110,
-          "enabled": false
-        },
-        {
-          "id": "ToonTales",
-          "name": "ToonTales",
-          "internalName": "ToonTales",
-          "description": "ToonTales",
-          "language": "hi",
-          "tvTypes": [
-            "Cartoon"
-          ],
-          "iconUrl": "https://www.toontales.net/wp-content/themes/toontales/images/logo.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/ToonTales.cs3",
-          "version": 5,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 38280,
-          "enabled": false
-        },
-        {
-          "id": "Topcartoons",
-          "name": "Topcartoons",
-          "internalName": "Topcartoons",
-          "description": "Top Cartoon",
-          "language": "hi",
-          "tvTypes": [
-            "Cartoon"
-          ],
-          "iconUrl": "https://www.topcartoons.tv/wp-content/uploads/logo.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Topcartoons.cs3",
-          "version": 5,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 38395,
-          "enabled": false
-        },
-        {
-          "id": "Topstreamfilm",
-          "name": "Topstreamfilm",
-          "internalName": "Topstreamfilm",
-          "description": "Filme  and Serien (German)",
-          "language": "de",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://www.topstreamfilm.live/templates/topstreamfilm/images/logo-1.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Topstreamfilm.cs3",
-          "version": 9,
-          "authors": [
-            "Phisher"
-          ],
-          "fileSize": 45273,
-          "enabled": false
-        },
-        {
-          "id": "TorraStream",
-          "name": "TorraStream",
-          "internalName": "TorraStream",
-          "description": "#1 Best Extension – MultiAPI-Based with 4K Torrent Support (Debian) Use Extension Settings",
-          "language": "en",
-          "tvTypes": [
-            "Movie",
-            "Torrent",
-            "AsianDrama",
-            "TvSeries",
-            "Anime"
-          ],
-          "iconUrl": "https://torrentio.strem.fun/images/logo_v1.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/TorraStream.cs3",
-          "version": 97,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 242215,
-          "enabled": false
-        },
-        {
-          "id": "UHDmoviesProvider",
-          "name": "UHDmoviesProvider",
-          "internalName": "UHDmoviesProvider",
-          "description": "Indian Multi-language 4K Provider",
-          "language": "en",
-          "tvTypes": [
-            "Movie",
-            "TvSeries"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/LikDev-256/likdev256-tamil-providers/master/UHDmoviesProvider/icon.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/UHDmoviesProvider.cs3",
-          "version": 42,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 86210,
-          "enabled": true
-        },
-        {
-          "id": "Ultima",
-          "name": "Ultima",
-          "internalName": "Ultima",
-          "description": "The ultimate All-in-One home screen to access all of your extensions at one place (You need to select/deselect sections in Ultima's settings to load other extensions on home screen)",
-          "language": "en",
-          "tvTypes": [
-            "All"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/Ultima.jpg",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Ultima.cs3",
-          "version": 70,
-          "authors": [
-            "RowdyRushya,Phisher98"
-          ],
-          "fileSize": 330387,
-          "enabled": false
-        },
-        {
-          "id": "WatchParty",
-          "name": "WatchParty",
-          "internalName": "WatchParty",
-          "description": "Synchronized Watch Party: Watch movies and series together with real-time playback sync, persistent chat window, and host moderation.",
-          "language": "en",
-          "tvTypes": [
-            "All"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/w1.jpg",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/WatchParty.cs3",
-          "version": 2,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 128864,
-          "enabled": false
-        },
-        {
-          "id": "XDMovies",
-          "name": "XDMovies",
-          "internalName": "XDMovies",
-          "description": "Watch Latest Movies",
-          "language": "en",
-          "tvTypes": [
-            "AsianDrama",
-            "TvSeries",
-            "Anime",
-            "Movie",
-            "Cartoon",
-            "AnimeMovie"
-          ],
-          "iconUrl": "https://huh.xdmovies.wtf/assets/logo1.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/XDMovies.cs3",
-          "version": 27,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 162975,
-          "enabled": false
-        },
-        {
-          "id": "YTS",
-          "name": "YTS",
-          "internalName": "YTS",
-          "description": "YTS Movies 4K Support (Torrent)",
-          "language": "en",
-          "tvTypes": [
-            "Movie",
-            "Torrent"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/yts.png",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/YTS.cs3",
-          "version": 11,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 43876,
-          "enabled": false
-        },
-        {
-          "id": "ZDKSerials",
-          "name": "ZDKSerials",
-          "internalName": "ZDKSerials",
-          "description": "",
-          "language": "hi",
-          "tvTypes": [
-            "TvSeries"
-          ],
-          "iconUrl": "https://zdkserials.site/wp-content/uploads/2026/03/cropped-ZD-1-1-192x192.jpg",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/ZDKSerials.cs3",
-          "version": 1,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 49875,
-          "enabled": false
-        },
-        {
-          "id": "Zinkmovies",
-          "name": "Zinkmovies",
-          "internalName": "Zinkmovies",
-          "description": "",
-          "language": "hi",
-          "tvTypes": [
-            "Movie",
-            "TvSeries",
-            "Anime"
-          ],
-          "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/refs/heads/main/Icons/zing.jpg",
-          "url": "https://raw.githubusercontent.com/phisher98/cloudstream-extensions-phisher/builds/Zinkmovies.cs3",
-          "version": 12,
-          "authors": [
-            "Phisher98"
-          ],
-          "fileSize": 141656,
-          "enabled": false
-        }
-      ]
-    },
     {
       "id": "cs-repo-cxxx",
       "name": "CXXX",
@@ -1831,6 +92,24 @@
       "enabled": true,
       "builtin": true,
       "plugins": [
+        {
+          "id": "Aagmaal",
+          "name": "Aagmaal",
+          "internalName": "Aagmaal",
+          "description": "Aagmaal - Indian Hot Hindi Web Series",
+          "language": "hi",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://aagmaall.com/wp-content/uploads/2025/07/cropped-aagmaall.png",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/Aagmaal.cs3",
+          "version": 1,
+          "authors": [
+            "Phisher98"
+          ],
+          "fileSize": 12235,
+          "enabled": true
+        },
         {
           "id": "actionviewphotography",
           "name": "actionviewphotography",
@@ -1886,6 +165,24 @@
           "enabled": true
         },
         {
+          "id": "Archivebate",
+          "name": "Archivebate",
+          "internalName": "Archivebate",
+          "description": "Archived cam shows from Archivebate (archivebate.com)",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=archivebate.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/Archivebate.cs3",
+          "version": 6,
+          "authors": [
+            "Phisher98"
+          ],
+          "fileSize": 37297,
+          "enabled": true
+        },
+        {
           "id": "Asianpinay",
           "name": "Asianpinay",
           "internalName": "Asianpinay",
@@ -1901,6 +198,24 @@
             "Phisher98"
           ],
           "fileSize": 12728,
+          "enabled": true
+        },
+        {
+          "id": "AzNude",
+          "name": "AzNude",
+          "internalName": "AzNude",
+          "description": "AZNude - Nude Celebrities from A to Z",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://cdn.aznude.com/images/logo/v5/main-logo.svg",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/AzNude.cs3",
+          "version": 3,
+          "authors": [
+            "Phisher98"
+          ],
+          "fileSize": 18852,
           "enabled": true
         },
         {
@@ -1937,7 +252,7 @@
             "luck731"
           ],
           "fileSize": 13563,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "CornHubProvider",
@@ -2008,11 +323,29 @@
           ],
           "iconUrl": "https://raw.githubusercontent.com/phisher98/TVVVV/main/eporner.ico",
           "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/Eporner.cs3",
-          "version": 13,
+          "version": 14,
           "authors": [
             "HindiProvider, megix"
           ],
-          "fileSize": 16279,
+          "fileSize": 19126,
+          "enabled": true
+        },
+        {
+          "id": "FamilyPornHD",
+          "name": "FamilyPornHD",
+          "internalName": "FamilyPornHD",
+          "description": "Family-themed HD videos (familypornhd.com) - latest, categories and search",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://familypornhd.com/wp-content/uploads/2024/07/cropped-favicon-192x192.png",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/FamilyPornHD.cs3",
+          "version": 7,
+          "authors": [
+            "Phisher98"
+          ],
+          "fileSize": 49595,
           "enabled": true
         },
         {
@@ -2031,6 +364,24 @@
             "Phisher98"
           ],
           "fileSize": 14600,
+          "enabled": true
+        },
+        {
+          "id": "Freeuseporn",
+          "name": "Freeuseporn",
+          "internalName": "Freeuseporn",
+          "description": "Freeuse, mind-control and hypno porn from freeuseporn.com - latest, categories and search (direct MP4, marked by real resolution)",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.freeuseporn.com/images/favicons/favicon-96x96.png",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/Freeuseporn.cs3",
+          "version": 2,
+          "authors": [
+            "Phisher98"
+          ],
+          "fileSize": 15644,
           "enabled": true
         },
         {
@@ -2070,7 +421,7 @@
             "phisher98"
           ],
           "fileSize": 12110,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Hahomoe",
@@ -2107,7 +458,7 @@
             "Jace"
           ],
           "fileSize": 27234,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Happy2hub",
@@ -2125,7 +476,7 @@
             "Phisher98"
           ],
           "fileSize": 34325,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "HentaiCity",
@@ -2182,6 +533,24 @@
           "enabled": true
         },
         {
+          "id": "HiWebXSeries",
+          "name": "HiWebXSeries",
+          "internalName": "HiWebXSeries",
+          "description": "HiWEBxSERIES - 18+ Desi Web Series from Ullu, Moodx and more",
+          "language": "hi",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://hiwebxseries.hot/wp-content/uploads/2025/08/Hixseries.in-Logo.png",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/HiWebXSeries.cs3",
+          "version": 1,
+          "authors": [
+            "Phisher98"
+          ],
+          "fileSize": 13825,
+          "enabled": true
+        },
+        {
           "id": "Hqporner",
           "name": "Hqporner",
           "internalName": "Hqporner",
@@ -2215,7 +584,7 @@
             "Phisher"
           ],
           "fileSize": 15315,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "IncestFlix",
@@ -2233,7 +602,7 @@
             "Cascade"
           ],
           "fileSize": 25932,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "InternetChicks",
@@ -2258,36 +627,18 @@
           "name": "ixiporn",
           "internalName": "ixiporn",
           "description": "IXI Porn",
-          "language": "en",
+          "language": "hi",
           "tvTypes": [
             "NSFW"
           ],
-          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://ixiporn.org&size=16",
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://ixiporn.live&size=16",
           "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/ixiporn.cs3",
-          "version": 16,
+          "version": 17,
           "authors": [
             "Phisher98"
           ],
-          "fileSize": 11029,
-          "enabled": false
-        },
-        {
-          "id": "JavFreeProvider",
-          "name": "JavFreeProvider",
-          "internalName": "JavFreeProvider",
-          "description": "High quality JAV",
-          "language": "en",
-          "tvTypes": [
-            "NSFW"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=javfree.sh&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/JavFreeProvider.cs3",
-          "version": 9,
-          "authors": [
-            "Jace"
-          ],
-          "fileSize": 17461,
-          "enabled": false
+          "fileSize": 12135,
+          "enabled": true
         },
         {
           "id": "JavGuru",
@@ -2304,7 +655,7 @@
           "authors": [
             "Jace"
           ],
-          "fileSize": 15903,
+          "fileSize": 20183,
           "enabled": true
         },
         {
@@ -2318,13 +669,13 @@
           ],
           "iconUrl": "https://javhd.today/logo/javhd1.png",
           "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/JAVHd.cs3",
-          "version": 8,
+          "version": 9,
           "authors": [
             "luck731",
             "megix"
           ],
-          "fileSize": 22725,
-          "enabled": false
+          "fileSize": 22794,
+          "enabled": true
         },
         {
           "id": "JavMost",
@@ -2355,12 +706,12 @@
           ],
           "iconUrl": "https://www.google.com/s2/favicons?domain=jav.guru&sz=%size%",
           "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/JAVPoint.cs3",
-          "version": 13,
+          "version": 14,
           "authors": [
             "Phisher98"
           ],
-          "fileSize": 44520,
-          "enabled": false
+          "fileSize": 45518,
+          "enabled": true
         },
         {
           "id": "Javtiful",
@@ -2373,12 +724,12 @@
           ],
           "iconUrl": "https://javtiful.com/images/logo/new_jt_logo.png",
           "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/Javtiful.cs3",
-          "version": 2,
+          "version": 3,
           "authors": [
             "Phisher98"
           ],
-          "fileSize": 18514,
-          "enabled": false
+          "fileSize": 17764,
+          "enabled": true
         },
         {
           "id": "Javx",
@@ -2391,12 +742,12 @@
           ],
           "iconUrl": "https://www.google.com/s2/favicons?domain=jav.guru&sz=%size%",
           "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/Javx.cs3",
-          "version": 1,
+          "version": 3,
           "authors": [
             "Jav"
           ],
-          "fileSize": 14990,
-          "enabled": false
+          "fileSize": 15816,
+          "enabled": true
         },
         {
           "id": "KRX18",
@@ -2414,7 +765,7 @@
             "Phisher98"
           ],
           "fileSize": 21354,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Longvideos",
@@ -2432,7 +783,7 @@
             "megix"
           ],
           "fileSize": 10600,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Mangoporn",
@@ -2450,7 +801,7 @@
             "HindiProvider"
           ],
           "fileSize": 20595,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "MissAV",
@@ -2468,7 +819,25 @@
             "luck731"
           ],
           "fileSize": 13503,
-          "enabled": false
+          "enabled": true
+        },
+        {
+          "id": "Mmsvibex",
+          "name": "Mmsvibex",
+          "internalName": "Mmsvibex",
+          "description": "Indian/desi MMS clips and photo albums",
+          "language": "hi",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://cdn.mmsvibex.fit/favicon.png",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/Mmsvibex.cs3",
+          "version": 2,
+          "authors": [
+            "Phisher98"
+          ],
+          "fileSize": 13764,
+          "enabled": true
         },
         {
           "id": "NetflavProvider",
@@ -2504,7 +873,7 @@
             "Phisher98, Coxju, megix"
           ],
           "fileSize": 11437,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Onlyjerk",
@@ -2522,25 +891,7 @@
             "megix"
           ],
           "fileSize": 10767,
-          "enabled": false
-        },
-        {
-          "id": "OpJav",
-          "name": "OpJav",
-          "internalName": "OpJav",
-          "description": "Old JAV",
-          "language": "en",
-          "tvTypes": [
-            "NSFW"
-          ],
-          "iconUrl": "https://www.google.com/s2/favicons?domain=opjav.com&sz=%size%",
-          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/OpJav.cs3",
-          "version": 7,
-          "authors": [
-            "Jace"
-          ],
-          "fileSize": 18317,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Paradisehill",
@@ -2558,7 +909,7 @@
             "Sora"
           ],
           "fileSize": 12681,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Perverzija",
@@ -2630,7 +981,7 @@
             "Phisher98, Coxju"
           ],
           "fileSize": 14013,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Pornhoarder",
@@ -2702,7 +1053,7 @@
             "HindiProvider"
           ],
           "fileSize": 11679,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "PornOne",
@@ -2738,7 +1089,7 @@
             "Coxju"
           ],
           "fileSize": 12795,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Sextb",
@@ -2756,7 +1107,7 @@
             "luck731"
           ],
           "fileSize": 12852,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "spankbang",
@@ -2769,12 +1120,12 @@
           ],
           "iconUrl": "https://logos-world.net/wp-content/uploads/2023/01/SpankBang-Logo.png",
           "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/spankbang.cs3",
-          "version": 10,
+          "version": 12,
           "authors": [
             "Phisher98"
           ],
-          "fileSize": 22585,
-          "enabled": false
+          "fileSize": 23716,
+          "enabled": true
         },
         {
           "id": "SuperJav",
@@ -2787,11 +1138,11 @@
           ],
           "iconUrl": "https://www.google.com/s2/favicons?domain=supjav.com&sz=%size%",
           "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/SuperJav.cs3",
-          "version": 5,
+          "version": 7,
           "authors": [
             "Phisher98"
           ],
-          "fileSize": 20194,
+          "fileSize": 20906,
           "enabled": true
         },
         {
@@ -2828,7 +1179,7 @@
             "Phisher98"
           ],
           "fileSize": 22963,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "TrendyPorn",
@@ -2846,7 +1197,7 @@
             "megix"
           ],
           "fileSize": 9245,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Uncut99",
@@ -2882,7 +1233,7 @@
             "Coxju"
           ],
           "fileSize": 10912,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Vlxx",
@@ -2901,7 +1252,7 @@
             "Jace"
           ],
           "fileSize": 16490,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Whoreshub",
@@ -2919,7 +1270,7 @@
             "megix"
           ],
           "fileSize": 11987,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Xhamster",
@@ -2955,7 +1306,7 @@
             "Phisher98"
           ],
           "fileSize": 9831,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Xmovies4u",
@@ -2991,7 +1342,7 @@
             "SIX"
           ],
           "fileSize": 22205,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "XNXX",
@@ -3045,7 +1396,7 @@
             "phisher98"
           ],
           "fileSize": 12594,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Xvideos",
@@ -3081,7 +1432,7 @@
             "megix"
           ],
           "fileSize": 10150,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "YMaal",
@@ -3102,14 +1453,6 @@
           "enabled": true
         }
       ]
-    },
-    {
-      "id": "cs-repo-hexated",
-      "name": "Hexated Official CloudStream Repository",
-      "description": "Multilingual Global Providers (SuperStream, Sflix, MovieBox, Anime)",
-      "url": "https://raw.githubusercontent.com/hexated/cloudstream-extensions-hexated/master/repo.json",
-      "enabled": false,
-      "builtin": true
     },
     {
       "id": "cs-repo-1792289622061",
@@ -3137,7 +1480,7 @@
             "NivinCNC"
           ],
           "fileSize": 66292,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "AnimeSuge",
@@ -3157,7 +1500,7 @@
             "NivinCNC"
           ],
           "fileSize": 61531,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "BilibiliProvider",
@@ -3216,7 +1559,7 @@
             "NivinCNC"
           ],
           "fileSize": 59963,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "CineVoodProvider",
@@ -3228,14 +1571,14 @@
             "Movie",
             "TvSeries"
           ],
-          "iconUrl": "https://cinevood.chat/cinevood-logo.webp",
+          "iconUrl": "https://cinevood.garden/cinevood-logo.webp",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/CineVoodProvider.cs3",
-          "version": 3,
+          "version": 6,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 112044,
-          "enabled": false
+          "fileSize": 120428,
+          "enabled": true
         },
         {
           "id": "CNC Verse",
@@ -3268,11 +1611,11 @@
           ],
           "iconUrl": "https://github.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/raw/refs/heads/master/Logos/CNC%20Verse%20Mobile/logo.jpeg",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/CNC Verse Mobile.cs3",
-          "version": 12,
+          "version": 13,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 97534,
+          "fileSize": 98226,
           "enabled": true
         },
         {
@@ -3286,11 +1629,11 @@
           ],
           "iconUrl": "https://cricfy.pro/wp-content/uploads/2024/11/cropped-cricfytv-2.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/CricifyProvider.cs3",
-          "version": 74,
+          "version": 76,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 117254,
+          "fileSize": 117712,
           "enabled": true
         },
         {
@@ -3309,7 +1652,7 @@
             "NivinCNC"
           ],
           "fileSize": 59363,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "DoFlixProvider",
@@ -3328,7 +1671,7 @@
             "NivinCNC"
           ],
           "fileSize": 98897,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "EinthusanProvider",
@@ -3346,7 +1689,7 @@
             "NivinCNC"
           ],
           "fileSize": 40093,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "GoldenAudiobook",
@@ -3364,7 +1707,7 @@
             "NivinCNC"
           ],
           "fileSize": 38034,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "HDOProvider",
@@ -3404,7 +1747,7 @@
             "Hexated, NivinCNC"
           ],
           "fileSize": 60045,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "LibriVoxAudiobook",
@@ -3422,7 +1765,7 @@
             "NivinCNC"
           ],
           "fileSize": 36138,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "LivXowProvider",
@@ -3435,12 +1778,12 @@
           ],
           "iconUrl": "https://www.livxow.site/logo.jpg",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/LivXowProvider.cs3",
-          "version": 23,
+          "version": 25,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 127401,
-          "enabled": false
+          "fileSize": 127811,
+          "enabled": true
         },
         {
           "id": "M3UPlaylistPlayerProvider",
@@ -3453,12 +1796,12 @@
           ],
           "iconUrl": "https://play-lh.googleusercontent.com/V4t4JeQV2Cu9u72hKuqOW5c0IfwcZuuVS1d9PF2uJsW3rlIq-aOMTrT5bABVGaAFTcM=w480-h960-rw",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/M3UPlaylistPlayerProvider.cs3",
-          "version": 19,
+          "version": 20,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 65133,
-          "enabled": false
+          "fileSize": 65790,
+          "enabled": true
         },
         {
           "id": "MLSBDProvider",
@@ -3479,7 +1822,7 @@
             "NivinCNC"
           ],
           "fileSize": 118715,
-          "enabled": true
+          "enabled": false
         },
         {
           "id": "MovieBoxProvider",
@@ -3538,7 +1881,7 @@
             "NivinCNC"
           ],
           "fileSize": 57989,
-          "enabled": true
+          "enabled": false
         },
         {
           "id": "MoviezwapProvider",
@@ -3556,7 +1899,7 @@
             "NivinCNC"
           ],
           "fileSize": 40156,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "PikashowProvider",
@@ -3588,12 +1931,12 @@
           ],
           "iconUrl": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/refs/heads/master/Logos/PlayFyTvProvider/playfy-tv-4.webp",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/PlayFyProvider.cs3",
-          "version": 17,
+          "version": 19,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 107267,
-          "enabled": false
+          "fileSize": 107930,
+          "enabled": true
         },
         {
           "id": "PlayZTVProvider",
@@ -3606,11 +1949,11 @@
           ],
           "iconUrl": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/refs/heads/master/Logos/PlayZTVProvider/logo.jpg",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/PlayZTVProvider.cs3",
-          "version": 45,
+          "version": 47,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 117522,
+          "fileSize": 118827,
           "enabled": true
         },
         {
@@ -3629,7 +1972,7 @@
             "NivinCNC"
           ],
           "fileSize": 36277,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Rtally",
@@ -3651,7 +1994,7 @@
             "Redowan, NivinCNC"
           ],
           "fileSize": 111273,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "SKTechProvider",
@@ -3664,12 +2007,12 @@
           ],
           "iconUrl": "https://sktechtv.org/wp-content/uploads/2026/05/sktechtv.webp",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/SKTechProvider.cs3",
-          "version": 61,
+          "version": 63,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 125462,
-          "enabled": false
+          "fileSize": 125890,
+          "enabled": true
         },
         {
           "id": "SportzxProvider",
@@ -3682,12 +2025,12 @@
           ],
           "iconUrl": "https://sportzxlive.com/wp-content/uploads/2026/04/cropped-logo-1-2048x1611-1-1024x806.png",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/SportzxProvider.cs3",
-          "version": 29,
+          "version": 31,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 123335,
-          "enabled": false
+          "fileSize": 123765,
+          "enabled": true
         },
         {
           "id": "StreamFlixProvider",
@@ -3707,7 +2050,7 @@
             "NivinCNC"
           ],
           "fileSize": 65038,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "SubscriptionManager",
@@ -3726,7 +2069,7 @@
             "NivinCNC"
           ],
           "fileSize": 38746,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "TamilDhoolProvider",
@@ -3744,7 +2087,7 @@
             "NivinCNC"
           ],
           "fileSize": 53266,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "Tamilian",
@@ -3762,7 +2105,7 @@
             "NivinCNC"
           ],
           "fileSize": 38224,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "TamilUltraProvider",
@@ -3780,7 +2123,7 @@
             "NivinCNC"
           ],
           "fileSize": 35387,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "VegaMoviesProvider",
@@ -3821,7 +2164,7 @@
             "NivinCNC"
           ],
           "fileSize": 48158,
-          "enabled": false
+          "enabled": true
         },
         {
           "id": "XonProvider",
@@ -3841,7 +2184,7 @@
             "NivinCNC"
           ],
           "fileSize": 63288,
-          "enabled": false
+          "enabled": true
         }
       ]
     },
@@ -4678,12 +3021,12 @@
           ],
           "iconUrl": "https://www.google.com/s2/favicons?domain=jav.guru&sz=%size%",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/JavGuru.cs3",
-          "version": 20,
+          "version": 21,
           "authors": [
             "kraptor",
             "ByAyzen"
           ],
-          "fileSize": 97958,
+          "fileSize": 106664,
           "enabled": true
         },
         {
@@ -4701,7 +3044,7 @@
           "authors": [
             "byayzen"
           ],
-          "fileSize": 89591,
+          "fileSize": 97062,
           "enabled": true
         },
         {
@@ -4842,13 +3185,13 @@
           ],
           "iconUrl": "https://mangoporn.net/wp-content/uploads/2024/07/mangoporn.net_.png",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Mangoporn.cs3",
-          "version": 34,
+          "version": 35,
           "authors": [
             "kraptor",
             "ByAyzen",
             "HindiProvider"
           ],
-          "fileSize": 108399,
+          "fileSize": 116238,
           "enabled": true
         },
         {
@@ -5205,11 +3548,11 @@
           ],
           "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://pornwatch.ws/&size=128",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/PornWatch.cs3",
-          "version": 26,
+          "version": 27,
           "authors": [
             "Kraptor"
           ],
-          "fileSize": 114237,
+          "fileSize": 121750,
           "enabled": true
         },
         {
@@ -5349,11 +3692,11 @@
           ],
           "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://sextb.net/&size=128",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/SexTB.cs3",
-          "version": 15,
+          "version": 16,
           "authors": [
             "ByAyzen"
           ],
-          "fileSize": 90798,
+          "fileSize": 98189,
           "enabled": true
         },
         {
@@ -5403,11 +3746,11 @@
           ],
           "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://sxyprn.com&size=16",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Sxyprn.cs3",
-          "version": 8,
+          "version": 9,
           "authors": [
             "ByAyzen"
           ],
-          "fileSize": 36257,
+          "fileSize": 36204,
           "enabled": true
         },
         {
@@ -5455,13 +3798,13 @@
           "tvTypes": [
             "NSFW"
           ],
-          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://turkhub154.cfd&size=128",
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://turkhub160.cfd&size=128",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/TurkHub.cs3",
-          "version": 97,
+          "version": 103,
           "authors": [
             "kraptor"
           ],
-          "fileSize": 19477,
+          "fileSize": 19483,
           "enabled": true
         },
         {
@@ -5509,13 +3852,13 @@
           "tvTypes": [
             "NSFW"
           ],
-          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://turkporno58.lat&size=128",
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://turkporno64.lat&size=128",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/TurkPorno.cs3",
-          "version": 151,
+          "version": 157,
           "authors": [
             "Kraptor"
           ],
-          "fileSize": 37283,
+          "fileSize": 37285,
           "enabled": true
         },
         {
@@ -5775,6 +4118,24 @@
           "enabled": true
         },
         {
+          "id": "XXXTime",
+          "name": "XXXTime",
+          "internalName": "XXXTime",
+          "description": "Porn Site featuring tons of Streaming Porn in HD. Watch and stream porn movies for mobile, tablet and desktop.",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?sz=64&domain=https://xxxtime.video",
+          "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/XXXTime.cs3",
+          "version": 1,
+          "authors": [
+            "kraptor"
+          ],
+          "fileSize": 15701,
+          "enabled": true
+        },
+        {
           "id": "Yesporn",
           "name": "Yesporn",
           "internalName": "Yesporn",
@@ -5829,6 +4190,388 @@
           "enabled": true
         }
       ]
+    },
+    {
+      "id": "cs-repo-1793346252469",
+      "name": "Redowan's BDIX repository",
+      "description": "Redowan's BDIX repository",
+      "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/master/repo.json",
+      "enabled": true,
+      "builtin": false,
+      "plugins": [
+        {
+          "id": "9kMovies",
+          "name": "9kMovies",
+          "internalName": "9kMovies",
+          "description": "Bangla & Hindi Movies",
+          "language": "hi",
+          "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "NSFW"
+          ],
+          "iconUrl": "https://9kmovies.llc/wp-content/uploads/2026/06/9kmovies-logo1.png",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/9kMovies.cs3",
+          "version": 11,
+          "authors": [
+            "Redowan"
+          ],
+          "fileSize": 16446,
+          "enabled": true
+        },
+        {
+          "id": "BanglaPlex",
+          "name": "BanglaPlex",
+          "internalName": "BanglaPlex",
+          "description": "BanglaPlex Movies & Web Series",
+          "language": "bn",
+          "tvTypes": [
+            "Movie",
+            "TvSeries"
+          ],
+          "iconUrl": "https://banglaplex.biz/uploads/system_logo/favicon_61916a9838d38.png",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BanglaPlex.cs3",
+          "version": 1,
+          "authors": [
+            "Redowan"
+          ],
+          "fileSize": 35067,
+          "enabled": true
+        },
+        {
+          "id": "BdixBdipTV",
+          "name": "BdixBdipTV",
+          "internalName": "BdixBdipTV",
+          "description": "BDIX Live Tv in Bangladesh",
+          "language": "bn",
+          "tvTypes": [
+            "Live"
+          ],
+          "iconUrl": "http://tv.bdiptv.net/assets/images/Live1.jpeg",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixBdipTV.cs3",
+          "version": 10,
+          "authors": [
+            "Redowan"
+          ],
+          "fileSize": 16863,
+          "enabled": true
+        },
+        {
+          "id": "BdixCircleftp",
+          "name": "BdixCircleftp",
+          "internalName": "BdixCircleftp",
+          "description": "Only works in Bangladesh. Works even in internet Shutdown",
+          "language": "bn",
+          "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "Anime",
+            "AnimeMovie",
+            "OVA",
+            "Cartoon",
+            "AsianDrama",
+            "Others",
+            "Documentary"
+          ],
+          "iconUrl": "http://new.circleftp.net/static/media/logo.fce2c9029060a10687b8.png",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixCircleftp.cs3",
+          "version": 27,
+          "authors": [
+            "Redowan"
+          ],
+          "fileSize": 22123,
+          "enabled": true
+        },
+        {
+          "id": "BdixCloudTV",
+          "name": "BdixCloudTV",
+          "internalName": "BdixCloudTV",
+          "description": "BDIX Live Tv in Bangladesh",
+          "language": "bn",
+          "tvTypes": [
+            "Live"
+          ],
+          "iconUrl": "http://172.19.178.180/assets/logos/Cloudtv.png",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixCloudTV.cs3",
+          "version": 6,
+          "authors": [
+            "Redowan"
+          ],
+          "fileSize": 17223,
+          "enabled": true
+        },
+        {
+          "id": "BdixDflix",
+          "name": "BdixDflix",
+          "internalName": "BdixDflix",
+          "description": "Discovery BDIX Provider",
+          "language": "bn",
+          "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "Anime",
+            "AnimeMovie",
+            "OVA",
+            "Cartoon",
+            "AsianDrama",
+            "Others",
+            "Documentary"
+          ],
+          "iconUrl": "https://dflix.discoveryftp.net/assets/images/icon.png",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixDflix.cs3",
+          "version": 10,
+          "authors": [
+            "Redowan"
+          ],
+          "fileSize": 19036,
+          "enabled": true
+        },
+        {
+          "id": "BdixDhakaFlix",
+          "name": "BdixDhakaFlix",
+          "internalName": "BdixDhakaFlix",
+          "description": "Dhaka Flix BDIX Provider",
+          "language": "bn",
+          "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "Anime",
+            "AnimeMovie",
+            "OVA",
+            "Cartoon",
+            "AsianDrama",
+            "Others",
+            "Documentary"
+          ],
+          "iconUrl": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/refs/heads/master/BdixDhakaFlix/icon.jpg",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixDhakaFlix.cs3",
+          "version": 8,
+          "authors": [
+            "Redowan"
+          ],
+          "fileSize": 34317,
+          "enabled": true
+        },
+        {
+          "id": "BdixICCFtp",
+          "name": "BdixICCFtp",
+          "internalName": "BdixICCFtp",
+          "description": "ICC BDIX Provider",
+          "language": "bn",
+          "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "Anime",
+            "AnimeMovie",
+            "OVA",
+            "Cartoon",
+            "AsianDrama",
+            "Others",
+            "Documentary"
+          ],
+          "iconUrl": "http://10.16.100.244/images/logo-purple.svg",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixICCFtp.cs3",
+          "version": 3,
+          "authors": [
+            "Redowan"
+          ],
+          "fileSize": 15539,
+          "enabled": true
+        },
+        {
+          "id": "BdixMyMovieBazarTV",
+          "name": "BdixMyMovieBazarTV",
+          "internalName": "BdixMyMovieBazarTV",
+          "description": "BDIX Live Tv in Bangladesh",
+          "language": "bn",
+          "tvTypes": [
+            "Live"
+          ],
+          "iconUrl": "https://mymoviebazar.net/assets/commons/header/logo1.png",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixMyMovieBazarTV.cs3",
+          "version": 6,
+          "authors": [
+            "Redowan"
+          ],
+          "fileSize": 9656,
+          "enabled": true
+        },
+        {
+          "id": "BdixRoarZoneTV",
+          "name": "BdixRoarZoneTV",
+          "internalName": "BdixRoarZoneTV",
+          "description": "BDIX Live Tv in Bangladesh",
+          "language": "bn",
+          "tvTypes": [
+            "Live"
+          ],
+          "iconUrl": "https://roarzone.info/logo.webp",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/BdixRoarZoneTV.cs3",
+          "version": 6,
+          "authors": [
+            "Redowan"
+          ],
+          "fileSize": 10702,
+          "enabled": true
+        },
+        {
+          "id": "EmwBD",
+          "name": "EmwBD",
+          "internalName": "EmwBD",
+          "description": "Movie website in Bangladesh",
+          "language": "bn",
+          "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "AnimeMovie",
+            "AsianDrama",
+            "NSFW"
+          ],
+          "iconUrl": "https://www.emwbd.xyz/wp-content/uploads/2024/07/cropped-20240718_170236-192x192.png",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/EmwBD.cs3",
+          "version": 16,
+          "authors": [
+            "Redowan"
+          ],
+          "fileSize": 12796,
+          "enabled": true
+        },
+        {
+          "id": "FootReplays",
+          "name": "FootReplays",
+          "internalName": "FootReplays",
+          "description": "FootBall Matches Replays and Highlights",
+          "language": "en",
+          "tvTypes": [
+            "Others"
+          ],
+          "iconUrl": "https://www.footreplays.com/wp-content/uploads/2024/11/cropped-footreplays-favicon-192x192.webp",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/FootReplays.cs3",
+          "version": 6,
+          "authors": [
+            "Redowan"
+          ],
+          "fileSize": 11048,
+          "enabled": true
+        },
+        {
+          "id": "FullReplays",
+          "name": "FullReplays",
+          "internalName": "FullReplays",
+          "description": "Watch Football Full Match Replay and Shows",
+          "language": "en",
+          "tvTypes": [
+            "Others"
+          ],
+          "iconUrl": "https://www.fullreplays.com/wp-content/uploads/2023/05/logo-ball-150x150.png",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/FullReplays.cs3",
+          "version": 6,
+          "authors": [
+            "Redowan"
+          ],
+          "fileSize": 11022,
+          "enabled": true
+        },
+        {
+          "id": "FullyMaza",
+          "name": "FullyMaza",
+          "internalName": "FullyMaza",
+          "description": "",
+          "language": "en",
+          "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "AnimeMovie",
+            "Cartoon"
+          ],
+          "iconUrl": "https://fibwatch.online/themes/default/img/fibwatch-logo-new.png",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/FullyMaza.cs3",
+          "version": 7,
+          "authors": [
+            "Redowan"
+          ],
+          "fileSize": 11826,
+          "enabled": true
+        },
+        {
+          "id": "MoviPK",
+          "name": "MoviPK",
+          "internalName": "MoviPK",
+          "description": "",
+          "language": "en",
+          "tvTypes": [
+            "Movie",
+            "TvSeries"
+          ],
+          "iconUrl": "https://www.movi.pk/wp-content/uploads/2023/06/apple-touch-icon.png",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/MoviPK.cs3",
+          "version": 4,
+          "authors": [
+            "MoviPK"
+          ],
+          "fileSize": 10567,
+          "enabled": true
+        },
+        {
+          "id": "Mp4Moviez",
+          "name": "Mp4Moviez",
+          "internalName": "Mp4Moviez",
+          "description": "Download Mp4Moviez free full movies, high quality movies, latest movies from Mp4Moviez. Mp4moviez is number one entertainment hollywood bollywood website and provide free Mp4moviez full movie download facility",
+          "language": "hi",
+          "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "NSFW"
+          ],
+          "iconUrl": "https://www.mp4moviez.glass/images/mp4moviez.png",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/Mp4Moviez.cs3",
+          "version": 3,
+          "authors": [
+            "salman731"
+          ],
+          "fileSize": 13275,
+          "enabled": true
+        },
+        {
+          "id": "TheMoviesFlix",
+          "name": "TheMoviesFlix",
+          "internalName": "TheMoviesFlix",
+          "description": "720p Movies, 1080p movies, Dual Audio Movies, Hindi Dubbed Series, Hollywood Movies",
+          "language": "hi",
+          "tvTypes": [
+            "Movie",
+            "TvSeries",
+            "NSFW"
+          ],
+          "iconUrl": "https://themoviesflix.it.com/wp-content/uploads/2024/12/cropped-cropped-favicon-32x32-1-180x180.png",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/TheMoviesFlix.cs3",
+          "version": 6,
+          "authors": [
+            "salman731,Redowan"
+          ],
+          "fileSize": 27276,
+          "enabled": true
+        },
+        {
+          "id": "WatchMoviesPk",
+          "name": "WatchMoviesPk",
+          "internalName": "WatchMoviesPk",
+          "description": "Watch Online Movies in HD Print Quality Free Download,Watch Full Movies Online Bollywood Movies Download Latest Hollywood Movies in DVD Print Quality Free",
+          "language": "hi",
+          "tvTypes": [
+            "TvSeries",
+            "Movie"
+          ],
+          "iconUrl": "https://www.watch-movies.com.pk/wp-content/uploads/2022/05/logo.png",
+          "url": "https://raw.githubusercontent.com/redowan99/Redowan-CloudStream/builds/WatchMoviesPk.cs3",
+          "version": 3,
+          "authors": [
+            "salman731"
+          ],
+          "fileSize": 12297,
+          "enabled": true
+        }
+      ]
     }
   ],
   "cloudstreamMasterEnabled": true,
@@ -5851,5 +4594,19 @@
       "builtin": false,
       "createdAt": "2026-10-18T14:25:32.775Z"
     }
+  ],
+  "MEDIA_SOURCES": [
+    "https://fsldownload.com",
+    "https://movielinkbd.com",
+    "https://*.movielinkbd.at",
+    "https://macdn.aoneroom.com",
+    "https://bcdn.hakunaymatata.com",
+    "https://pbcdn.aoneroom.com",
+    "https://pixeldrain.com",
+    "https://hubcloud.club",
+    "https://hubcloud.one",
+    "https://pengu.uk",
+    "https://circleftp.net",
+    "http://localhost:3001"
   ]
 }

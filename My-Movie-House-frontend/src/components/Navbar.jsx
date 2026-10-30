@@ -12,7 +12,25 @@ export default function Navbar() {
     navigate(`/search?q=${encodeURIComponent(query.trim())}`);
   };
 
-  const isActive = (path) => location.pathname === path;
+  // Check if adult category is active via search query or hash
+  const isAdultActive =
+    location.pathname === '/' &&
+    (location.search.includes('cat=adult') ||
+      (typeof window !== 'undefined' &&
+        (window.location.search.includes('cat=adult') || window.location.hash.includes('cat=adult'))));
+
+  const isHomeActive = location.pathname === '/' && !isAdultActive;
+  const isIptvActive = location.pathname === '/iptv';
+  const isSettingsActive = location.pathname === '/settings';
+
+  const handleAdultClick = () => {
+    if (location.pathname === '/') {
+      setTimeout(() => {
+        const el = document.getElementById('category-pills') || document.getElementById('catalogs-section');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }, 50);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#0f1422]/70 backdrop-blur-2xl px-4 py-3 sm:px-6">
@@ -44,7 +62,7 @@ export default function Navbar() {
           <Link
             to="/"
             className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-              isActive('/')
+              isHomeActive
                 ? 'bg-blue-600 text-white shadow-md shadow-blue-600/40'
                 : 'text-white/70 hover:text-white hover:bg-white/5'
             }`}
@@ -54,7 +72,7 @@ export default function Navbar() {
           <Link
             to="/iptv"
             className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5 ${
-              isActive('/iptv')
+              isIptvActive
                 ? 'bg-red-600 text-white shadow-md shadow-red-600/40'
                 : 'text-white/70 hover:text-white hover:bg-white/5'
             }`}
@@ -64,19 +82,32 @@ export default function Navbar() {
           </Link>
           <Link
             to="/?cat=adult"
+            onClick={handleAdultClick}
             className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all flex items-center gap-1.5 ${
-              location.search.includes('cat=adult')
-                ? 'bg-rose-600 text-white shadow-md shadow-rose-600/40'
-                : 'text-white/70 hover:text-rose-300 hover:bg-white/5'
+              isAdultActive
+                ? 'bg-rose-600 text-white shadow-md shadow-rose-600/50'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
             }`}
+            style={
+              isAdultActive
+                ? {
+                    backgroundColor: '#e11d48',
+                    color: '#ffffff',
+                    boxShadow: '0 4px 14px rgba(225, 29, 72, 0.45)'
+                  }
+                : undefined
+            }
           >
-            <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+            <span
+              className="h-1.5 w-1.5 rounded-full animate-pulse"
+              style={{ backgroundColor: isAdultActive ? '#ffffff' : '#fb7185' }}
+            />
             <span>Adult 18+</span>
           </Link>
           <Link
             to="/settings"
             className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-all ${
-              isActive('/settings')
+              isSettingsActive
                 ? 'bg-blue-600 text-white shadow-md shadow-blue-600/40'
                 : 'text-white/70 hover:text-white hover:bg-white/5'
             }`}
@@ -128,15 +159,23 @@ export default function Navbar() {
 
       {/* Mobile Subnav */}
       <div className="mt-2.5 flex items-center justify-between border-t border-white/5 pt-2 text-xs sm:hidden">
-        <div className="flex gap-4 font-semibold">
-          <Link to="/" className={isActive('/') ? 'text-blue-400 font-bold' : 'text-white/70'}>
+        <div className="flex gap-3 font-semibold">
+          <Link to="/" className={isHomeActive ? 'text-blue-400 font-bold' : 'text-white/70'}>
             Home
           </Link>
-          <Link to="/iptv" className={`flex items-center gap-1 ${isActive('/iptv') ? 'text-red-400 font-bold' : 'text-white/70'}`}>
+          <Link to="/iptv" className={`flex items-center gap-1 ${isIptvActive ? 'text-red-400 font-bold' : 'text-white/70'}`}>
             <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
             <span>Live TV</span>
           </Link>
-          <Link to="/settings" className={isActive('/settings') ? 'text-blue-400 font-bold' : 'text-white/70'}>
+          <Link
+            to="/?cat=adult"
+            onClick={handleAdultClick}
+            className={`flex items-center gap-1 ${isAdultActive ? 'text-rose-400 font-bold' : 'text-white/70'}`}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
+            <span>Adult 18+</span>
+          </Link>
+          <Link to="/settings" className={isSettingsActive ? 'text-blue-400 font-bold' : 'text-white/70'}>
             Addons
           </Link>
         </div>

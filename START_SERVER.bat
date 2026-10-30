@@ -28,6 +28,9 @@ if not exist "My-Movie-House-frontend\node_modules\" (
     echo.
 )
 
+echo [STARTING] BDIX Stremio Addons on http://127.0.0.1:43003
+start "MY-MOVIE-HOUSE - BDIX ADDONS" /min cmd /k "cd /d "%~dp0bdix-stremio-addons" && node index.js"
+
 echo [STARTING] Backend on http://localhost:3001
 start "MY-MOVIE-HOUSE - BACKEND" cmd /k "cd /d "%~dp0backend" && node server.js"
 

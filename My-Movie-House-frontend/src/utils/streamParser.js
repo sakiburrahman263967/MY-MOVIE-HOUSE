@@ -33,7 +33,8 @@ export function parseStreamDetails(stream) {
   // 2. File Size
   let size = stream.size;
   if (!size) {
-    const sizeMatch = fullText.match(/(\d+(?:\.\d+)?\s*(?:GB|MB|GiB|MiB))/i);
+    const cleanedText = fullText.replace(/~?[\d.]+\s*Mbps/gi, '');
+    const sizeMatch = cleanedText.match(/(\d+(?:\.\d+)?\s*(?:GB|MB|GiB|MiB))/i);
     size = sizeMatch ? sizeMatch[1].toUpperCase() : null;
   }
 
@@ -44,17 +45,44 @@ export function parseStreamDetails(stream) {
     sound = soundMatch ? soundMatch[1] : null;
   }
 
-  // 4. Language / Audio type
+  // 4. Detailed Language & Multi-Audio Detection
+  const audioLangs = [];
+  const lowerText = fullText.toLowerCase();
+
+  const langMap = [
+    { name: 'Bangla', pattern: /\b(bangla|bengali|ben)\b/i },
+    { name: 'Hindi', pattern: /\b(hindi|hin)\b/i },
+    { name: 'English', pattern: /\b(english|eng)\b/i },
+    { name: 'Tamil', pattern: /\b(tamil|tam)\b/i },
+    { name: 'Telugu', pattern: /\b(telugu|tel)\b/i },
+    { name: 'Malayalam', pattern: /\b(malayalam|mal)\b/i },
+    { name: 'Kannada', pattern: /\b(kannada|kan)\b/i },
+    { name: 'Urdu', pattern: /\b(urdu|urd)\b/i },
+    { name: 'Korean', pattern: /\b(korean|kor)\b/i },
+    { name: 'Japanese', pattern: /\b(japanese|jap|jpn)\b/i },
+    { name: 'Spanish', pattern: /\b(spanish|spa|es)\b/i },
+    { name: 'French', pattern: /\b(french|fre|fra)\b/i },
+    { name: 'German', pattern: /\b(german|ger|deu)\b/i },
+    { name: 'Arabic', pattern: /\b(arabic|ara)\b/i }
+  ];
+
+  for (const item of langMap) {
+    if (item.pattern.test(fullText)) {
+      audioLangs.push(item.name);
+    }
+  }
+
+  const isDual = /\b(dual\s*audio|dual)\b/i.test(fullText) || audioLangs.length >= 2;
+  const isMulti = /\b(multi\s*audio|multi\s*sub|multiaudio|multi)\b/i.test(fullText) || audioLangs.length > 2;
+  const isDubbed = /\b(dubbed|dub)\b/i.test(fullText);
+
   let language = stream.language;
   if (!language) {
-    if (/dual\s*audio/i.test(fullText)) language = 'Dual Audio';
-    else if (/multi\s*(?:audio|lang)?/i.test(fullText)) language = 'Multi Audio';
-    else if (/hindi\s*\+\s*eng/i.test(fullText)) language = 'Hindi + Eng';
-    else if (/bengali|bangla/i.test(fullText)) language = 'Bengali';
-    else if (/hindi/i.test(fullText)) language = 'Hindi';
-    else if (/english/i.test(fullText)) language = 'English';
+    if (isMulti) language = 'Multi Audio';
+    else if (isDual) language = 'Dual Audio';
+    else if (audioLangs.length > 0) language = audioLangs.join(', ');
+    else language = 'Audio: unknown';
   }
-  const isDual = Boolean(language && /dual|multi|hindi\s*\+/i.test(language));
 
   // 5. Server Name
   let serverName = stream.serverName;
@@ -71,8 +99,11 @@ export function parseStreamDetails(stream) {
     size,
     sound,
     language,
-    serverName,
+    audioLangs,
     isDual,
+    isMulti,
+    isDubbed,
+    serverName,
     fullText
   };
 }

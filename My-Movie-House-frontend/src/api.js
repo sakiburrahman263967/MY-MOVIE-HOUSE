@@ -257,3 +257,15 @@ export const progress = {
   getOne: (id) => progress.get()[id] || null,
   getAll: () => Object.values(progress.get()).sort((a, b) => b.updatedAt - a.updatedAt)
 };
+
+
+// Media prep API
+export const mediaPrep = {
+  prepare: (path) => fetch((API_BASE || '') + '/api/media/prepare', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path })
+  }).then(r => r.json()),
+  getStatus: (id) => fetch((API_BASE || '') + '/api/media/prepare/status/' + id).then(r => r.json()),
+  list: () => fetch((API_BASE || '') + '/api/media/prepare/list').then(r => r.json())
+};

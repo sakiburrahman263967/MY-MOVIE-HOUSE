@@ -37,3 +37,8 @@ desktop.ini
 # IDE files
 .vscode/
 .idea/
+
+# External cloned addons & temporary scripts
+bdix-stremio-addons/
+aacfix/
+*.bak*

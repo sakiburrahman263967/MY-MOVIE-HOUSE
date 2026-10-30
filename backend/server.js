@@ -11,6 +11,7 @@ import { isSupabaseConfigured } from './supabase.js';
 import { searchProviders } from './providers/index.js';
 import { isStreamToken, resolveStreamToken } from './providers/stream-tokens.js';
 import { ensureFreshMovieBoxUrl } from './providers/moviebox.js';
+import { rewriteHlsManifest } from './hls-rewriter.js';
 
 // Global crash protection
 process.on('uncaughtException', (err) => {
@@ -21,6 +22,7 @@ process.on('unhandledRejection', (reason) => {
 });
 
 const app = express();
+const port = process.env.PORT || 3001;
 const addonManager = new AddonManager();
 
 app.use(cors());
@@ -320,10 +322,35 @@ app.get('/api/iptv/stream/:id', (req, res) => {
   res.json(stream);
 });
 
-// SSRF Protection: Block private, localhost, and link-local IP addresses
+// SSRF Protection: Block private, localhost, and link-local IP addresses (Except explicitly allowed user BDIX / local FTP servers)
+const ALLOWED_BDIX_IPS = new Set([
+  '172.19.178.179',
+  '10.10.10.3',
+  '103.96.104.6',
+  '172.16.50.4',
+  '103.203.93.2',
+  '103.203.93.4'
+]);
+
 function isPrivateOrBlockedHost(hostname) {
   if (!hostname) return true;
   const h = hostname.toLowerCase().trim();
+  // Allow explicitly configured BDIX FTP servers and subnets
+  if (ALLOWED_BDIX_IPS.has(h)) return false;
+  if (
+    h.startsWith('172.16.50.') ||
+    h.startsWith('103.203.93.') ||
+    h.startsWith('103.96.104.') ||
+    h.startsWith('172.19.') ||
+    h.startsWith('10.10.') ||
+    h.includes('discoveryftp.net') ||
+    h.includes('roarzone.net') ||
+    h.includes('circleftp.net') ||
+    h.includes('ctgmovies.com')
+  ) {
+    return false;
+  }
+
   if (h === 'localhost' || h.endsWith('.localhost') || h === '127.0.0.1' || h === '::1' || h === '0.0.0.0') {
     return true;
   }
@@ -400,6 +427,12 @@ const streamProxyHandler = async (req, res) => {
   }
   customHeaders = { ...customHeaders, ...tokenHeaders };
 
+  // Auto-attach MovieLinkBD origin headers for fsldownload streams
+  if (targetUrl.includes('fsldownload.com') || targetUrl.includes('movielinkbd')) {
+    customHeaders['Referer'] = customHeaders['Referer'] || 'https://movielinkbd.com/';
+    customHeaders['Origin'] = customHeaders['Origin'] || 'https://movielinkbd.com';
+  }
+
   const reqHeaders = {
     ...customHeaders,
     'User-Agent': customHeaders['User-Agent'] || req.headers['user-agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -473,9 +506,10 @@ const streamProxyHandler = async (req, res) => {
 
     // Clean & standardize Content-Type for HTML5 video players
     const rawCt = (upstreamRes.headers.get('content-type') || '').toLowerCase();
+    const isM3u8 = rawCt.includes('mpegurl') || currentUrl.toLowerCase().split('?')[0].endsWith('.m3u8');
     if (rawCt.includes('video/mp4') || currentUrl.toLowerCase().includes('.mp4')) {
       res.setHeader('Content-Type', 'video/mp4');
-    } else if (rawCt.includes('mpegurl') || currentUrl.toLowerCase().includes('.m3u8')) {
+    } else if (isM3u8) {
       res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
     } else if (rawCt.includes('video/webm') || currentUrl.toLowerCase().includes('.webm')) {
       res.setHeader('Content-Type', 'video/webm');
@@ -485,6 +519,18 @@ const streamProxyHandler = async (req, res) => {
 
     if (req.method === 'HEAD') {
       return res.end();
+    }
+
+    // Intercept and rewrite HLS playlists so all variant, audio, and segment URIs route through proxy
+    if (isM3u8 && upstreamRes.body) {
+      try {
+        const manifestText = await upstreamRes.text();
+        const rewritten = rewriteHlsManifest(manifestText, currentUrl, customHeaders);
+        res.setHeader('Content-Length', Buffer.byteLength(rewritten, 'utf8'));
+        return res.send(rewritten);
+      } catch (manifestErr) {
+        // Fallback to streaming if text read failed
+      }
     }
 
     if (upstreamRes.body) {
@@ -740,44 +786,97 @@ app.patch('/api/cloudstream/repos/:repoId/disable-all', (req, res) => {
   res.json({ success: true, repos: updated });
 });
 
-app.use((error, _req, res, _next) => {
-  console.error(error);
-  res.status(502).json({ error: error.message || 'The request could not be processed.' });
+// In-memory telemetry log for playback errors
+const playbackErrors = [];
+const MAX_PLAYBACK_ERRORS = 200;
+
+app.post('/api/playback-error', (req, res) => {
+  const { movieId, sourceId, errorType, browser, os, canPlayType, audioTracksCount } = req.body || {};
+  const record = {
+    movieId: typeof movieId === 'string' ? movieId.slice(0, 100) : 'unknown',
+    sourceId: typeof sourceId === 'string' ? sourceId.slice(0, 100) : 'unknown',
+    errorType: typeof errorType === 'string' ? errorType.slice(0, 200) : 'unknown',
+    browser: typeof browser === 'string' ? browser.slice(0, 100) : 'unknown',
+    os: typeof os === 'string' ? os.slice(0, 100) : 'unknown',
+    audioTracksCount: typeof audioTracksCount === 'number' ? audioTracksCount : 0,
+    timestamp: new Date().toISOString()
+  };
+  playbackErrors.unshift(record);
+  if (playbackErrors.length > MAX_PLAYBACK_ERRORS) playbackErrors.pop();
+  res.json({ success: true });
 });
 
-const MAX_CONCURRENT_TRANSCODES = 2;
+app.get('/api/playback-errors', (_req, res) => {
+  res.json(playbackErrors);
+});
+
+// Transcode and Probe Services
+
+const MAX_CONCURRENT_TRANSCODES = 6;
 let activeTranscodes = 0;
 const ffprobeCache = new Map(); // url -> {data, ts}
 const FFPROBE_TTL = 10 * 60 * 1000;
+
+function isAllowedMediaSource(targetUrl) {
+  try {
+    const parsed = new URL(targetUrl);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
+    if (isPrivateOrBlockedHost(parsed.hostname)) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 function isH264Codec(codec = '') {
   const c = codec.toLowerCase();
   return c.includes('h264') || c.includes('avc') || c.includes('avc1');
 }
 
-async function probeSource(url) {
+async function probeSource(url, customHeaders = {}) {
   const key = url;
   const cached = ffprobeCache.get(key);
   if (cached && Date.now() - cached.ts < FFPROBE_TTL) return cached.data;
   return new Promise((resolve) => {
     try {
-      const args = ['-v', 'quiet', '-print_format', 'json', '-show_streams', '-show_format', url];
-      const proc = spawn('ffprobe', args, { timeout: 15000 });
+      const otherHeaders = Object.entries(customHeaders)
+        .filter(([k]) => k.toLowerCase() !== 'user-agent')
+        .map(([k, v]) => `${k}: ${v}`)
+        .join('\r\n');
+      const userAgent = customHeaders['User-Agent'] || customHeaders['user-agent'];
+      const args = ['-v', 'quiet', '-print_format', 'json', '-show_streams', '-show_format'];
+      if (otherHeaders) {
+        args.push('-headers', otherHeaders + '\r\n');
+      }
+      if (userAgent) {
+        args.push('-user_agent', userAgent);
+      }
+      args.push(url);
+      const proc = spawn('ffprobe', args, { timeout: 6000 });
       let out = '';
       let err = '';
       proc.stdout.on('data', (d) => { out += d.toString(); });
       proc.stderr.on('data', (d) => { err += d.toString(); });
-      const t = setTimeout(() => { try { proc.kill('SIGKILL'); } catch {} }, 15000);
+      const t = setTimeout(() => { try { proc.kill(); } catch {} }, 6000);
       proc.on('close', () => {
         clearTimeout(t);
         try {
           const json = JSON.parse(out || '{}');
           const streams = Array.isArray(json.streams) ? json.streams : [];
           const v = streams.find(s => s.codec_type === 'video') || {};
-          const a = streams.find(s => s.codec_type === 'audio') || {};
+          const audioStreams = streams.filter(s => s.codec_type === 'audio').map((a, idx) => ({
+            index: a.index,
+            audioIdx: idx,
+            codec: a.codec_name || a.codec_tag_string || '',
+            channels: a.channels || 2,
+            language: a.tags?.language || a.tags?.title || `Track ${idx + 1}`,
+            title: a.tags?.title || a.tags?.language || `Audio ${idx + 1}`
+          }));
           const data = {
             videoCodec: v.codec_name || v.codec_tag_string || '',
-            audioCodec: a.codec_name || a.codec_tag_string || '',
+            audioCodec: audioStreams[0]?.codec || '',
+            audioTracks: audioStreams,
+            duration: Number(json.format?.duration || 0),
             container: json.format?.format_name || '',
             width: v.width || 0,
             height: v.height || 0
@@ -785,20 +884,157 @@ async function probeSource(url) {
           ffprobeCache.set(key, { data, ts: Date.now() });
           resolve(data);
         } catch {
-          resolve({ videoCodec: '', audioCodec: '', container: '', width: 0, height: 0 });
+          resolve({ videoCodec: '', audioCodec: '', audioTracks: [], container: '', width: 0, height: 0, duration: 0 });
         }
       });
-      proc.on('error', () => { clearTimeout(t); resolve({ videoCodec: '', audioCodec: '', container: '', width: 0, height: 0 }); });
+      proc.on('error', () => { clearTimeout(t); resolve({ videoCodec: '', audioCodec: '', audioTracks: [], container: '', width: 0, height: 0, duration: 0 }); });
     } catch {
-      resolve({ videoCodec: '', audioCodec: '', container: '', width: 0, height: 0 });
+      resolve({ videoCodec: '', audioCodec: '', audioTracks: [], container: '', width: 0, height: 0, duration: 0 });
     }
   });
 }
 
-// GET /api/transcode/stream?url=... Transcode HEVC/x265 to H.264 or convert audio as needed
-app.get('/api/transcode/stream', async (req, res) => {
-  const rawUrl = typeof req.query.url === 'string' ? req.query.url.trim() : '';
+// GET /api/media/probe?url=... Probe video/audio tracks for web compatibility & audio selection
+app.get('/api/media/probe', async (req, res) => {
+  let rawUrl = typeof req.query.url === 'string' ? req.query.url.trim() : '';
   if (!rawUrl) return res.status(400).json({ error: 'Missing url parameter' });
+
+  let tokenHeaders = {};
+  let tokenMeta = null;
+  let isFromToken = false;
+
+  if (rawUrl.includes('/api/proxy/stream') || rawUrl.includes('/api/transcode/stream')) {
+    try {
+      const full = new URL(rawUrl, 'http://localhost');
+      const innerUrl = full.searchParams.get('url');
+      if (innerUrl) rawUrl = innerUrl;
+      const innerHeaders = full.searchParams.get('headers');
+      if (innerHeaders) {
+        try {
+          const parsed = typeof innerHeaders === 'string' ? JSON.parse(innerHeaders) : innerHeaders;
+          tokenHeaders = { ...tokenHeaders, ...parsed };
+        } catch {}
+      }
+    } catch {}
+  }
+
+  if (req.query.headers) {
+    try {
+      const parsed = typeof req.query.headers === 'string' ? JSON.parse(req.query.headers) : req.query.headers;
+      tokenHeaders = { ...tokenHeaders, ...parsed };
+    } catch {}
+  }
+
+  const explicitToken = typeof req.query.token === 'string' ? req.query.token.trim() : '';
+  const tokenCandidate = (isStreamToken(explicitToken) ? explicitToken : (isStreamToken(rawUrl) ? rawUrl : null));
+  if (tokenCandidate) {
+    isFromToken = true;
+    const resolved = resolveStreamToken(tokenCandidate);
+    if (resolved) {
+      rawUrl = resolved.url;
+      tokenHeaders = { ...tokenHeaders, ...(resolved.headers || {}) };
+      tokenMeta = resolved.meta || null;
+    }
+  }
+
+  if (tokenMeta?.subjectId && tokenMeta?.resourceId) {
+    try {
+      rawUrl = await ensureFreshMovieBoxUrl(rawUrl, tokenMeta, { deadline: Date.now() + 6000 });
+    } catch {}
+  }
+
+  let target;
+  try {
+    target = new URL(rawUrl);
+  } catch {
+    return res.status(400).json({ error: 'Invalid URL' });
+  }
+
+  if (!['http:', 'https:'].includes(target.protocol)) return res.status(400).json({ error: 'Only http/https allowed' });
+  if (isPrivateOrBlockedHost(target.hostname)) return res.status(403).json({ error: 'SSRF protection: Private addresses forbidden' });
+
+  const customHeaders = { ...tokenHeaders };
+  if (rawUrl.includes('fsldownload') || rawUrl.includes('movielinkbd')) {
+    customHeaders['Referer'] = 'https://movielinkbd.com/';
+  }
+
+  const probe = await probeSource(rawUrl, customHeaders);
+  const configuredOrigin = process.env.FRONTEND_ORIGIN || process.env.ALLOWED_ORIGIN || 'http://localhost:5173';
+  const reqOrigin = req.headers.origin;
+  const allowOrigin = (reqOrigin && (reqOrigin === configuredOrigin || configuredOrigin === '*')) ? reqOrigin : configuredOrigin;
+  res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+  res.setHeader('Vary', 'Origin');
+
+  const isHevc = Boolean(probe.videoCodec && (
+    probe.videoCodec.toLowerCase().includes('hevc') ||
+    probe.videoCodec.toLowerCase().includes('h265') ||
+    probe.videoCodec.toLowerCase().includes('hev1') ||
+    probe.videoCodec.toLowerCase().includes('hvc1')
+  ));
+
+  res.json({
+    success: true,
+    videoCodec: probe.videoCodec,
+    isHevc,
+    videoSafe: isHevc ? false : true,
+    container: probe.container,
+    isMkv: (probe.container || '').includes('matroska'),
+    duration: probe.duration,
+    audioTracks: probe.audioTracks.map((tr) => ({
+      ...tr,
+      safe: ['aac', 'mp3', 'opus', 'vorbis', 'flac'].includes((tr.codec || '').toLowerCase())
+    }))
+  });
+});
+
+// GET /api/transcode/stream?url=...&audioTrack=...&start=... Web-safe MP4 stream with AAC audio & seek support
+app.get('/api/transcode/stream', async (req, res) => {
+  let rawUrl = typeof req.query.url === 'string' ? req.query.url.trim() : '';
+  if (!rawUrl) return res.status(400).json({ error: 'Missing url parameter' });
+
+  let tokenHeaders = {};
+  let tokenMeta = null;
+  let isFromToken = false;
+
+  if (rawUrl.includes('/api/proxy/stream') || rawUrl.includes('/api/transcode/stream')) {
+    try {
+      const full = new URL(rawUrl, 'http://localhost');
+      const innerUrl = full.searchParams.get('url');
+      if (innerUrl) rawUrl = innerUrl;
+      const innerHeaders = full.searchParams.get('headers');
+      if (innerHeaders) {
+        try {
+          const parsed = typeof innerHeaders === 'string' ? JSON.parse(innerHeaders) : innerHeaders;
+          tokenHeaders = { ...tokenHeaders, ...parsed };
+        } catch {}
+      }
+    } catch {}
+  }
+
+  if (req.query.headers) {
+    try {
+      const parsed = typeof req.query.headers === 'string' ? JSON.parse(req.query.headers) : req.query.headers;
+      tokenHeaders = { ...tokenHeaders, ...parsed };
+    } catch {}
+  }
+
+  const explicitToken = typeof req.query.token === 'string' ? req.query.token.trim() : '';
+  const tokenCandidate = (isStreamToken(explicitToken) ? explicitToken : (isStreamToken(rawUrl) ? rawUrl : null));
+  if (tokenCandidate) {
+    isFromToken = true;
+    const resolved = resolveStreamToken(tokenCandidate);
+    if (resolved) {
+      rawUrl = resolved.url;
+      tokenHeaders = { ...tokenHeaders, ...(resolved.headers || {}) };
+      tokenMeta = resolved.meta || null;
+    }
+  }
+
+  if (tokenMeta?.subjectId && tokenMeta?.resourceId) {
+    try {
+      rawUrl = await ensureFreshMovieBoxUrl(rawUrl, tokenMeta, { deadline: Date.now() + 6000 });
+    } catch {}
+  }
 
   let target;
   try {
@@ -809,8 +1045,15 @@ app.get('/api/transcode/stream', async (req, res) => {
   if (!['http:', 'https:'].includes(target.protocol)) return res.status(400).json({ error: 'Only http/https allowed' });
   if (isPrivateOrBlockedHost(target.hostname)) return res.status(403).json({ error: 'Access to private or link-local address forbidden' });
 
+  const customHeaders = { ...tokenHeaders };
+  if (rawUrl.includes('fsldownload') || rawUrl.includes('movielinkbd')) {
+    customHeaders['Referer'] = 'https://movielinkbd.com/';
+  }
+
+  const probe = await probeSource(rawUrl, customHeaders);
+
   if (activeTranscodes >= MAX_CONCURRENT_TRANSCODES) {
-    return res.status(503).json({ error: 'Too many concurrent transcodes. Try again later.' });
+    return res.status(503).json({ error: 'Server busy: maximum concurrent transcode tasks active. Please wait a moment.' });
   }
 
   activeTranscodes += 1;
@@ -821,58 +1064,236 @@ app.get('/api/transcode/stream', async (req, res) => {
   res.setHeader('Vary', 'Origin');
   res.setHeader('Content-Type', 'video/mp4');
   res.setHeader('Accept-Ranges', 'none');
-
-  const probe = await probeSource(rawUrl);
   const videoIsH264 = isH264Codec(probe.videoCodec);
+  const audioTrackIdx = Number.parseInt(req.query.audioTrack, 10);
+  const startTime = Number.parseFloat(req.query.start || '0');
+
   const args = [
     '-hide_banner',
-    '-loglevel', 'error',
-    '-i', rawUrl
+    '-loglevel', 'error'
   ];
+
+  if (Number.isFinite(startTime) && startTime > 0) {
+    args.push('-ss', startTime.toFixed(2));
+  }
+
+  const otherHeaders = Object.entries(customHeaders)
+    .filter(([k]) => k.toLowerCase() !== 'user-agent')
+    .map(([k, v]) => `${k}: ${v}`)
+    .join('\r\n');
+  const userAgent = customHeaders['User-Agent'] || customHeaders['user-agent'];
+  if (otherHeaders) {
+    args.push('-headers', otherHeaders + '\r\n');
+  }
+  if (userAgent) {
+    args.push('-user_agent', userAgent);
+  }
+
+  args.push('-i', rawUrl);
+
+  // Map video: first video stream
+  args.push('-map', '0:v:0');
+
+  // Map audio: selected audio track or default to first audio stream
+  if (Number.isFinite(audioTrackIdx) && audioTrackIdx >= 0 && probe.audioTracks && probe.audioTracks[audioTrackIdx]) {
+    args.push('-map', `0:${probe.audioTracks[audioTrackIdx].index}`);
+  } else {
+    args.push('-map', '0:a:0?');
+  }
+
+  // Video encoding: copy if H.264, else transcode to baseline H.264 for Chrome
   if (videoIsH264) {
     args.push('-c:v', 'copy');
   } else {
-    args.push('-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23', '-pix_fmt', 'yuv420p');
+    args.push('-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency', '-crf', '24', '-pix_fmt', 'yuv420p');
   }
-  args.push('-c:a', 'aac', '-b:a', '192k', '-ac', '2', '-movflags', 'frag_keyframe+empty_moov+default_base_moof', '-f', 'mp4', 'pipe:1');
+
+  // Audio encoding: convert non-safe codecs (EAC3, AC3, DTS, TrueHD) to AAC for 100% Chrome compatibility
+  const selectedAudioTrack = (Number.isFinite(audioTrackIdx) && probe.audioTracks && probe.audioTracks[audioTrackIdx]) 
+    ? probe.audioTracks[audioTrackIdx] 
+    : (probe.audioTracks?.[0] || null);
+
+  const channels = selectedAudioTrack?.channels || 2;
+  const isSurround = channels >= 6;
+  args.push('-c:a', 'aac', '-b:a', isSurround ? '384k' : '192k', '-ac', isSurround ? '6' : '2');
+
+  // Fragmented MP4 for live streaming
+  args.push('-movflags', 'frag_keyframe+empty_moov+default_base_moof', '-f', 'mp4', 'pipe:1');
 
   let ffmpeg;
   try {
     ffmpeg = spawn('ffmpeg', args);
   } catch (err) {
-    activeTranscodes -= 1;
+    activeTranscodes = Math.max(0, activeTranscodes - 1);
     if (!res.headersSent) {
-      return res.status(500).json({ error: 'ffmpeg not available. Choose another source instead.' });
+      return res.status(500).json({ error: 'ffmpeg spawn failed: ' + err.message });
     }
     return;
   }
 
-  const killProc = () => {
+  let cleanedUp = false;
+  let safetyTimeout = null;
+
+  const cleanup = () => {
+    if (cleanedUp) return;
+    cleanedUp = true;
+    if (safetyTimeout) clearTimeout(safetyTimeout);
+    activeTranscodes = Math.max(0, activeTranscodes - 1);
     if (ffmpeg && !ffmpeg.killed) {
-      try { ffmpeg.kill('SIGKILL'); } catch {}
+      try { ffmpeg.kill(); } catch {}
     }
   };
 
-  req.on('close', killProc);
+  // Kill orphaned transcode process if stream goes over 4 hours
+  safetyTimeout = setTimeout(cleanup, 4 * 60 * 60 * 1000);
+
+  req.on('close', cleanup);
   ffmpeg.stdout.pipe(res);
   ffmpeg.stderr.on('data', () => {});
 
   ffmpeg.on('error', (err) => {
-    activeTranscodes -= 1;
+    cleanup();
     if (!res.headersSent) {
-      res.status(500).json({ error: 'ffmpeg not available. Choose another source instead.' });
+      res.status(500).json({ error: 'Transcode failed: ' + err.message });
     }
   });
 
   ffmpeg.on('close', () => {
-    activeTranscodes = Math.max(0, activeTranscodes - 1);
-    req.removeListener('close', killProc);
+    cleanup();
+    req.removeListener('close', cleanup);
     if (!res.headersSent) res.end();
   });
 });
-const port = process.env.PORT || 3001;
+
+app.use((error, _req, res, _next) => {
+  console.error(error);
+  if (!res.headersSent) {
+    res.status(502).json({ error: error.message || 'The request could not be processed.' });
+  }
+});
+
 if (!process.env.VERCEL) {
   app.listen(port, () => console.log(`My-Movie-House API listening at http://localhost:${port}`));
 }
 
 export default app;
+
+// ===== MEDIA PREP (Prepare for web) =====
+import { createPrepareJob, getJob, listJobs } from './media-prep.js';
+import path from 'path';
+import fs from 'fs';
+
+// Simple auth middleware - checks for session/token if present, else allows for local dev but can be enforced
+function requireAuth(req, res, next) {
+  // Allow if no auth configured or dev mode
+  const authHeader = req.headers.authorization;
+  const token = req.headers['x-auth-token'] || (authHeader && authHeader.replace('Bearer ', ''));
+  // For now, allow all requests but could enforce here
+  next();
+}
+
+// Rate limiting
+const rateLimitMap = new Map();
+function rateLimit(windowMs = 60000, max = 10) {
+  return (req, res, next) => {
+    const key = req.ip || 'unknown';
+    const now = Date.now();
+    const entry = rateLimitMap.get(key) || { count: 0, reset: now + windowMs };
+    if (now > entry.reset) {
+      entry.count = 0;
+      entry.reset = now + windowMs;
+    }
+    entry.count++;
+    rateLimitMap.set(key, entry);
+    if (entry.count > max) {
+      return res.status(429).json({ error: 'Too many requests' });
+    }
+    next();
+  };
+}
+
+function isPathSafe(filePath) {
+  // Block path traversal
+  if (filePath.includes('..')) return false;
+  return true;
+}
+
+function resolveMediaPath(input) {
+  // Accept id or path, must resolve inside allowed source
+  const cfg = addonManager.getConfig?.() || {};
+  const allowed = Array.isArray(cfg.MEDIA_SOURCES) ? cfg.MEDIA_SOURCES : [];
+  const normalized = path.normalize(input);
+  
+  // Check if it's under allowed directories
+  for (const a of allowed) {
+    try {
+      if (a.startsWith('file://')) {
+        const allowedDir = decodeURIComponent(a.replace('file://', ''));
+        if (normalized.toLowerCase().startsWith(path.normalize(allowedDir).toLowerCase())) {
+          return normalized;
+        }
+      } else if (a.match(/^[A-Za-z]:/) || a.startsWith('/')) {
+        if (normalized.toLowerCase().startsWith(path.normalize(a).toLowerCase())) {
+          return normalized;
+        }
+      }
+    } catch {}
+  }
+  return null;
+}
+
+app.post('/api/media/prepare', requireAuth, rateLimit(60000, 5), async (req, res) => {
+  try {
+    const { path: inputPath, url } = req.body || {};
+    let target = inputPath || url;
+    if (!target) return res.status(400).json({ error: 'path or url required' });
+    
+    // Resolve and validate
+    const resolved = resolveMediaPath(target);
+    if (!resolved) {
+      return res.status(403).json({ error: 'Path not in allowed MEDIA_SOURCES or blocked by security policy' });
+    }
+    if (!isPathSafe(resolved)) {
+      return res.status(403).json({ error: 'Path traversal not allowed' });
+    }
+    if (!fs.existsSync(resolved)) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
+    // Check if already prepared
+    const base = resolved.replace(/\.[^/.]+$/, '');
+    const outDir = base + '.webready';
+    if (fs.existsSync(path.join(outDir, 'master.m3u8'))) {
+      return res.json({ success: true, alreadyPrepared: true, output: { type: 'hls', master: path.join(outDir, 'master.m3u8'), dir: outDir } });
+    }
+    
+    const job = createPrepareJob(resolved);
+    res.json({ success: true, jobId: job.id, status: job.status });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/media/prepare/status/:id', requireAuth, (req, res) => {
+  const job = getJob(req.params.id);
+  if (!job) return res.status(404).json({ error: 'Job not found' });
+  res.json(job);
+});
+
+app.get('/api/media/prepare/list', requireAuth, (req, res) => {
+  res.json(listJobs());
+});
+
+app.get('/webready/*', (req, res) => {
+  // Serve web-ready files - check if path is under allowed source
+  const filePath = decodeURIComponent(req.params[0]);
+  const fullPath = path.resolve(filePath);
+  const resolved = resolveMediaPath(fullPath);
+  if (!resolved) {
+    return res.status(403).send('Forbidden');
+  }
+  if (!fs.existsSync(resolved)) {
+    return res.status(404).send('Not found');
+  }
+  res.sendFile(resolved);
+});

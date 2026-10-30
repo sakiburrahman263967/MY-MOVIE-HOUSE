@@ -33,14 +33,6 @@ export const PRESET_CLOUDSTREAM_REPOS = [
     url: "https://raw.githubusercontent.com/phisher98/CXXX/builds/CXXX.json",
     enabled: true,
     builtin: true
-  },
-  {
-    id: 'cs-repo-hexated',
-    name: "Hexated Official CloudStream Repository",
-    description: "Multilingual Global Providers (SuperStream, Sflix, MovieBox, Anime)",
-    url: "https://raw.githubusercontent.com/hexated/cloudstream-extensions-hexated/master/repo.json",
-    enabled: false,
-    builtin: true
   }
 ];
 
@@ -1090,8 +1082,8 @@ export class CloudStreamManager {
       } else if (pName.includes('DhakaFlix') || pName.includes('ICC') || pName.includes('RoarZone') || pName.includes('BanglaPlex') || pName.includes('MovieLinkBD') || pName.includes('MLSBD')) {
         // BDIX & Regional Fast Server (VidSrc / MultiEmbed)
         const embedUrl = isMovie
-          ? `https://vidsrc.cc/v2/embed/movie/${tmdbId || validId}`
-          : `https://vidsrc.cc/v2/embed/tv/${tmdbId || validId}/${season}/${episode}`;
+          ? `https://autoembed.co/movie/tmdb/${tmdbId || validId}`
+          : `https://autoembed.co/tv/tmdb/${tmdbId || validId}/${season}/${episode}`;
         streams.push({
           addonId: `cloudstream-${plugin.id}`,
           addonName: `[CloudStream] ${pName} (BDIX)`,
