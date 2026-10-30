@@ -1613,9 +1613,21 @@ export class AddonManager {
 
     // Shared meta lookup — ID resolution, cloudstream fan-out and the
     // MovieBox-TUI provider fan-out all reuse this single in-flight promise.
+    const baseMetaId = (() => {
+      const s = String(id);
+      if (s.startsWith('tmdb:')) {
+        const parts = s.split(':');
+        return parts.length >= 2 ? `${parts[0]}:${parts[1]}` : s;
+      }
+      return s.split(':')[0];
+    })();
+
     const metaForId = (async () => {
       try {
-        return await this.getMeta(type, id);
+        const direct = await this.getMeta(type, baseMetaId);
+        if (direct) return direct;
+        if (baseMetaId !== id) return await this.getMeta(type, id);
+        return null;
       } catch {
         return null;
       }
@@ -1834,7 +1846,7 @@ export class AddonManager {
       let chunkEmitted = false;
       try {
         const meta = await metaForId;
-        const streams = await getBdixFtpStreams({ type, id, meta, deadline: startTime + 8000 });
+        const streams = await getBdixFtpStreams({ type, id, meta, deadline: startTime + 12000 });
         const latency = Date.now() - startTime;
         const parsed = (streams || [])
           .map((s) => ({ ...parseStreamDetails(s, s.addonName || 'BDIX Fast FTP Servers', latency), addonId: 'bdix-ftp', addonName: 'BDIX Fast FTP Servers' }))

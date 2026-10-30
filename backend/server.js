@@ -1,9 +1,16 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
+import crypto from 'crypto';
+import { fileURLToPath } from 'url';
 import { Readable } from 'stream';
 import { spawn } from 'child_process';
 import { AddonManager } from './addon-manager.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import { fetchPlatformContent, resolveImdbId, validateTmdbKey, fetchTmdbSeasonEpisodes, searchTmdbId, fetchTmdbSimilar, fetchPersonCredits } from './tmdb.js';
 import { cloudstreamManager } from './cloudstream-manager.js';
 import { iptvManager } from './iptv-manager.js';
@@ -558,6 +565,8 @@ app.all('/api/proxy/stream', streamProxyHandler);
 // Extension-suffixed variant so the player's extension/HLS detection
 // (split('?')[0].endsWith('.m3u8')) works for proxied token URLs.
 app.all('/api/proxy/stream.:ext', streamProxyHandler);
+app.all('/proxy', streamProxyHandler);
+app.all('/api/proxy', streamProxyHandler);
 
 app.get('/api/search', async (req, res, next) => {
   const query = typeof req.query.q === 'string' ? req.query.q.trim() : '';
@@ -1165,23 +1174,245 @@ app.get('/api/transcode/stream', async (req, res) => {
   });
 });
 
-app.use((error, _req, res, _next) => {
-  console.error(error);
-  if (!res.headersSent) {
-    res.status(502).json({ error: error.message || 'The request could not be processed.' });
+// ===== BACKGROUND HLS TRANSCODER (RFC 8216 Compliant) =====
+const HLS_OUT_DIR = path.join(__dirname, 'public', 'hls');
+fs.mkdirSync(HLS_OUT_DIR, { recursive: true });
+
+app.use('/transcode/hls', express.static(HLS_OUT_DIR, {
+  setHeaders: (res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', '*');
   }
+}));
+
+app.use('/out', express.static(HLS_OUT_DIR, {
+  setHeaders: (res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+  }
+}));
+
+const activeHlsJobs = new Map(); // jobId -> { child, startTime, status, url }
+
+const transcodeHlsHandler = async (req, res) => {
+  let rawUrl = (req.body?.url || req.query?.url || '').trim();
+  if (!rawUrl) return res.status(400).json({ error: 'Missing url parameter' });
+
+  let customHeaders = { ...(req.body?.headers || {}) };
+  let tokenMeta = null;
+
+  // Resolve opaque token (MovieBox/Dramachi)
+  if (isStreamToken(rawUrl)) {
+    const resolved = resolveStreamToken(rawUrl);
+    if (resolved) {
+      rawUrl = resolved.url;
+      customHeaders = { ...customHeaders, ...(resolved.headers || {}) };
+      tokenMeta = resolved.meta || null;
+    }
+  }
+
+  // If URL wraps an inner proxy url
+  if (rawUrl.includes('/api/proxy/stream') || rawUrl.includes('/proxy')) {
+    try {
+      const full = new URL(rawUrl, 'http://localhost');
+      const innerUrl = full.searchParams.get('url');
+      if (innerUrl) rawUrl = innerUrl;
+      const innerHeaders = full.searchParams.get('headers');
+      if (innerHeaders) {
+        try {
+          const parsed = JSON.parse(innerHeaders);
+          customHeaders = { ...customHeaders, ...parsed };
+        } catch {}
+      }
+    } catch {}
+  }
+
+  if (tokenMeta?.subjectId && tokenMeta?.resourceId) {
+    try {
+      rawUrl = await ensureFreshMovieBoxUrl(rawUrl, tokenMeta, { deadline: Date.now() + 6000 });
+    } catch {}
+  }
+
+  let target;
+  try {
+    target = new URL(rawUrl);
+  } catch {
+    return res.status(400).json({ error: 'Invalid URL' });
+  }
+  if (!['http:', 'https:'].includes(target.protocol)) {
+    return res.status(400).json({ error: 'Only http/https allowed' });
+  }
+  if (isPrivateOrBlockedHost(target.hostname)) {
+    return res.status(403).json({ error: 'Access to private host forbidden' });
+  }
+
+  const audioTrackIdx = Number.parseInt(req.body?.audioTrack ?? req.query?.audioTrack, 10);
+  const cacheKey = `${rawUrl}_audio_${Number.isFinite(audioTrackIdx) ? audioTrackIdx : 'default'}`;
+  const jobId = crypto.createHash('md5').update(cacheKey).digest('hex').slice(0, 16);
+  const jobDir = path.join(HLS_OUT_DIR, jobId);
+  const playlistPath = path.join(jobDir, 'index.m3u8');
+  const hlsUrl = `/transcode/hls/${jobId}/index.m3u8`;
+
+  // 1. Check existing cached HLS output
+  if (fs.existsSync(playlistPath)) {
+    try {
+      const content = fs.readFileSync(playlistPath, 'utf8');
+      if (content.includes('.ts') || content.includes('#EXT-X-TARGETDURATION')) {
+        return res.json({ success: true, hlsUrl, jobId, status: 'ready', cached: true });
+      }
+    } catch {}
+  }
+
+  // 2. Check if already actively transcoding
+  if (activeHlsJobs.has(jobId)) {
+    return res.json({ success: true, hlsUrl, jobId, status: 'transcoding' });
+  }
+
+  fs.mkdirSync(jobDir, { recursive: true });
+
+  const args = [
+    '-hide_banner',
+    '-loglevel', 'warning'
+  ];
+
+  if (rawUrl.includes('fsldownload') || rawUrl.includes('movielinkbd')) {
+    customHeaders['Referer'] = 'https://movielinkbd.com/';
+  }
+
+  const headersStr = Object.entries(customHeaders)
+    .filter(([k]) => k.toLowerCase() !== 'user-agent')
+    .map(([k, v]) => `${k}: ${v}`)
+    .join('\r\n');
+  if (headersStr) args.push('-headers', headersStr + '\r\n');
+  if (customHeaders['User-Agent'] || customHeaders['user-agent']) {
+    args.push('-user_agent', customHeaders['User-Agent'] || customHeaders['user-agent']);
+  }
+
+  args.push('-i', rawUrl);
+
+  // Map video & selected audio
+  args.push('-map', '0:v:0');
+  if (Number.isFinite(audioTrackIdx) && audioTrackIdx >= 0) {
+    args.push('-map', `0:a:${audioTrackIdx}?`);
+  } else {
+    args.push('-map', '0:a:0?');
+  }
+
+  // Video encoding: libx264 veryfast crf 23 with downscaling 4K/HDR to 1080p for smooth browser playback
+  args.push(
+    '-c:v', 'libx264',
+    '-preset', 'veryfast',
+    '-crf', '23',
+    '-pix_fmt', 'yuv420p',
+    '-vf', 'scale=\'min(1920,iw)\':-2'
+  );
+
+  // Audio: AAC stereo 192k universal
+  args.push(
+    '-c:a', 'aac',
+    '-b:a', '192k',
+    '-ac', '2'
+  );
+
+  // HLS segmentation
+  const segDuration = String(process.env.TRANSCODE_SEGMENT_DURATION || 4);
+  args.push(
+    '-f', 'hls',
+    '-hls_time', segDuration,
+    '-hls_list_size', '0',
+    '-hls_flags', 'independent_segments',
+    '-hls_segment_filename', path.join(jobDir, 'seg_%04d.ts'),
+    playlistPath
+  );
+
+  let ffmpegProc;
+  try {
+    ffmpegProc = spawn('ffmpeg', args, { stdio: ['ignore', 'pipe', 'pipe'] });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to start ffmpeg: ' + err.message });
+  }
+
+  activeHlsJobs.set(jobId, { child: ffmpegProc, startTime: Date.now(), status: 'transcoding', url: rawUrl });
+
+  ffmpegProc.on('error', (err) => {
+    console.error(`[FFMPEG HLS ERROR ${jobId}]:`, err.message);
+    activeHlsJobs.delete(jobId);
+  });
+
+  ffmpegProc.on('close', (code) => {
+    activeHlsJobs.delete(jobId);
+    console.log(`[FFMPEG HLS FINISHED ${jobId}] exit code:`, code);
+  });
+
+  // Wait up to 3.5s for initial playlist to be written
+  const startWait = Date.now();
+  while (Date.now() - startWait < 3500) {
+    if (fs.existsSync(playlistPath)) {
+      try {
+        const text = fs.readFileSync(playlistPath, 'utf8');
+        if (text.length > 20) break;
+      } catch {}
+    }
+    await new Promise((r) => setTimeout(r, 200));
+  }
+
+  return res.json({ success: true, hlsUrl, jobId, status: 'transcoding' });
+};
+
+app.post('/transcode', transcodeHlsHandler);
+app.post('/api/transcode', transcodeHlsHandler);
+app.post('/api/transcode/hls', transcodeHlsHandler);
+
+app.get('/api/transcode/status/:jobId', (req, res) => {
+  const { jobId } = req.params;
+  const isRunning = activeHlsJobs.has(jobId);
+  const playlistPath = path.join(HLS_OUT_DIR, jobId, 'index.m3u8');
+  const exists = fs.existsSync(playlistPath);
+  res.json({
+    jobId,
+    active: isRunning,
+    ready: exists,
+    hlsUrl: `/transcode/hls/${jobId}/index.m3u8`
+  });
 });
 
-if (!process.env.VERCEL) {
-  app.listen(port, () => console.log(`My-Movie-House API listening at http://localhost:${port}`));
-}
+app.delete('/api/transcode/job/:jobId', (req, res) => {
+  const { jobId } = req.params;
+  const job = activeHlsJobs.get(jobId);
+  if (job?.child) {
+    try { job.child.kill(); } catch {}
+  }
+  activeHlsJobs.delete(jobId);
+  const jobDir = path.join(HLS_OUT_DIR, jobId);
+  try {
+    fs.rmSync(jobDir, { recursive: true, force: true });
+  } catch {}
+  res.json({ success: true, jobId });
+});
 
-export default app;
+// Auto-delete expired transcode jobs after 3 hours
+setInterval(() => {
+  try {
+    if (!fs.existsSync(HLS_OUT_DIR)) return;
+    const items = fs.readdirSync(HLS_OUT_DIR);
+    const now = Date.now();
+    const maxAgeMs = (Number(process.env.TRANSCODE_CACHE_HOURS) || 3) * 60 * 60 * 1000;
+    for (const item of items) {
+      if (activeHlsJobs.has(item)) continue;
+      const itemPath = path.join(HLS_OUT_DIR, item);
+      const stat = fs.statSync(itemPath);
+      if (now - stat.mtimeMs > maxAgeMs) {
+        fs.rmSync(itemPath, { recursive: true, force: true });
+        console.log(`[HLS CLEANUP] Deleted expired transcode job: ${item}`);
+      }
+    }
+  } catch {}
+}, 30 * 60 * 1000);
 
 // ===== MEDIA PREP (Prepare for web) =====
 import { createPrepareJob, getJob, listJobs } from './media-prep.js';
-import path from 'path';
-import fs from 'fs';
 
 // Simple auth middleware - checks for session/token if present, else allows for local dev but can be enforced
 function requireAuth(req, res, next) {
@@ -1297,3 +1528,16 @@ app.get('/webready/*', (req, res) => {
   }
   res.sendFile(resolved);
 });
+
+app.use((error, _req, res, _next) => {
+  console.error(error);
+  if (!res.headersSent) {
+    res.status(502).json({ error: error.message || 'The request could not be processed.' });
+  }
+});
+
+if (!process.env.VERCEL) {
+  app.listen(port, () => console.log(`My-Movie-House API listening at http://localhost:${port}`));
+}
+
+export default app;

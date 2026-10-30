@@ -74,11 +74,15 @@ export function isEmbedUrl(url) {
 export function canBrowserPlayHevc() {
   if (typeof document === 'undefined') return false;
   const v = document.createElement('video');
-  const canPlay = v.canPlayType('video/mp4; codecs="hev1.1.6.L93.B0"') ||
-                  v.canPlayType('video/mp4; codecs="hvc1.1.6.L93.B0"') ||
+  const canPlay = v.canPlayType('video/mp4; codecs="hvc1.1.6.L93.B0"') ||
+                  v.canPlayType('video/mp4; codecs="hev1.1.6.L93.B0"') ||
                   v.canPlayType('video/mp4; codecs="hev1"') ||
                   v.canPlayType('video/mp4; codecs="hvc1"');
-  return canPlay === 'probably' || canPlay === 'maybe';
+  const mse = typeof window !== 'undefined' && window.MediaSource && (
+    window.MediaSource.isTypeSupported('video/mp4; codecs="hvc1.1.6.L93.B0"') ||
+    window.MediaSource.isTypeSupported('video/mp4; codecs="hev1.1.6.L93.B0"')
+  );
+  return canPlay === 'probably' || (canPlay === 'maybe' && !!mse);
 }
 
 // Simple client-side SRT parser
@@ -237,6 +241,7 @@ export default function VideoPlayer({
   const [currentAudioTrack, setCurrentAudioTrack] = useState(0);
   const [mkvCodecWarning, setMkvCodecWarning] = useState(false);
   const [isTranscoding, setIsTranscoding] = useState(false);
+  const [playbackMode, setPlaybackMode] = useState('direct'); // 'direct' | 'transcoded'
   const autoTranscodeAttemptedRef = useRef(false);
 
   // Subtitles (Internal + External)
@@ -355,10 +360,42 @@ export default function VideoPlayer({
   const isEmbed = !directUrl && isEmbedUrl(stream?.url);
   const activeStreamInfo = parseStreamInfo(stream);
 
+  // Request background HLS transcode from backend
+  const requestHlsTranscode = useCallback(async (srcUrl, track = 0) => {
+    if (!srcUrl) return null;
+    setIsTranscoding(true);
+    setError('');
+    showOsd('⚡ Transcoding HEVC/MKV to H.264 (HLS) for web playback...');
+    try {
+      const res = await fetch(`${API_BASE}/transcode`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: srcUrl, audioTrack: track })
+      });
+      const data = await res.json();
+      if (data.success && data.hlsUrl) {
+        const fullHls = data.hlsUrl.startsWith('http') ? data.hlsUrl : `${API_BASE}${data.hlsUrl}`;
+        setDirectUrl(fullHls);
+        setPlaybackMode('transcoded');
+        setIsTranscoding(false);
+        setMkvCodecWarning(false);
+        showOsd('⚡ Transcoded HLS stream active. Playing with seek support...');
+        return fullHls;
+      } else {
+        throw new Error(data.error || 'Transcode failed');
+      }
+    } catch (err) {
+      setIsTranscoding(false);
+      setError(`Transcoding error: ${err.message}. Click Retry Transcode or Open Original Link.`);
+      return null;
+    }
+  }, [showOsd]);
+
   // Switch Stream Server & remember chosen quality
   const handleSwitchServer = useCallback((newStream) => {
     setInternalStream(newStream);
     setDirectUrl(null);
+    setPlaybackMode(newStream?.url?.includes('/transcode/hls/') ? 'transcoded' : 'direct');
     setIsTranscoding(false);
     setMkvCodecWarning(false);
     autoTranscodeAttemptedRef.current = false;
@@ -382,11 +419,12 @@ export default function VideoPlayer({
     }
 
     // 1. If this was a transcode stream that failed, stop transcoding and move to next server
-    if (directUrl && directUrl.includes('/api/transcode/stream')) {
+    if (directUrl && (directUrl.includes('/transcode/hls/') || directUrl.includes('/api/transcode'))) {
       failedUrlsRef.current.add(directUrl);
       if (stream?.url) failedUrlsRef.current.add(stream.url);
       setDirectUrl(null);
       setIsTranscoding(false);
+      setPlaybackMode('direct');
 
       const candidateStreams = allStreams.filter((s) => s?.url && !failedUrlsRef.current.has(s.url));
       if (candidateStreams.length > 0) {
@@ -396,20 +434,16 @@ export default function VideoPlayer({
         handleSwitchServer(nextStream);
         return;
       }
-      setError('All available streams failed to play. Please select another server or click Retry.');
+      setError('All available streams failed to play. Please click Retry Transcode or Open Original Link.');
       return;
     }
 
     // 2. If direct/proxied stream failed (HEVC, unsupported video/audio codec in browser),
-    // RESCUE IT with /api/transcode/stream once before failing!
+    // RESCUE IT with HLS transcode once before failing!
     const currentSrc = stream?.url || effectiveUrl;
-    if (!autoTranscodeAttemptedRef.current && currentSrc && (!directUrl || !directUrl.includes('/api/transcode/stream'))) {
+    if (!autoTranscodeAttemptedRef.current && currentSrc && (!directUrl || !directUrl.includes('/transcode/hls/'))) {
       autoTranscodeAttemptedRef.current = true;
-      const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(currentSrc)}&audioTrack=${currentAudioTrack || 0}&start=0`;
-      setIsTranscoding(true);
-      setDirectUrl(transcodeUrl);
-      setMkvCodecWarning(false);
-      showOsd('⚡ Format not supported natively. Transcoding to H.264 for playback...');
+      requestHlsTranscode(currentSrc, currentAudioTrack || 0);
       return;
     }
 
@@ -627,23 +661,15 @@ export default function VideoPlayer({
         }
       });
     } else {
-      // Auto-convert MKV / HEVC to H.264 MP4 if browser lacks native decoding
+      // Auto-convert MKV / HEVC to H.264 HLS if browser lacks native decoding
+      const urlToCheck = decodeURIComponent(streamUrl || '') + ' ' + (stream?.externalUrl || '') + ' ' + (stream?.name || '') + ' ' + (stream?.title || '') + ' ' + (stream?.quality || '');
       const isHevcOrMkv = (
-        stream?.language === 'hevc' ||
-        stream?.quality?.toLowerCase()?.includes('hevc') ||
-        stream?.title?.toLowerCase()?.includes('hevc') ||
-        stream?.title?.toLowerCase()?.includes('x265') ||
-        stream?.title?.toLowerCase()?.includes('h265') ||
-        stream?.name?.toLowerCase()?.includes('hevc') ||
-        stream?.name?.toLowerCase()?.includes('x265') ||
-        stream?.url?.toLowerCase()?.includes('hevc') ||
-        stream?.url?.toLowerCase()?.includes('.mkv')
+        /\b(hevc|h265|x265|10bit|hdr)\b/i.test(urlToCheck) ||
+        /\.mkv(\?|$)/i.test(urlToCheck) ||
+        urlToCheck.includes('.mkv')
       );
-      if (isHevcOrMkv && !canBrowserPlayHevc() && (!directUrl || !directUrl.includes('/api/transcode/stream'))) {
-        setIsTranscoding(true);
-        const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(streamUrl)}&audioTrack=0&start=0`;
-        setDirectUrl(transcodeUrl);
-        showOsd('⚡ Converting MKV/HEVC to H.264 for web playback...');
+      if (isHevcOrMkv && (!canBrowserPlayHevc() || /\.mkv(\?|$)/i.test(urlToCheck) || urlToCheck.includes('.mkv')) && (!directUrl || !directUrl.includes('/transcode/hls/'))) {
+        requestHlsTranscode(streamUrl, 0);
         return undefined;
       }
 
@@ -653,7 +679,7 @@ export default function VideoPlayer({
       }
 
       // Proactively probe stream via server-side ffprobe to discover audio tracks, duration, and detect HEVC
-      if (!isHls && !streamUrl.includes('/api/transcode/stream')) {
+      if (!isHls && !streamUrl.includes('/transcode/hls/') && !streamUrl.includes('/api/transcode/stream')) {
         const probeUrl = `${API_BASE}/api/media/probe?url=${encodeURIComponent(streamUrl)}`;
         fetch(probeUrl)
           .then((r) => r.json())
@@ -671,12 +697,9 @@ export default function VideoPlayer({
                 }));
                 setAudioTracks(mapped);
               }
-              // Only auto-switch to transcode if video is strictly confirmed as HEVC and browser cannot decode it
-              if ((data.isHevc === true || data.isMkv === true) && !canBrowserPlayHevc() && (!directUrl || !directUrl.includes('/api/transcode/stream'))) {
-                setIsTranscoding(true);
-                const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(streamUrl)}&audioTrack=0&start=0`;
-                setDirectUrl(transcodeUrl);
-                showOsd('⚡ Converting MKV/HEVC to H.264 for web playback...');
+              // Auto-switch to HLS transcode if video is strictly confirmed as HEVC and browser cannot decode it
+              if ((data.isHevc === true || data.isMkv === true) && !canBrowserPlayHevc() && (!directUrl || !directUrl.includes('/transcode/hls/'))) {
+                requestHlsTranscode(streamUrl, 0);
               }
             }
           })
@@ -927,6 +950,20 @@ export default function VideoPlayer({
 
     if (video.buffered.length > 0) {
       setBuffered(video.buffered.end(video.buffered.length - 1));
+    }
+
+    // Black screen / unsupported video codec detection:
+    // If audio is advancing (cur > 2.5s) and video is not paused, but no frames have been rendered:
+    if (cur > 2.5 && !video.paused && !autoTranscodeAttemptedRef.current && (!directUrl || !directUrl.includes('/transcode/hls/')) && !isEmbed) {
+      const q = typeof video.getVideoPlaybackQuality === 'function' ? video.getVideoPlaybackQuality() : null;
+      const decodedFrames = (q && typeof q.totalVideoFrames === 'number')
+        ? q.totalVideoFrames
+        : (typeof video.webkitDecodedFrameCount === 'number' ? video.webkitDecodedFrameCount : null);
+      if ((decodedFrames !== null && decodedFrames === 0) || video.videoWidth === 0) {
+        autoTranscodeAttemptedRef.current = true;
+        showOsd('⚡ Black screen detected (unsupported video codec). Transcoding to HLS...');
+        requestHlsTranscode(stream?.url || effectiveUrl, currentAudioTrack || 0);
+      }
     }
 
     // A-B Repeat Loop Trigger
@@ -1636,15 +1673,19 @@ export default function VideoPlayer({
             </h1>
             <div className="flex items-center gap-2 text-[10px] text-white/60">
               <span className="text-blue-300 font-semibold">{activeStreamInfo.serverName}</span>
-              {directUrl && !directUrl.includes('/api/transcode/stream') ? (
-                <span className="rounded bg-emerald-500/20 text-emerald-300 font-bold px-1.5 py-0.2 border border-emerald-400/30">
-                  ⚡ PotPlayer Native
+              {playbackMode === 'transcoded' || effectiveUrl?.includes('/transcode/hls/') ? (
+                <span className="rounded bg-cyan-500/20 text-cyan-300 font-bold px-2 py-0.5 border border-cyan-400/40 text-[10px] tracking-wide">
+                  ⚡ Transcoded (HLS)
                 </span>
               ) : isEmbed ? (
-                <span className="rounded bg-amber-500/20 text-amber-300 font-bold px-1.5 py-0.2 border border-amber-400/30">
+                <span className="rounded bg-amber-500/20 text-amber-300 font-bold px-1.5 py-0.5 border border-amber-400/30">
                   Embed Mirror
                 </span>
-              ) : null}
+              ) : (
+                <span className="rounded bg-emerald-500/20 text-emerald-300 font-bold px-2 py-0.5 border border-emerald-400/40 text-[10px] tracking-wide">
+                  ⚡ Direct
+                </span>
+              )}
               {isResolvingDirect && (
                 <span className="rounded bg-blue-500/20 text-blue-300 font-bold px-1.5 py-0.2 border border-blue-400/30 animate-pulse">
                   Extracting Direct…
@@ -1850,15 +1891,10 @@ export default function VideoPlayer({
                 if (v.videoWidth === 0) {
                   const checkTimer = setTimeout(() => {
                     if (videoRef.current && videoRef.current.videoWidth === 0 && !videoRef.current.paused && videoRef.current.currentTime > 2) {
-                      if (!autoTranscodeAttemptedRef.current && stream?.url && (!directUrl || !directUrl.includes('/api/transcode/stream'))) {
+                      if (!autoTranscodeAttemptedRef.current && stream?.url && (!directUrl || !directUrl.includes('/transcode/hls/'))) {
                         autoTranscodeAttemptedRef.current = true;
-                        const currentPos = Math.max(0, Math.floor(videoRef.current.currentTime || 0));
-                        const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(stream.url)}&audioTrack=${currentAudioTrack || 0}&start=${currentPos}`;
-                        setIsTranscoding(true);
-                        setDirectUrl(transcodeUrl);
-                        setMkvCodecWarning(false);
-                        showOsd('⚡ Converting to H.264 for web playback...');
-                      } else if (!directUrl?.includes('/api/transcode/stream')) {
+                        requestHlsTranscode(stream.url, currentAudioTrack || 0);
+                      } else if (!directUrl?.includes('/transcode/hls/')) {
                         setMkvCodecWarning(true);
                       }
                     }
@@ -1896,6 +1932,28 @@ export default function VideoPlayer({
           </div>
         )}
 
+        {/* Live Transcoding Overlay Spinner */}
+        {!isEmbed && isTranscoding && (
+          <div className="absolute inset-0 z-35 flex flex-col items-center justify-center bg-black/85 backdrop-blur-md animate-fadeIn p-6 text-center">
+            <div className="relative flex items-center justify-center mb-4">
+              <div className="h-20 w-20 rounded-full border-4 border-cyan-500/20 border-t-cyan-400 animate-spin shadow-xl" />
+              <div className="absolute inset-0 grid place-items-center text-2xl font-black text-cyan-300 animate-pulse">
+                ⚡
+              </div>
+            </div>
+            <div className="max-w-md bg-[#0b1329] p-5 rounded-2xl border border-cyan-500/40 shadow-2xl">
+              <h3 className="text-base font-bold text-white mb-1">Transcoding to H.264 (HLS)</h3>
+              <p className="text-xs text-cyan-200/80 mb-3 leading-relaxed">
+                Converting HEVC / MKV video into browser-native HLS stream with instant start and working seek...
+              </p>
+              <div className="flex items-center justify-center gap-2 text-[11px] text-white/50 font-mono">
+                <span className="h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
+                <span>Generating HLS segments...</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Live Buffering / Stall Overlay Spinner */}
         {!isEmbed && isBuffering && !isScanning && (
           <div className="pointer-events-none absolute inset-0 z-25 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px] animate-fadeIn">
@@ -1928,7 +1986,7 @@ export default function VideoPlayer({
         {/* Live Resource Scanner Overlay (Removed in favor of clean background stream loading) */}
 
         {/* MKV / Codec Audio-Only Black Screen Warning Banner */}
-        {mkvCodecWarning && !error && !isTranscoding && (!directUrl || !directUrl.includes('/api/transcode/stream')) && (
+        {mkvCodecWarning && !error && !isTranscoding && (!directUrl || !directUrl.includes('/transcode/hls/')) && (
           <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm p-6 text-center animate-fadeIn">
             <div className="relative max-w-md rounded-2xl bg-[#0f172a] p-6 border border-amber-500/40 text-amber-200 shadow-2xl">
               <button
@@ -1947,19 +2005,14 @@ export default function VideoPlayer({
               <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
                 <button
                   onClick={() => {
-                    const raw = stream?.url;
+                    const raw = stream?.url || effectiveUrl;
                     if (raw) {
-                      const currentPos = Math.max(0, Math.floor(videoRef.current?.currentTime || 0));
-                      const transcodeUrl = `${API_BASE}/api/transcode/stream?url=${encodeURIComponent(raw)}&audioTrack=${currentAudioTrack || 0}&start=${currentPos}`;
-                      setIsTranscoding(true);
-                      setDirectUrl(transcodeUrl);
-                      setMkvCodecWarning(false);
-                      showOsd('⚡ Converting to H.264 for browser playback...');
+                      requestHlsTranscode(raw, currentAudioTrack || 0);
                     }
                   }}
                   className="w-full sm:w-auto rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-emerald-500 transition shadow-md flex items-center justify-center gap-1.5"
                 >
-                  <span>⚡ Transcode & Play in Browser (H.264)</span>
+                  <span>⚡ Transcode & Play in Browser (H.264 HLS)</span>
                 </button>
                 {allStreams.length > 1 && (
                   <button
@@ -2010,10 +2063,22 @@ export default function VideoPlayer({
               <p className="text-xs text-rose-300 mb-4 pr-6">{error}</p>
               <div className="flex flex-wrap justify-center gap-2">
                 <button
+                  onClick={() => requestHlsTranscode(stream?.url || effectiveUrl, currentAudioTrack || 0)}
+                  className="rounded-xl bg-cyan-600 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-500 transition shadow-md flex items-center gap-1.5"
+                >
+                  <span>⚡</span> Retry Transcode (HLS)
+                </button>
+                <button
+                  onClick={() => window.open(stream?.url || effectiveUrl, '_blank')}
+                  className="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-500 transition shadow-md flex items-center gap-1.5"
+                >
+                  <span>🔗</span> Open Original Link
+                </button>
+                <button
                   onClick={handleRetryPlayback}
                   className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-black hover:bg-amber-400 transition shadow-md flex items-center gap-1.5"
                 >
-                  <span>🔄</span> Retry Streams
+                  <span>🔄</span> Retry Direct
                 </button>
                 {allStreams.length > 1 && (
                   <button

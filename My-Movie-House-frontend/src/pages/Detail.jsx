@@ -936,144 +936,27 @@ export default function Detail() {
                   if (targetId.includes('cloudstream') || targetName.includes('cloudstream')) {
                     return streamAddonId.includes('cloudstream') || streamAddonName.includes('cloudstream');
                   }
-                  return false;
-                });
-
-                if (modalStreams.length === 0) {
-                  return (
-                    <div className="py-12 text-center text-white/60">
-                      <div className="text-3xl mb-2">📡</div>
-                      <p className="text-sm font-semibold">No direct streams returned from this provider for this title.</p>
-                      <p className="text-xs text-white/40 mt-1">Try clicking on another active provider pill above.</p>
-                    </div>
-                  );
-                }
-
-                return modalStreams.map((st, idx) => {
-                  const info = parseStreamInfo(st);
-                  const isCurrent = selectedStream && selectedStream.url === st.url;
-                  return (
-                    <div
-                      key={`modal-stream-${st.addonId}-${st.url}-${idx}`}
-                      onClick={() => {
-                        setSelectedStream(st);
-                        setShowStreams(true);
-                        setSelectedAddonForModal(null);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
-                      className={`group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
-                        isCurrent
-                          ? 'bg-emerald-600/25 border-emerald-400 text-white shadow-lg shadow-emerald-500/10'
-                          : 'bg-white/[0.04] hover:bg-emerald-600/15 border-white/10 hover:border-emerald-400/50 text-white/90 hover:text-white'
-                      }`}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                          <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                          <span className="text-xs font-black text-white group-hover:text-emerald-300">
-                            {info.serverName}
-                          </span>
-                          <span className="rounded-md bg-blue-500/20 px-2 py-0.5 text-[10px] font-black text-blue-300 border border-blue-400/30">
-                            {info.resolution}
-                          </span>
-                          {info.isDual && (
-                            <span className="rounded-md bg-purple-500/20 px-2 py-0.5 text-[10px] font-bold text-purple-300 border border-purple-400/30">
-                              🎧 Dual Audio
-                            </span>
-                          )}
-                          {info.isMulti && !info.isDual && (
-                            <span className="rounded-md bg-indigo-500/20 px-2 py-0.5 text-[10px] font-bold text-indigo-300 border border-indigo-400/30">
-                              🎧 Multi Audio
-                            </span>
-                          )}
-                          {Array.isArray(info.audioLangs) && info.audioLangs.length > 0 && !info.isDual && !info.isMulti && (
-                            <span className="rounded-md bg-cyan-500/20 px-2 py-0.5 text-[10px] font-bold text-cyan-300 border border-cyan-400/30">
-                              🎙 {info.audioLangs.slice(0, 2).join(', ')}
-                            </span>
-                          )}
-                          {info.size && (
-                            <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 text-[10px] font-mono font-bold text-emerald-300 border border-emerald-400/30">
-                              💾 {info.size}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-white/70 truncate">
-                          {st.title || st.description || st.name}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                        <button
-                          type="button"
-                          className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-xs font-black text-white group-hover:from-emerald-500 group-hover:to-teal-500 transition shadow-md flex items-center gap-1.5"
-                        >
-                          <span>⚡</span>
-                          <span>Play Now</span>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── Addon Sources Popup Modal ─── */}
-      {selectedAddonForModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
-          onClick={() => setSelectedAddonForModal(null)}
-        >
-          <div
-            className="relative w-full max-w-3xl max-h-[85vh] rounded-2xl bg-[#0b1329] border border-emerald-500/40 p-5 shadow-2xl flex flex-col text-left overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 shrink-0">
-              <div className="flex items-center gap-2.5">
-                <span className="h-3 w-3 rounded-full bg-emerald-400 shadow-md shadow-emerald-400/50 animate-pulse" />
-                <div>
-                  <h2 className="text-base sm:text-lg font-black text-white flex items-center gap-2">
-                    <span>{selectedAddonForModal.addonName}</span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 font-mono font-normal">
-                      {selectedAddonForModal.count || 0} Sources Found
-                    </span>
-                  </h2>
-                  <p className="text-[11px] text-white/50 mt-0.5">
-                    Click any source card below to start playing immediately in the player.
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedAddonForModal(null)}
-                className="grid h-8 w-8 place-items-center rounded-xl bg-white/10 text-white hover:bg-rose-600 hover:text-white transition font-bold text-sm shadow"
-                title="Close (Esc)"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Stream List */}
-            <div className="flex-1 overflow-y-auto py-4 pr-1 space-y-2">
-              {(() => {
-                const modalStreams = availableStreams.filter((st) => {
-                  if (st.addonId && st.addonId === selectedAddonForModal.addonId) return true;
-                  if (st.addonName && st.addonName.toLowerCase() === selectedAddonForModal.addonName.toLowerCase()) return true;
-                  if (selectedAddonForModal.addonId === 'bdix-ftp' && (
-                    st.addonName?.toLowerCase().includes('bdix') ||
-                    st.serverName?.toLowerCase().includes('bdix') ||
-                    st.serverName?.toLowerCase().includes('ftp') ||
-                    st.serverName?.toLowerCase().includes('dhaka') ||
-                    st.serverName?.toLowerCase().includes('ctg') ||
-                    st.serverName?.toLowerCase().includes('ghuri') ||
-                    st.serverName?.toLowerCase().includes('ibccl') ||
-                    st.serverName?.toLowerCase().includes('circle') ||
-                    st.serverName?.toLowerCase().includes('roarzone') ||
-                    st.serverName?.toLowerCase().includes('cloud media')
-                  )) return true;
+                  if (targetId.includes('hdhub') || targetName.includes('hdhub')) {
+                    return streamAddonId.includes('hdhub') || streamAddonName.includes('hdhub') || streamServer.includes('hdhub');
+                  }
+                  if (targetId.includes('cinefreak') || targetName.includes('cinefreak')) {
+                    return streamAddonId.includes('cinefreak') || streamAddonName.includes('cinefreak') || streamServer.includes('cinefreak');
+                  }
+                  if (targetId.includes('flix') || targetName.includes('flix')) {
+                    return streamAddonId.includes('flix') || streamAddonName.includes('flix') || streamServer.includes('flix');
+                  }
+                  if (targetId.includes('pengu') || targetName.includes('pengu')) {
+                    return streamAddonId.includes('pengu') || streamAddonName.includes('pengu') || streamServer.includes('pengu');
+                  }
+                  if (targetId.includes('mediafusion') || targetName.includes('mediafusion')) {
+                    return streamAddonId.includes('mediafusion') || streamAddonName.includes('mediafusion') || streamServer.includes('mediafusion');
+                  }
+                  if (targetId.includes('sootio') || targetName.includes('sootio')) {
+                    return streamAddonId.includes('sootio') || streamAddonName.includes('sootio') || streamServer.includes('sootio');
+                  }
+                  if (targetId.includes('webstreamr') || targetName.includes('webstreamr')) {
+                    return streamAddonId.includes('webstreamr') || streamAddonName.includes('webstreamr') || streamServer.includes('webstreamr');
+                  }
                   return false;
                 });
 

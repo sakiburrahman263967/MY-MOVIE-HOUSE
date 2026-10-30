@@ -480,27 +480,81 @@ export async function searchRoarZone(title, isSeries = false, season = 1, episod
 
       for (const item of items) {
         if (!item || !item.Id) continue;
-        if (!isTitleMatch(item.Name, title, year)) continue;
 
-        const streamUrl = `https://play.roarzone.net/emby/Videos/${item.Id}/stream.mkv?Static=true&api_key=${auth.token}`;
-        if (seenUrls.has(streamUrl)) continue;
-        seenUrls.add(streamUrl);
+        if (isSeries) {
+          if (item.Type === 'Series') {
+            if (!isTitleMatch(item.Name, title, year)) continue;
+            try {
+              const epRes = await fetch(`https://play.roarzone.net/emby/Shows/${item.Id}/Episodes?Season=${season}&UserId=${auth.userId}&Fields=MediaSources,Path`, {
+                headers: { 'X-Emby-Token': auth.token },
+                signal: AbortSignal.timeout(3500)
+              });
+              if (epRes.ok) {
+                const epData = await epRes.json();
+                const targetEp = (epData.Items || []).find(e => Number(e.IndexNumber) === Number(episode)) || epData.Items?.[Number(episode) - 1];
+                if (targetEp && targetEp.Id) {
+                  const streamUrl = `https://play.roarzone.net/emby/Videos/${targetEp.Id}/stream.mkv?Static=true&api_key=${auth.token}`;
+                  if (!seenUrls.has(streamUrl)) {
+                    seenUrls.add(streamUrl);
+                    const is1080p = /1080p/i.test(targetEp.Name || targetEp.Path || '');
+                    const is720p = /720p/i.test(targetEp.Name || targetEp.Path || '');
+                    const is4k = /2160p|4k/i.test(targetEp.Name || targetEp.Path || '');
+                    const quality = is4k ? '4K' : (is1080p ? '1080p' : (is720p ? '720p' : 'HD'));
+                    results.push({
+                      url: streamUrl,
+                      name: `[BDIX FTP] RoarZone - ${quality}`,
+                      title: `${item.Name} S${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}: ${targetEp.Name || 'Episode'}`,
+                      quality,
+                      size: 'BDIX Gigabit',
+                      addonName: 'BDIX Fast FTP Servers',
+                      serverName: 'RoarZone Media Server',
+                      behaviorHints: { notWebReady: false }
+                    });
+                  }
+                }
+              }
+            } catch {}
+          } else if (item.Type === 'Episode') {
+            if (Number(item.IndexNumber) === Number(episode) && Number(item.ParentIndexNumber || 1) === Number(season)) {
+              const streamUrl = `https://play.roarzone.net/emby/Videos/${item.Id}/stream.mkv?Static=true&api_key=${auth.token}`;
+              if (!seenUrls.has(streamUrl)) {
+                seenUrls.add(streamUrl);
+                results.push({
+                  url: streamUrl,
+                  name: `[BDIX FTP] RoarZone - HD`,
+                  title: `${title} S${String(season).padStart(2, '0')}E${String(episode).padStart(2, '0')}: ${item.Name || 'Episode'}`,
+                  quality: 'HD',
+                  size: 'BDIX Gigabit',
+                  addonName: 'BDIX Fast FTP Servers',
+                  serverName: 'RoarZone Media Server',
+                  behaviorHints: { notWebReady: false }
+                });
+              }
+            }
+          }
+        } else {
+          if (!isTitleMatch(item.Name, title, year)) continue;
 
-        const is1080p = /1080p/i.test(item.Name || item.Path || '');
-        const is720p = /720p/i.test(item.Name || item.Path || '');
-        const is4k = /2160p|4k/i.test(item.Name || item.Path || '');
-        const quality = is4k ? '4K' : (is1080p ? '1080p' : (is720p ? '720p' : 'HD'));
+          const streamUrl = `https://play.roarzone.net/emby/Videos/${item.Id}/stream.mkv?Static=true&api_key=${auth.token}`;
+          if (seenUrls.has(streamUrl)) continue;
+          seenUrls.add(streamUrl);
 
-        results.push({
-          url: streamUrl,
-          name: `[BDIX FTP] RoarZone - ${quality}`,
-          title: `${item.Name} (RoarZone BDIX Gigabit)`,
-          quality,
-          size: 'BDIX Gigabit',
-          addonName: 'BDIX Fast FTP Servers',
-          serverName: 'RoarZone Media Server',
-          behaviorHints: { notWebReady: false }
-        });
+          const is1080p = /1080p/i.test(item.Name || item.Path || '');
+          const is720p = /720p/i.test(item.Name || item.Path || '');
+          const is4k = /2160p|4k/i.test(item.Name || item.Path || '');
+          const quality = is4k ? '4K' : (is1080p ? '1080p' : (is720p ? '720p' : 'HD'));
+
+          results.push({
+            url: streamUrl,
+            name: `[BDIX FTP] RoarZone - ${quality}`,
+            title: `${item.Name} (RoarZone BDIX Gigabit)`,
+            quality,
+            size: 'BDIX Gigabit',
+            addonName: 'BDIX Fast FTP Servers',
+            serverName: 'RoarZone Media Server',
+            behaviorHints: { notWebReady: false }
+          });
+        }
       }
       if (results.length > 0) break;
     }
@@ -559,57 +613,207 @@ export async function searchCircleSam(title, isSeries = false, season = 1, episo
 }
 
 // 7. Search Cloud Media (http://172.19.178.179/)
-export async function searchCloudMedia(title, year = null) {
+export async function searchCloudMedia(title, year = null, isSeries = false, season = 1, episode = 1) {
   try {
     const queries = generateSearchQueries(title);
     const results = [];
     const seenUrls = new Set();
 
     for (const q of queries.slice(0, 2)) {
-      // Correct search parameter on Cloud Media is ?q=
       const searchUrl = `http://172.19.178.179/search.php?q=${encodeURIComponent(q)}`;
       const res = await fetch(searchUrl, { signal: AbortSignal.timeout(4000) });
       if (!res.ok) continue;
       const html = await res.text();
 
-      // Extract each <a href="movie.php?id=...">Title</a>
-      const aMatches = [...html.matchAll(/<a[^>]*href="([^"]*movie\.php\?id=\d+)"[^>]*>([\s\S]*?)<\/a>/gi)];
-      const candidateList = [];
-      for (const m of aMatches) {
-        const link = m[1];
-        const linkTitle = m[2].replace(/<[^>]*>/g, '').replace(/&#039;/g, "'").trim();
-        if (linkTitle && isTitleMatch(linkTitle, title, year)) {
-          const idMatch = link.match(/id=(\d+)/);
-          if (idMatch && !candidateList.some(c => c.id === idMatch[1])) {
-            candidateList.push({ id: idMatch[1], title: linkTitle });
+      if (isSeries) {
+        const sMatches = [...html.matchAll(/<a[^>]*href=["']([^"']*series\.php\?id=\d+)["'][^>]*>([\s\S]*?)<\/a>/gi)];
+        const padSeason = String(season).padStart(2, '0');
+        const epRegex = new RegExp(`(?:s0?${season}e0?${episode}|s${padSeason}e0?${episode}|episode\\s*0?${episode}|e0?${episode})`, 'i');
+
+        for (const sm of sMatches) {
+          const link = sm[1];
+          const linkTitle = sm[2].replace(/<[^>]*>/g, '').replace(/&#039;/g, "'").trim();
+          if (linkTitle && isTitleMatch(linkTitle, title, year)) {
+            const idMatch = link.match(/id=(\d+)/);
+            if (idMatch) {
+              const dRes = await fetch(`http://172.19.178.179/series.php?id=${idMatch[1]}`, { signal: AbortSignal.timeout(3500) });
+              if (dRes.ok) {
+                const dHtml = await dRes.text();
+                const vMatches = [...dHtml.matchAll(/(?:src|href)=["'](http:\/\/172\.19\.[^"']*\.(?:mp4|mkv|avi|webm)[^"']*)["']/gi)];
+                for (const vm of vMatches) {
+                  let streamUrl = vm[1].replace(/&#039;/g, "'").replace(/&amp;/g, '&');
+                  if (epRegex.test(streamUrl) || vMatches.length === 1) {
+                    if (seenUrls.has(streamUrl)) continue;
+                    seenUrls.add(streamUrl);
+                    const is1080p = /1080p/i.test(streamUrl);
+                    const is720p = /720p/i.test(streamUrl);
+                    const quality = is1080p ? '1080p' : (is720p ? '720p' : 'HD');
+                    results.push({
+                      url: streamUrl,
+                      name: `[BDIX FTP] Cloud Media - ${quality}`,
+                      title: `${linkTitle} S${padSeason}E${String(episode).padStart(2, '0')}`,
+                      quality,
+                      size: 'BDIX Direct',
+                      addonName: 'BDIX Fast FTP Servers',
+                      serverName: 'Cloud Media (172.19.178.179)',
+                      behaviorHints: { notWebReady: false }
+                    });
+                    break;
+                  }
+                }
+              }
+            }
+          }
+        }
+      } else {
+        const aMatches = [...html.matchAll(/<a[^>]*href=["']([^"']*movie\.php\?id=\d+)["'][^>]*>([\s\S]*?)<\/a>/gi)];
+        const candidateList = [];
+        for (const m of aMatches) {
+          const link = m[1];
+          const linkTitle = m[2].replace(/<[^>]*>/g, '').replace(/&#039;/g, "'").trim();
+          if (linkTitle && isTitleMatch(linkTitle, title, year)) {
+            const idMatch = link.match(/id=(\d+)/);
+            if (idMatch && !candidateList.some(c => c.id === idMatch[1])) {
+              candidateList.push({ id: idMatch[1], title: linkTitle });
+            }
+          }
+        }
+
+        for (const cand of candidateList.slice(0, 2)) {
+          const dRes = await fetch(`http://172.19.178.179/movie.php?id=${cand.id}`, { signal: AbortSignal.timeout(3500) });
+          if (!dRes.ok) continue;
+          const dHtml = await dRes.text();
+          const vMatches = [...dHtml.matchAll(/(?:src|href)=["'](http:\/\/172\.19\.[^"']*\.(?:mp4|mkv|avi|webm)[^"']*)["']/gi)];
+          for (const vm of vMatches) {
+            let streamUrl = vm[1].replace(/&#039;/g, "'").replace(/&amp;/g, '&');
+            if (seenUrls.has(streamUrl)) continue;
+            seenUrls.add(streamUrl);
+
+            const is1080p = /1080p/i.test(streamUrl);
+            const is720p = /720p/i.test(streamUrl);
+            const is4k = /2160p|4k/i.test(streamUrl);
+            const quality = is4k ? '4K' : (is1080p ? '1080p' : (is720p ? '720p' : 'HD'));
+            results.push({
+              url: streamUrl,
+              name: `[BDIX FTP] Cloud Media - ${quality}`,
+              title: `${cand.title} (${quality})`,
+              quality,
+              size: 'BDIX Direct',
+              addonName: 'BDIX Fast FTP Servers',
+              serverName: 'Cloud Media (172.19.178.179)',
+              behaviorHints: { notWebReady: false }
+            });
           }
         }
       }
+      if (results.length > 0) break;
+    }
+    return results;
+  } catch {
+    return [];
+  }
+}
 
-      for (const cand of candidateList.slice(0, 2)) {
-        const dRes = await fetch(`http://172.19.178.179/movie.php?id=${cand.id}`, { signal: AbortSignal.timeout(3500) });
-        if (!dRes.ok) continue;
-        const dHtml = await dRes.text();
-        const vMatches = [...dHtml.matchAll(/(?:src|href)=["'](http:\/\/172\.19\.[^"']*\.(?:mp4|mkv|avi|webm)[^"']*)["']/gi)];
-        for (const vm of vMatches) {
-          let streamUrl = vm[1].replace(/&#039;/g, "'").replace(/&amp;/g, '&');
-          if (seenUrls.has(streamUrl)) continue;
-          seenUrls.add(streamUrl);
+// 8. Search DiscoveryFTP (cdn1.discoveryftp.net to cdn5.discoveryftp.net)
+export async function searchDiscoveryFtp(title, isSeries = false, season = 1, episode = 1, year = null) {
+  try {
+    const queries = generateSearchQueries(title);
+    const results = [];
+    const seenUrls = new Set();
 
-          const is1080p = /1080p/i.test(streamUrl);
-          const is720p = /720p/i.test(streamUrl);
-          const is4k = /2160p|4k/i.test(streamUrl);
-          const quality = is4k ? '4K' : (is1080p ? '1080p' : (is720p ? '720p' : 'HD'));
-          results.push({
-            url: streamUrl,
-            name: `[BDIX FTP] Cloud Media - ${quality}`,
-            title: `${cand.title} (${quality})`,
-            quality,
-            size: 'BDIX Direct',
-            addonName: 'BDIX Fast FTP Servers',
-            serverName: 'Cloud Media (172.19.178.179)',
-            behaviorHints: { notWebReady: false }
-          });
+    for (const q of queries.slice(0, 2)) {
+      const endpoint = isSeries
+        ? `http://movies.discoveryftp.net/s/find/${encodeURIComponent(q)}`
+        : `http://movies.discoveryftp.net/m/find/${encodeURIComponent(q)}`;
+
+      const res = await fetch(endpoint, { signal: AbortSignal.timeout(4500) });
+      if (!res.ok) continue;
+      const html = await res.text();
+
+      if (!isSeries) {
+        // Movies: <a class="cfocus" href="/m/view/36481"><div class="poster " title="...">
+        const matches = [...html.matchAll(/<a[^>]*href=["'](\/m\/view\/(\d+))["'][^>]*>([\s\S]*?)<\/a>/gi)];
+        for (const m of matches.slice(0, 6)) {
+          const id = m[2];
+          const inner = m[3] || '';
+          const cardTitleMatch = inner.match(/title=["']([^"']+)["']/i) || inner.match(/alt=["']([^"']+)["']/i);
+          const cardTitle = cardTitleMatch ? cardTitleMatch[1].trim() : '';
+          if (cardTitle && !isTitleMatch(cardTitle, title, year)) continue;
+
+          try {
+            const plRes = await fetch(`http://movies.discoveryftp.net/m/playlist/${id}`, { signal: AbortSignal.timeout(3500) });
+            const plText = await plRes.text();
+            const linkMatch = plText.match(/https?:\/\/[^\s\r\n]+\.(?:mp4|mkv|avi|webm)[^\s\r\n]*/i);
+            if (linkMatch) {
+              const streamUrl = linkMatch[0].trim();
+              if (seenUrls.has(streamUrl)) continue;
+              // Also check file name in streamUrl
+              const decodedPath = decodeURIComponent(streamUrl);
+              const fileName = decodedPath.split('/').pop() || '';
+              if (!isTitleMatch(fileName, title, year) && cardTitle && !isTitleMatch(cardTitle, title, year)) continue;
+
+              seenUrls.add(streamUrl);
+
+              const is1080p = /1080p/i.test(streamUrl);
+              const is720p = /720p/i.test(streamUrl);
+              const is4k = /2160p|4k/i.test(streamUrl);
+              const quality = is4k ? '4K' : (is1080p ? '1080p' : (is720p ? '720p' : 'HD'));
+
+              results.push({
+                url: streamUrl,
+                name: `[BDIX FTP] DiscoveryFTP - ${quality}`,
+                title: `${cardTitle || title} (DiscoveryFTP Gigabit)`,
+                quality,
+                size: 'BDIX Gigabit',
+                addonName: 'BDIX Fast FTP Servers',
+                serverName: 'DiscoveryFTP CDN',
+                behaviorHints: { notWebReady: false }
+              });
+            }
+          } catch {}
+        }
+      } else {
+        // Series: <a class='text-light' href='/s/view/4573'>...<div class='ftitle'>The Mentalist ((2008))</div>
+        const matches = [...html.matchAll(/<a[^>]*href=["'](\/s\/view\/(\d+))["'][^>]*>([\s\S]*?)<\/a>/gi)];
+        const padSeason = String(season).padStart(2, '0');
+        const epRegex = new RegExp(`(?:s0?${season}e0?${episode}|s${padSeason}e0?${episode}|episode\\s*0?${episode}|e0?${episode})`, 'i');
+
+        for (const m of matches.slice(0, 6)) {
+          const id = m[2];
+          const inner = m[3] || '';
+          const ftitleMatch = inner.match(/<div class=['"]ftitle['"]>([^<]+)<\/div>/i);
+          const cardTitle = ftitleMatch ? ftitleMatch[1].replace(/\(\(\d+\)\)/g, '').trim() : '';
+          if (cardTitle && !isTitleMatch(cardTitle, title, year)) continue;
+
+          try {
+            const sRes = await fetch(`http://movies.discoveryftp.net/s/view/${id}/${padSeason}`, { signal: AbortSignal.timeout(4000) });
+            const sHtml = await sRes.text();
+            const videoLinks = [...sHtml.matchAll(/href=["'](http:\/\/cdn\d\.discoveryftp\.net\/[^"']+\.(?:mkv|mp4|webm))["']/gi)];
+            for (const vl of videoLinks) {
+              const streamUrl = vl[1];
+              if (epRegex.test(streamUrl) || videoLinks.length === 1) {
+                if (seenUrls.has(streamUrl)) continue;
+                seenUrls.add(streamUrl);
+
+                const is1080p = /1080p/i.test(streamUrl);
+                const is720p = /720p/i.test(streamUrl);
+                const is4k = /2160p|4k/i.test(streamUrl);
+                const quality = is4k ? '4K' : (is1080p ? '1080p' : (is720p ? '720p' : 'HD'));
+
+                results.push({
+                  url: streamUrl,
+                  name: `[BDIX FTP] DiscoveryFTP - ${quality}`,
+                  title: `${cardTitle || title} S${padSeason}E${String(episode).padStart(2, '0')} (DiscoveryFTP)`,
+                  quality,
+                  size: 'BDIX Gigabit',
+                  addonName: 'BDIX Fast FTP Servers',
+                  serverName: 'DiscoveryFTP CDN',
+                  behaviorHints: { notWebReady: false }
+                });
+                break;
+              }
+            }
+          } catch {}
         }
       }
       if (results.length > 0) break;
@@ -626,7 +830,8 @@ export async function getBdixFtpStreams({ type, id, meta, deadline }) {
   if (!title || typeof title !== 'string' || !title.trim()) return [];
 
   const cleanTitle = title.trim();
-  const year = meta?.year || meta?.releaseInfo || null;
+  const rawYear = meta?.year || meta?.releaseInfo || '';
+  const cleanYear = String(rawYear).replace(/[^\d]/g, '').slice(0, 4) || null;
   const imdbId = meta?.imdb_id || meta?.imdbId || (String(id).startsWith('tt') ? id.split(':')[0] : null);
   const isSeries = type === 'series' || type === 'tv';
 
@@ -638,14 +843,15 @@ export async function getBdixFtpStreams({ type, id, meta, deadline }) {
     episode = parseInt(match[2], 10) || 1;
   }
 
-  const [ibcclRes, ghuriRes, ctgRes, dhakaRes, roarRes, circleRes, cloudRes] = await Promise.allSettled([
-    searchIbcclFtp(cleanTitle, year),
-    searchGhuriFtp(cleanTitle, imdbId, year),
-    searchCtgMovies(cleanTitle, isSeries, season, episode, year),
-    searchDhakaFlix(cleanTitle, year, isSeries, season, episode),
-    searchRoarZone(cleanTitle, isSeries, season, episode, year),
-    searchCircleSam(cleanTitle, isSeries, season, episode, year),
-    searchCloudMedia(cleanTitle, year)
+  const [ibcclRes, ghuriRes, ctgRes, dhakaRes, roarRes, circleRes, cloudRes, discRes] = await Promise.allSettled([
+    searchIbcclFtp(cleanTitle, cleanYear),
+    searchGhuriFtp(cleanTitle, imdbId, cleanYear),
+    searchCtgMovies(cleanTitle, isSeries, season, episode, cleanYear),
+    searchDhakaFlix(cleanTitle, cleanYear, isSeries, season, episode),
+    searchRoarZone(cleanTitle, isSeries, season, episode, cleanYear),
+    searchCircleSam(cleanTitle, isSeries, season, episode, cleanYear),
+    searchCloudMedia(cleanTitle, cleanYear, isSeries, season, episode),
+    searchDiscoveryFtp(cleanTitle, isSeries, season, episode, cleanYear)
   ]);
 
   const all = [
@@ -653,6 +859,7 @@ export async function getBdixFtpStreams({ type, id, meta, deadline }) {
     ...(roarRes.status === 'fulfilled' ? roarRes.value : []),
     ...(circleRes.status === 'fulfilled' ? circleRes.value : []),
     ...(cloudRes.status === 'fulfilled' ? cloudRes.value : []),
+    ...(discRes.status === 'fulfilled' ? discRes.value : []),
     ...(ibcclRes.status === 'fulfilled' ? ibcclRes.value : []),
     ...(ghuriRes.status === 'fulfilled' ? ghuriRes.value : []),
     ...(ctgRes.status === 'fulfilled' ? ctgRes.value : [])
