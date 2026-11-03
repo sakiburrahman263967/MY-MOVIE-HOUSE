@@ -12,42 +12,60 @@ const __dirname = path.dirname(__filename);
 
 export function isTitleMatch(candidateTitle, targetTitle, targetYear) {
   if (!candidateTitle || !targetTitle) return false;
-  const candNorm = String(candidateTitle).toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
+  let candNorm = String(candidateTitle).toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
   const targNorm = String(targetTitle).toLowerCase().replace(/[^a-z0-9]/g, ' ').replace(/\s+/g, ' ').trim();
 
   if (candNorm === targNorm) return true;
 
-  // Candidate must start with target title (e.g. "Obsession 2026", "Obsession Dual Audio")
-  // Rejects prefixes like "A Deadly Obsession", "Secret Obsession", "Unwritten Obsession", "Raftaar - An Obsession"
-  if (!candNorm.startsWith(targNorm)) {
-    return false;
+  // Strip leading track / rank / numbering like "089 ", "12 ", "01 "
+  const strippedCand = candNorm.replace(/^[\d\s.\-_]+/, '').trim();
+  if (strippedCand === targNorm || strippedCand.startsWith(targNorm)) {
+    const charAfter = strippedCand.slice(targNorm.length, targNorm.length + 1);
+    if (!charAfter || charAfter === ' ') {
+      if (targetYear) {
+        const candYearMatch = candNorm.match(/\b(19\d\d|20\d\d)\b/);
+        if (candYearMatch) {
+          const cy = parseInt(candYearMatch[1], 10);
+          const ty = parseInt(targetYear, 10);
+          if (Math.abs(cy - ty) > 1) return false;
+        }
+      }
+      return true;
+    }
   }
 
-  // Ensure word boundary: "Obsession" shouldn't match "Obsessionist"
-  const charAfter = candNorm.slice(targNorm.length, targNorm.length + 1);
-  if (charAfter && charAfter !== ' ') return false;
-
-  // Year check if candidate specifies a year and target year is provided
+  // Also check exact phrase boundary if targetYear is present and matches
   if (targetYear) {
     const candYearMatch = candNorm.match(/\b(19\d\d|20\d\d)\b/);
     if (candYearMatch) {
       const cy = parseInt(candYearMatch[1], 10);
       const ty = parseInt(targetYear, 10);
-      if (Math.abs(cy - ty) > 1) return false;
+      if (Math.abs(cy - ty) <= 1) {
+        const wordRegex = new RegExp(`(^|\\s)${targNorm.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}(\\s|$)`, 'i');
+        if (wordRegex.test(candNorm)) return true;
+      }
     }
   }
 
-  return true;
+  return false;
 }
 
 let dhakaDb = null;
 function getDhakaDb() {
   if (dhakaDb) return dhakaDb;
   try {
-    const moviesPath = path.resolve(__dirname, '../../bdix-stremio-addons/DhakaFlix/data/movies.json');
-    const seriesPath = path.resolve(__dirname, '../../bdix-stremio-addons/DhakaFlix/data/series.json');
-    const movies = fs.existsSync(moviesPath) ? JSON.parse(fs.readFileSync(moviesPath, 'utf8')).items || [] : [];
-    const series = fs.existsSync(seriesPath) ? JSON.parse(fs.readFileSync(seriesPath, 'utf8')).items || [] : [];
+    const candidateDirs = [
+      path.resolve(__dirname, '../../bdix-stremio-addons/DhakaFlix/data'),
+      path.resolve(__dirname, '../bdix-stremio-addons/DhakaFlix/data'),
+      path.resolve(process.cwd(), 'bdix-stremio-addons/DhakaFlix/data'),
+      path.resolve(process.cwd(), '../bdix-stremio-addons/DhakaFlix/data'),
+      'D:/sakib/movie-site/bdix-stremio-addons/DhakaFlix/data'
+    ];
+    const dataDir = candidateDirs.find(d => fs.existsSync(path.join(d, 'movies.json')));
+    const moviesPath = dataDir ? path.join(dataDir, 'movies.json') : '';
+    const seriesPath = dataDir ? path.join(dataDir, 'series.json') : '';
+    const movies = moviesPath && fs.existsSync(moviesPath) ? JSON.parse(fs.readFileSync(moviesPath, 'utf8')).items || [] : [];
+    const series = seriesPath && fs.existsSync(seriesPath) ? JSON.parse(fs.readFileSync(seriesPath, 'utf8')).items || [] : [];
     dhakaDb = { movies, series };
   } catch {
     dhakaDb = { movies: [], series: [] };
@@ -731,26 +749,25 @@ export async function searchDiscoveryFtp(title, isSeries = false, season = 1, ep
       const html = await res.text();
 
       if (!isSeries) {
-        // Movies: <a class="cfocus" href="/m/view/36481"><div class="poster " title="...">
-        const matches = [...html.matchAll(/<a[^>]*href=["'](\/m\/view\/(\d+))["'][^>]*>([\s\S]*?)<\/a>/gi)];
-        for (const m of matches.slice(0, 6)) {
-          const id = m[2];
-          const inner = m[3] || '';
-          const cardTitleMatch = inner.match(/title=["']([^"']+)["']/i) || inner.match(/alt=["']([^"']+)["']/i);
-          const cardTitle = cardTitleMatch ? cardTitleMatch[1].trim() : '';
-          if (cardTitle && !isTitleMatch(cardTitle, title, year)) continue;
+        // Movies: <a class="cfocus" href="/m/view/36481">...</a><div class="details"><h3 class="">Movie Title</h3>...
+        const detailMatches = [...html.matchAll(/<a[^>]*href=["']\/m\/view\/(\d+)["'][^>]*>[\s\S]*?<\/a>\s*<div[^>]*class=["']details["'][^>]*>\s*<h3[^>]*>([^<]+)<\/h3>/gi)];
+        let candidateItems = detailMatches.map(m => ({ id: m[1], title: m[2].trim() }));
+
+        if (candidateItems.length === 0) {
+          const fallbackMatches = [...html.matchAll(/<a[^>]*href=["']\/m\/view\/(\d+)["'][^>]*>/gi)];
+          candidateItems = fallbackMatches.slice(0, 6).map(m => ({ id: m[1], title: '' }));
+        }
+
+        for (const item of candidateItems.slice(0, 6)) {
+          if (item.title && !isTitleMatch(item.title, title, year)) continue;
 
           try {
-            const plRes = await fetch(`http://movies.discoveryftp.net/m/playlist/${id}`, { signal: AbortSignal.timeout(3500) });
+            const plRes = await fetch(`http://movies.discoveryftp.net/m/playlist/${item.id}`, { signal: AbortSignal.timeout(3500) });
             const plText = await plRes.text();
             const linkMatch = plText.match(/https?:\/\/[^\s\r\n]+\.(?:mp4|mkv|avi|webm)[^\s\r\n]*/i);
             if (linkMatch) {
               const streamUrl = linkMatch[0].trim();
               if (seenUrls.has(streamUrl)) continue;
-              // Also check file name in streamUrl
-              const decodedPath = decodeURIComponent(streamUrl);
-              const fileName = decodedPath.split('/').pop() || '';
-              if (!isTitleMatch(fileName, title, year) && cardTitle && !isTitleMatch(cardTitle, title, year)) continue;
 
               seenUrls.add(streamUrl);
 
@@ -762,7 +779,7 @@ export async function searchDiscoveryFtp(title, isSeries = false, season = 1, ep
               results.push({
                 url: streamUrl,
                 name: `[BDIX FTP] DiscoveryFTP - ${quality}`,
-                title: `${cardTitle || title} (DiscoveryFTP Gigabit)`,
+                title: `${item.title || title} (DiscoveryFTP Gigabit)`,
                 quality,
                 size: 'BDIX Gigabit',
                 addonName: 'BDIX Fast FTP Servers',

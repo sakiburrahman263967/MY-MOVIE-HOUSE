@@ -565,6 +565,7 @@ export default function VideoPlayer({
       hls.attachMedia(video);
 
       hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().then(() => setIsPlaying(true)).catch(() => {});
         // Load Audio Tracks
         if (hls.audioTracks && hls.audioTracks.length > 0) {
           const mappedTracks = hls.audioTracks.map((t, idx) => ({

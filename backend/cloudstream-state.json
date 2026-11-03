@@ -135,6 +135,24 @@
           "enabled": true
         },
         {
+          "id": "Beeg",
+          "name": "Beeg",
+          "internalName": "Beeg",
+          "description": "Adult videos from beeg.porn - Latest, Trending, Best & Search",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://beeg.porn/favicon.ico",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/Beeg.cs3",
+          "version": 3,
+          "authors": [
+            "khalsatorrent-droid"
+          ],
+          "fileSize": 25983,
+          "enabled": true
+        },
+        {
           "id": "Cam4",
           "name": "Cam4",
           "internalName": "Cam4",
@@ -190,6 +208,42 @@
             "Coxju"
           ],
           "fileSize": 14953,
+          "enabled": true
+        },
+        {
+          "id": "Desihub",
+          "name": "Desihub",
+          "internalName": "Desihub",
+          "description": "Indian adult content from desihub.sh - Explore, Feed, Search & Direct Streams",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://desihub.sh/favicon.ico",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/Desihub.cs3",
+          "version": 2,
+          "authors": [
+            "khalsatorrent-droid"
+          ],
+          "fileSize": 14230,
+          "enabled": true
+        },
+        {
+          "id": "Desimaal",
+          "name": "Desimaal",
+          "internalName": "Desimaal",
+          "description": "Uncut Hindi web series from desimaal.live - Ullu, MoodX, PrimePlay, Rabbit and more",
+          "language": "hi",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=desimaal.live&sz=%size%",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/Desimaal.cs3",
+          "version": 1,
+          "authors": [
+            "khalsatorrent-droid"
+          ],
+          "fileSize": 14385,
           "enabled": true
         },
         {
@@ -864,6 +918,24 @@
           "enabled": true
         },
         {
+          "id": "Porneec",
+          "name": "Porneec",
+          "internalName": "Porneec",
+          "description": "Videos from porneec.com - latest and search",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=porneec.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/Porneec.cs3",
+          "version": 3,
+          "authors": [
+            "khalsatorrent-droid"
+          ],
+          "fileSize": 19300,
+          "enabled": true
+        },
+        {
           "id": "Porngrey",
           "name": "Porngrey",
           "internalName": "Porngrey",
@@ -1080,6 +1152,42 @@
           "enabled": true
         },
         {
+          "id": "Taboodaddy",
+          "name": "Taboodaddy",
+          "internalName": "Taboodaddy",
+          "description": "Taboo videos from taboodaddy.com - latest, categories and search",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=taboodaddy.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/Taboodaddy.cs3",
+          "version": 3,
+          "authors": [
+            "khalsatorrent-droid"
+          ],
+          "fileSize": 17380,
+          "enabled": true
+        },
+        {
+          "id": "Tabooporn",
+          "name": "Tabooporn",
+          "internalName": "Tabooporn",
+          "description": "Taboo videos from tabooporn.to - latest, most popular, top rated and search",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=tabooporn.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/Tabooporn.cs3",
+          "version": 3,
+          "authors": [
+            "khalsatorrent-droid"
+          ],
+          "fileSize": 15205,
+          "enabled": true
+        },
+        {
           "id": "TollyPro",
           "name": "TollyPro",
           "internalName": "TollyPro",
@@ -1186,6 +1294,24 @@
             "megix"
           ],
           "fileSize": 11987,
+          "enabled": true
+        },
+        {
+          "id": "XFantazy",
+          "name": "XFantazy",
+          "internalName": "XFantazy",
+          "description": "Free HD videos from XFantazy.com - New, Trending, Most Viewed, search and streaming",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://xfantazy.com/favicon.ico",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/XFantazy.cs3",
+          "version": 9,
+          "authors": [
+            "khalsatorrent-droid"
+          ],
+          "fileSize": 19836,
           "enabled": true
         },
         {
@@ -1333,6 +1459,26 @@
           "enabled": true
         },
         {
+          "id": "XXXTube",
+          "name": "XXXTube",
+          "internalName": "XXXTube",
+          "description": "Watch HD videos from X-X-X.tube — Featured, Latest, Top Rated, Most Popular and paginated search",
+          "language": "en",
+          "tvTypes": [
+            "NSFW",
+            "Movie",
+            "TvSeries"
+          ],
+          "iconUrl": "https://x-x-x.tube/favicon.ico",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/XXXTube.cs3",
+          "version": 3,
+          "authors": [
+            "khalsatorrent-droid"
+          ],
+          "fileSize": 26143,
+          "enabled": true
+        },
+        {
           "id": "YesPornPlease",
           "name": "YesPornPlease",
           "internalName": "YesPornPlease",
@@ -1366,6 +1512,24 @@
             "rockhero1234"
           ],
           "fileSize": 9174,
+          "enabled": true
+        },
+        {
+          "id": "Youperv",
+          "name": "Youperv",
+          "internalName": "Youperv",
+          "description": "Videos from youperv.com - latest, categories and search",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=youperv.com&sz=%size%",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/Youperv.cs3",
+          "version": 1,
+          "authors": [
+            "khalsatorrent-droid"
+          ],
+          "fileSize": 16453,
           "enabled": true
         }
       ]
@@ -1456,6 +1620,25 @@
             "NivinCNC"
           ],
           "fileSize": 87957,
+          "enabled": true
+        },
+        {
+          "id": "CineDozeProvider",
+          "name": "CineDozeProvider",
+          "internalName": "CineDozeProvider",
+          "description": "Bangla, Hindi dubbed, dual audio movies and web series from CineDoze",
+          "language": "bn",
+          "tvTypes": [
+            "Movie",
+            "TvSeries"
+          ],
+          "iconUrl": "https://cinedoze.tv/wp-content/uploads/2024/05/CineDoze.Com-Logo.png",
+          "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/CineDozeProvider.cs3",
+          "version": 1,
+          "authors": [
+            "NivinCNC"
+          ],
+          "fileSize": 109642,
           "enabled": true
         },
         {
@@ -1550,6 +1733,24 @@
             "NivinCNC"
           ],
           "fileSize": 117712,
+          "enabled": true
+        },
+        {
+          "id": "DaddyLiveProvider",
+          "name": "DaddyLiveProvider",
+          "internalName": "DaddyLiveProvider",
+          "description": "Live sports schedule and 900+ 24/7 channels from DaddyLive (thedaddy.pk)",
+          "language": "en",
+          "tvTypes": [
+            "Live"
+          ],
+          "iconUrl": "https://thedaddy.pk/assets/logos/favicon-32x32.png",
+          "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/DaddyLiveProvider.cs3",
+          "version": 2,
+          "authors": [
+            "NivinCNC"
+          ],
+          "fileSize": 72423,
           "enabled": true
         },
         {
@@ -1658,11 +1859,11 @@
           ],
           "iconUrl": "https://www.google.com/s2/favicons?domain=rezka.ag&sz=%size%",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/HDrezkaProvider.cs3",
-          "version": 37,
+          "version": 38,
           "authors": [
             "Hexated, NivinCNC"
           ],
-          "fileSize": 60045,
+          "fileSize": 66953,
           "enabled": true
         },
         {
@@ -1818,6 +2019,24 @@
           "enabled": true
         },
         {
+          "id": "NTVProvider",
+          "name": "NTVProvider",
+          "internalName": "NTVProvider",
+          "description": "Live sports from NTV (ntv.st): four servers of live matches and channels",
+          "language": "en",
+          "tvTypes": [
+            "Live"
+          ],
+          "iconUrl": "https://ntv.st/assets/img/icons/favicon-96x96.png",
+          "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/NTVProvider.cs3",
+          "version": 5,
+          "authors": [
+            "NivinCNC"
+          ],
+          "fileSize": 80791,
+          "enabled": true
+        },
+        {
           "id": "PikashowProvider",
           "name": "PikashowProvider",
           "internalName": "PikashowProvider",
@@ -1870,6 +2089,24 @@
             "NivinCNC"
           ],
           "fileSize": 118827,
+          "enabled": true
+        },
+        {
+          "id": "PPVProvider",
+          "name": "PPVProvider",
+          "internalName": "PPVProvider",
+          "description": "Live sports events and 24/7 sports channels from PPV (ppv.st)",
+          "language": "en",
+          "tvTypes": [
+            "Live"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=ppv.st&sz=128",
+          "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/PPVProvider.cs3",
+          "version": 3,
+          "authors": [
+            "NivinCNC"
+          ],
+          "fileSize": 61529,
           "enabled": true
         },
         {
@@ -2195,11 +2432,11 @@
           ],
           "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://aki-h.com/&size=128",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Aki.cs3",
-          "version": 5,
+          "version": 6,
           "authors": [
             "ByAyzen"
           ],
-          "fileSize": 25860,
+          "fileSize": 26763,
           "enabled": true
         },
         {
@@ -2630,11 +2867,11 @@
           ],
           "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://fapgoat.com/&size=128",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/FapGoat.cs3",
-          "version": 2,
+          "version": 3,
           "authors": [
             "ByAyzen"
           ],
-          "fileSize": 31353,
+          "fileSize": 31783,
           "enabled": true
         },
         {
@@ -2974,11 +3211,11 @@
           ],
           "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://javtiful.com/main&size=128",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/Javtiful.cs3",
-          "version": 6,
+          "version": 7,
           "authors": [
             "ByAyzen"
           ],
-          "fileSize": 15077,
+          "fileSize": 23372,
           "enabled": true
         },
         {
@@ -3247,11 +3484,11 @@
           ],
           "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://oppai.stream/&size=128",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/OppaiStream.cs3",
-          "version": 1,
+          "version": 2,
           "authors": [
             "ByAyzen"
           ],
-          "fileSize": 15624,
+          "fileSize": 14942,
           "enabled": true
         },
         {
@@ -3608,11 +3845,11 @@
           ],
           "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://sextb.net/&size=128",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/SexTB.cs3",
-          "version": 16,
+          "version": 17,
           "authors": [
             "ByAyzen"
           ],
-          "fileSize": 98189,
+          "fileSize": 104003,
           "enabled": true
         },
         {
@@ -3714,13 +3951,13 @@
           "tvTypes": [
             "NSFW"
           ],
-          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://turkhub160.cfd&size=128",
+          "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://turkhub161.cfd&size=128",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/TurkHub.cs3",
-          "version": 103,
+          "version": 104,
           "authors": [
             "kraptor"
           ],
-          "fileSize": 19483,
+          "fileSize": 19481,
           "enabled": true
         },
         {
@@ -3734,11 +3971,11 @@
           ],
           "iconUrl": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://turkifsa.blog/category/turk-ifsa&size=128",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/TurkifsaBlog.cs3",
-          "version": 1,
+          "version": 2,
           "authors": [
             "ByAyzen"
           ],
-          "fileSize": 11467,
+          "fileSize": 12307,
           "enabled": true
         },
         {
@@ -3768,13 +4005,13 @@
           "tvTypes": [
             "NSFW"
           ],
-          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://turkporno64.lat&size=128",
+          "iconUrl": "https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://turkporno66.lat&size=128",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/TurkPorno.cs3",
-          "version": 157,
+          "version": 159,
           "authors": [
             "Kraptor"
           ],
-          "fileSize": 37285,
+          "fileSize": 37287,
           "enabled": true
         },
         {
@@ -3842,11 +4079,11 @@
           ],
           "iconUrl": "https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://watchhentai.net&size=128",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/WatchHentai.cs3",
-          "version": 3,
+          "version": 4,
           "authors": [
             "ByAyzen"
           ],
-          "fileSize": 14505,
+          "fileSize": 17088,
           "enabled": true
         },
         {
@@ -3914,11 +4151,11 @@
           ],
           "iconUrl": "https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://en.xchina.co/&size=128",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/XChina.cs3",
-          "version": 3,
+          "version": 4,
           "authors": [
             "ByAyzen"
           ],
-          "fileSize": 12529,
+          "fileSize": 11771,
           "enabled": true
         },
         {
@@ -3952,12 +4189,12 @@
           ],
           "iconUrl": "https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://xmoviesforyou.com/&size=32",
           "url": "https://raw.githubusercontent.com/Kraptor123/Cs-GizliKeyif/builds/XMoviesForYou.cs3",
-          "version": 10,
+          "version": 11,
           "authors": [
             "kraptor",
             "ByAyzen"
           ],
-          "fileSize": 16288,
+          "fileSize": 16548,
           "enabled": true
         },
         {
@@ -4491,5 +4728,5 @@
     }
   ],
   "cloudstreamMasterEnabled": true,
-  "updatedAt": "2026-10-30T16:00:17.492Z"
+  "updatedAt": "2026-11-03T07:05:58.664Z"
 }

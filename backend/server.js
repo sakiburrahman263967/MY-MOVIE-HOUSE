@@ -1178,27 +1178,18 @@ app.get('/api/transcode/stream', async (req, res) => {
 const HLS_OUT_DIR = path.join(__dirname, 'public', 'hls');
 fs.mkdirSync(HLS_OUT_DIR, { recursive: true });
 
-app.use('/transcode/hls', express.static(HLS_OUT_DIR, {
-  setHeaders: (res) => {
+app.use(['/transcode/hls', '/api/transcode/hls', '/out'], express.static(HLS_OUT_DIR, {
+  setHeaders: (res, filePath) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', '*');
-  }
-}));
-
-app.use('/api/transcode/hls', express.static(HLS_OUT_DIR, {
-  setHeaders: (res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', '*');
-  }
-}));
-
-app.use('/out', express.static(HLS_OUT_DIR, {
-  setHeaders: (res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', '*');
+    if (filePath && filePath.endsWith('.m3u8')) {
+      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    } else if (filePath && filePath.endsWith('.ts')) {
+      res.setHeader('Content-Type', 'video/mp2t');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    }
   }
 }));
 
@@ -1338,6 +1329,8 @@ const transcodeHlsHandler = async (req, res) => {
   let ffmpegProc;
   try {
     ffmpegProc = spawn('ffmpeg', args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    ffmpegProc.stdout.on('data', () => {});
+    ffmpegProc.stderr.on('data', () => {});
   } catch (err) {
     return res.status(500).json({ error: 'Failed to start ffmpeg: ' + err.message });
   }
