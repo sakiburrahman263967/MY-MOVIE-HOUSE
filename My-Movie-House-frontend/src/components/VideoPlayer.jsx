@@ -308,6 +308,7 @@ export default function VideoPlayer({
   const [isResolvingDirect, setIsResolvingDirect] = useState(false);
   const failedUrlsRef = useRef(new Set());
   const stallTimerRef = useRef(null);
+  const consecutiveFailuresRef = useRef(0);
 
   // Attempt to resolve direct .m3u8/.mp4 stream from embed URL (for PotPlayer and stream extraction)
   useEffect(() => {
@@ -485,7 +486,10 @@ export default function VideoPlayer({
   }, [showOsd]);
 
   // Switch Stream Server & remember chosen quality
-  const handleSwitchServer = useCallback((newStream) => {
+  const handleSwitchServer = useCallback((newStream, isAuto = false) => {
+    if (!isAuto) {
+      consecutiveFailuresRef.current = 0;
+    }
     setInternalStream(newStream);
     setDirectUrl(null);
     setPlaybackMode(newStream?.url?.includes('/transcode/hls/') ? 'transcoded' : 'direct');
@@ -513,6 +517,15 @@ export default function VideoPlayer({
       stallTimerRef.current = null;
     }
 
+    consecutiveFailuresRef.current = (consecutiveFailuresRef.current || 0) + 1;
+    if (consecutiveFailuresRef.current > 2) {
+      setIsTranscoding(false);
+      const errMsg = 'Playback stopped after 2 consecutive server failures.';
+      showOsd(`❌ ${errMsg}`);
+      setError(`${errMsg} Please select another server from the Server menu (Servers: ${allStreams.length}), use PlayDrive Player, or launch in Desktop PotPlayer.`);
+      return;
+    }
+
     // 1. If this was a transcode stream that failed, check retry counter before failing or switching
     if (directUrl && (directUrl.includes('/transcode/hls/') || directUrl.includes('/api/transcode'))) {
       transcodeAttemptsRef.current = (transcodeAttemptsRef.current || 0) + 1;
@@ -537,7 +550,7 @@ export default function VideoPlayer({
         const nextStream = candidateStreams[0];
         const nextInfo = parseStreamInfo(nextStream);
         showOsd(`⚡ Transcode failed. Auto-switching to ${nextInfo.serverName} (${nextInfo.resolution})...`);
-        handleSwitchServer(nextStream);
+        handleSwitchServer(nextStream, true);
         return;
       }
       setError('All available streams failed to play. Please click Desktop PotPlayer or Open Original Link.');
@@ -568,7 +581,7 @@ export default function VideoPlayer({
       const nextStream = candidateStreams[0];
       const nextInfo = parseStreamInfo(nextStream);
       showOsd(`⚡ Stream failed. Auto-switching to ${nextInfo.serverName} (${nextInfo.resolution})...`);
-      handleSwitchServer(nextStream);
+      handleSwitchServer(nextStream, true);
       return;
     }
 
@@ -577,6 +590,7 @@ export default function VideoPlayer({
 
   const handleRetryPlayback = () => {
     failedUrlsRef.current.clear();
+    consecutiveFailuresRef.current = 0;
     setError('');
     if (allStreams.length > 0) {
       handleSwitchServer(allStreams[0]);
@@ -2081,6 +2095,7 @@ export default function VideoPlayer({
             onPlaying={() => {
               setIsPlaying(true);
               setIsBuffering(false);
+              consecutiveFailuresRef.current = 0;
               if (stallTimerRef.current) {
                 clearTimeout(stallTimerRef.current);
                 stallTimerRef.current = null;

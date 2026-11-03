@@ -769,6 +769,45 @@ app.get(['/api/player/playdrive', '/playdrive'], async (req, res) => {
       html = fs.readFileSync(templatePath, 'utf8');
       const targetStream = rawStreamUrl || 'https://uprising.best/range/UBBCMH2orAb_CkhSZ0949fU-J0fxxkGyj_04oeRbCC9IqoOFcaLmmNtPAiGe7T9oQe5lLEasuaNYPUZmflAhHcUxGc_lduO32W-1AFRAEP5ejwZDzrSJ2Q.js';
 
+      const streamObj = {
+        id: 1,
+        m3u8_url: targetStream,
+        video_url: targetStream,
+        domain_name: 'local',
+        languages: [
+          { id: 1, code: 'und', name: lang }
+        ],
+        qualities: [
+          { id: 1, slug: 'auto', label: 'Auto (HD)', height: 1080 },
+          { id: 2, slug: '1080p', label: '1080p', height: 1080 },
+          { id: 3, slug: '720p', label: '720p', height: 720 },
+          { id: 4, slug: '480p', label: '480p', height: 480 }
+        ]
+      };
+
+      const itemObj = {
+        viewkey: 'local-1',
+        id: 1,
+        title: title,
+        original_title: title,
+        overview: title,
+        poster: poster || 'https://image.tmdb.org/t/p/original/3icyRAqgakNcQn6aDVz9libFmBA.jpg',
+        cover: poster || 'https://image.tmdb.org/t/p/original/3icyRAqgakNcQn6aDVz9libFmBA.jpg',
+        thumbnail: poster || 'https://image.tmdb.org/t/p/w300/3icyRAqgakNcQn6aDVz9libFmBA.jpg',
+        video_url: targetStream,
+        domain_name: 'local',
+        languages: [
+          { id: 1, code: 'und', name: lang }
+        ],
+        qualities: [
+          { id: 1, slug: 'auto', label: 'Auto (HD)', height: 1080 },
+          { id: 2, slug: '1080p', label: '1080p', height: 1080 },
+          { id: 3, slug: '720p', label: '720p', height: 720 },
+          { id: 4, slug: '480p', label: '480p', height: 480 }
+        ],
+        is_custom: true
+      };
+
       const customPlayConfig = {
         ok: true,
         movie: {
@@ -779,23 +818,8 @@ app.get(['/api/player/playdrive', '/playdrive'], async (req, res) => {
           runtime_minutes: 120,
           type_slug: 'movie'
         },
-        streams: [
-          {
-            id: 1,
-            m3u8_url: targetStream,
-            video_url: targetStream,
-            domain_name: 'local',
-            languages: [
-              { id: 1, code: 'und', name: lang }
-            ],
-            qualities: [
-              { id: 1, slug: 'auto', label: 'Auto (HD)', height: 1080 },
-              { id: 2, slug: '1080p', label: '1080p', height: 1080 },
-              { id: 3, slug: '720p', label: '720p', height: 720 },
-              { id: 4, slug: '480p', label: '480p', height: 480 }
-            ]
-          }
-        ]
+        streams: [streamObj],
+        item: itemObj
       };
 
       html = html.replace('/*__PA_PLAY_JSON__*/', JSON.stringify(customPlayConfig));

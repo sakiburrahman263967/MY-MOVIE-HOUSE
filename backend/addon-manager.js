@@ -162,13 +162,20 @@ export function isDirectPlayable(stream) {
   if (!stream || !stream.url) return false;
   if (isEmbedStreamUrl(stream.url)) return false;
   const url = String(stream.url).toLowerCase();
+
+  // MKV is NOT direct playable in web browsers (Chrome/Firefox/Safari)
+  if (url.includes('.mkv')) return false;
+  // Pixeldrain links frequently hit 403 Forbidden IP bandwidth limits
+  if (url.includes('pixeldrain.dev') || url.includes('pixeldrain.com')) return false;
+
   return (
     url.includes('.m3u8') ||
     url.includes('.mp4') ||
     url.includes('/api/proxy/stream') ||
-    url.includes('pixeldrain.dev') ||
-    url.includes('pixeldrain.com') ||
-    url.includes('.mkv') ||
+    url.includes('shegu.net') ||
+    url.includes('febbox') ||
+    url.includes('/range/') ||
+    url.includes('playdrive') ||
     !url.includes('http')
   );
 }
@@ -254,31 +261,64 @@ export function parseStreamDetails(stream, fallbackAddonName = '', latency = 0) 
 
 export function scoreStream(stream) {
   let score = 0;
+  const url = String(stream.url || '').toLowerCase();
+  const name = String(stream.name || stream.addonName || stream.serverName || '').toLowerCase();
+  const isDirect = isDirectPlayable(stream);
 
-  if (isDirectPlayable(stream)) {
-    score += 100000;
-  } else if (!stream.behaviorHints?.notWebReady) {
-    score += 30000;
+  // 1. Browser Native Playability (CRITICAL - web streams play instantly without lag)
+  if (isDirect) {
+    score += 250000;
+  } else if (!stream.behaviorHints?.notWebReady && !url.includes('.mkv')) {
+    score += 40000;
   }
 
-  const quality = String(stream.quality || '').toUpperCase();
-  if (/2160P|4K|UHD/.test(quality)) score += 21600;
-  else if (/1440P|2K/.test(quality)) score += 14400;
-  else if (/1080P|FHD/.test(quality)) score += 10800;
-  else if (/720P|HD/.test(quality)) score += 7200;
-  else if (/480P|SD/.test(quality)) score += 4800;
-  else if (/360P/.test(quality)) score += 3600;
+  // 2. High-speed, verified CDN sources (MovieBox / FebBox / Shegu) get top priority
+  if (url.includes('shegu.net') || url.includes('febbox') || name.includes('moviebox') || name.includes('febbox')) {
+    score += 150000;
+  }
 
+  // 3. PlayDrive / UpRising HLS streams
+  if (url.includes('playdrive') || url.includes('uprising.best') || name.includes('playdrive')) {
+    score += 120000;
+  }
+
+  // 4. Penalize problematic or dead links
+  if (url.includes('pixeldrain.dev') || url.includes('pixeldrain.com')) {
+    // Pixeldrain hits daily 403 bandwidth limits on consumer residential IPs
+    score -= 60000;
+  }
+  if (url.includes('.mkv')) {
+    // MKV requires backend ffmpeg transcoding which can fail or lag
+    score -= 40000;
+  }
+
+  // 5. Quality scoring (prefer 1080p for web balance, 4K only if playable)
+  const quality = String(stream.quality || '').toUpperCase();
+  if (/1080P|FHD/.test(quality)) score += 25000;
+  else if (/720P|HD/.test(quality)) score += 18000;
+  else if (/2160P|4K|UHD/.test(quality)) score += 15000;
+  else if (/1440P|2K/.test(quality)) score += 14000;
+  else if (/480P|SD/.test(quality)) score += 5000;
+  else if (/360P/.test(quality)) score += 3000;
+
+  // 6. Size check: Heavily penalize giant files (> 15GB) for web browser streaming
   if (stream.size) {
     const m = String(stream.size).match(/([\d.]+)\s*(GB|MB|GIB|MIB)/i);
     if (m) {
       const val = parseFloat(m[1]);
       const unit = m[2].toUpperCase();
       const mb = unit.startsWith('G') ? val * 1024 : val;
-      score += Math.min(Math.round(mb), 15000);
+      if (mb > 15360) {
+        // Greater than 15GB (REMUX / huge MKV) - bad for web streaming
+        score -= 50000;
+      } else if (mb >= 1000 && mb <= 8000) {
+        // Sweet spot: 1GB - 8GB WEB-DL
+        score += 10000;
+      }
     }
   }
 
+  // 7. Network latency
   const latency = typeof stream.latency === 'number' ? stream.latency : 2000;
   score += Math.max(0, Math.round((5000 - latency) / 2));
 
