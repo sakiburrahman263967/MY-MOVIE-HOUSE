@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import Hls from 'hls.js';
 import { progress, api, API_BASE, mediaPrep } from '../api.js';
 import { parseStreamDetails } from '../utils/streamParser.js';
