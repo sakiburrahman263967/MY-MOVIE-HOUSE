@@ -252,6 +252,8 @@ export default function VideoPlayer({
   const [isTranscoding, setIsTranscoding] = useState(false);
   const [playbackMode, setPlaybackMode] = useState('direct'); // 'direct' | 'transcoded'
   const autoTranscodeAttemptedRef = useRef(false);
+  const transcodeAttemptsRef = useRef(0);
+  const hlsFatalRetriesRef = useRef(0);
 
   // Subtitles (Internal + External)
   const [internalSubtitles, setInternalSubtitles] = useState([]);
@@ -383,12 +385,13 @@ export default function VideoPlayer({
     return effectiveUrl || raw;
   };
 
-  // Request background HLS transcode from backend
+  // Request background HLS transcode from backend with active segment polling
   const requestHlsTranscode = useCallback(async (srcUrl, track = 0) => {
     if (!srcUrl) return null;
     setIsTranscoding(true);
     setError('');
-    showOsd('⚡ Transcoding HEVC/MKV to H.264 (HLS) for web playback...');
+    console.log('[PLAYER TRANSCODE START] Requesting HLS transcode for:', srcUrl);
+    showOsd('⚡ Transcoding HEVC/MKV to H.264 (HLS)... Initializing encoder...');
     try {
       let res = await fetch(`${API_BASE}/api/transcode`, {
         method: 'POST',
@@ -406,30 +409,77 @@ export default function VideoPlayer({
 
       if (!res.ok) {
         const text = await res.text().catch(() => '');
-        throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
+        let errJson = null;
+        try { errJson = JSON.parse(text); } catch {}
+        const msg = errJson?.error || text || res.statusText;
+        throw new Error(msg);
       }
 
-      const rawText = await res.text().catch(() => '');
-      let data;
-      try {
-        data = JSON.parse(rawText);
-      } catch {
-        throw new Error(rawText ? `Invalid server response: ${rawText.slice(0, 80)}` : 'Empty response from transcode server');
+      const data = await res.json();
+      console.log('[PLAYER TRANSCODE RESPONSE]:', data);
+
+      if (!data.success) {
+        throw new Error(data.error || 'Transcode initialization failed');
       }
-      if (data.success && data.hlsUrl) {
+
+      // 1. If backend reports segments are already ready (cached or generated within initial window)
+      if (data.ready === true && data.hlsUrl) {
         const fullHls = data.hlsUrl.startsWith('http') ? data.hlsUrl : `${API_BASE}${data.hlsUrl}`;
+        console.log('[PLAYER TRANSCODE READY] Starting HLS playback from:', fullHls);
         setDirectUrl(fullHls);
         setPlaybackMode('transcoded');
         setIsTranscoding(false);
         setMkvCodecWarning(false);
         showOsd('⚡ Transcoded HLS stream active. Playing with seek support...');
         return fullHls;
-      } else {
-        throw new Error(data.error || 'Transcode failed');
       }
+
+      // 2. If backend is actively transcoding and waiting for initial 2 segments: poll status endpoint
+      const jobId = data.jobId;
+      console.log(`[PLAYER TRANSCODE POLL] Job ${jobId} warming up. Polling status until at least 2 segments are written...`);
+      showOsd('⚡ Encoding HLS stream... Waiting for segments (0/2)...');
+
+      let pollAttempts = 0;
+      const maxPolls = 60; // Up to 60s
+      while (pollAttempts < maxPolls) {
+        pollAttempts++;
+        await new Promise((r) => setTimeout(r, 1000));
+        try {
+          const stRes = await fetch(`${API_BASE}/api/transcode/status/${jobId}`);
+          if (!stRes.ok) continue;
+          const stData = await stRes.json();
+          console.log(`[PLAYER TRANSCODE POLL #${pollAttempts}]`, stData);
+
+          if (stData.error || stData.status === 'error') {
+            throw new Error(stData.error || 'ffmpeg process failed during transcode');
+          }
+
+          if (stData.ready === true && stData.hlsUrl) {
+            const fullHls = stData.hlsUrl.startsWith('http') ? stData.hlsUrl : `${API_BASE}${stData.hlsUrl}`;
+            console.log('[PLAYER TRANSCODE READY] 2+ segments ready! Starting HLS playback from:', fullHls);
+            setDirectUrl(fullHls);
+            setPlaybackMode('transcoded');
+            setIsTranscoding(false);
+            setMkvCodecWarning(false);
+            showOsd('⚡ Transcoded HLS stream active. Playing with seek support...');
+            return fullHls;
+          }
+
+          const segCount = stData.segmentsCount || 0;
+          showOsd(`⚡ Encoding segments: ${segCount}/2 generated...`);
+        } catch (pollErr) {
+          if (pollErr.message && !pollErr.message.includes('fetch')) {
+            throw pollErr;
+          }
+        }
+      }
+
+      throw new Error('Transcode timed out waiting for HLS segments after 60s.');
     } catch (err) {
+      console.error('[PLAYER TRANSCODE ERROR]:', err.message);
       setIsTranscoding(false);
-      setError(`Transcoding error: ${err.message}. Click Retry Transcode or Open Original Link.`);
+      showOsd(`❌ Transcoding error: ${err.message}`);
+      setError(`Transcoding error: ${err.message}. Click Retry Transcode or Open in PotPlayer.`);
       return null;
     }
   }, [showOsd]);
@@ -442,6 +492,8 @@ export default function VideoPlayer({
     setIsTranscoding(false);
     setMkvCodecWarning(false);
     autoTranscodeAttemptedRef.current = false;
+    transcodeAttemptsRef.current = 0;
+    hlsFatalRetriesRef.current = 0;
     if (onSelectStream) {
       onSelectStream(newStream);
     }
@@ -461,8 +513,19 @@ export default function VideoPlayer({
       stallTimerRef.current = null;
     }
 
-    // 1. If this was a transcode stream that failed, stop transcoding and move to next server
+    // 1. If this was a transcode stream that failed, check retry counter before failing or switching
     if (directUrl && (directUrl.includes('/transcode/hls/') || directUrl.includes('/api/transcode'))) {
+      transcodeAttemptsRef.current = (transcodeAttemptsRef.current || 0) + 1;
+      console.warn(`[PLAYER ERROR] Transcode playback failed (attempt ${transcodeAttemptsRef.current}/2)`);
+
+      if (transcodeAttemptsRef.current >= 2) {
+        setIsTranscoding(false);
+        const errMsg = 'Transcoded HLS stream failed to play after 2 attempts.';
+        showOsd(`❌ ${errMsg}`);
+        setError(`${errMsg} Please try selecting another server from the Server menu or launch in Desktop PotPlayer.`);
+        return;
+      }
+
       failedUrlsRef.current.add(directUrl);
       if (stream?.url) failedUrlsRef.current.add(stream.url);
       setDirectUrl(null);
@@ -477,7 +540,7 @@ export default function VideoPlayer({
         handleSwitchServer(nextStream);
         return;
       }
-      setError('All available streams failed to play. Please click Retry Transcode or Open Original Link.');
+      setError('All available streams failed to play. Please click Desktop PotPlayer or Open Original Link.');
       return;
     }
 
@@ -510,7 +573,7 @@ export default function VideoPlayer({
     }
 
     setError('All available streams failed to play. Please select another server or click Retry.');
-  }, [directUrl, stream?.url, effectiveUrl, allStreams, currentAudioTrack, showOsd, handleSwitchServer]);
+  }, [directUrl, stream?.url, effectiveUrl, allStreams, currentAudioTrack, showOsd, handleSwitchServer, requestHlsTranscode]);
 
   const handleRetryPlayback = () => {
     failedUrlsRef.current.clear();
@@ -598,7 +661,8 @@ export default function VideoPlayer({
       hls.loadSource(streamUrl);
       hls.attachMedia(video);
 
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      hls.on(Hls.Events.MANIFEST_PARSED, (_ev, data) => {
+        console.log('[HLS EVENT] Manifest parsed successfully! Levels:', data?.levels?.length);
         video.play().then(() => setIsPlaying(true)).catch(() => {});
         // Load Audio Tracks
         if (hls.audioTracks && hls.audioTracks.length > 0) {
@@ -705,25 +769,40 @@ export default function VideoPlayer({
         }
       });
 
+      hls.on(Hls.Events.FRAG_LOADED, (_ev, data) => {
+        console.log(`[HLS EVENT] Fragment/Segment #${data?.frag?.sn} loaded (${data?.frag?.duration}s)`);
+        setIsBuffering(false);
+      });
+
       hls.on(Hls.Events.ERROR, (_event, data) => {
+        console.warn('[HLS EVENT ERROR]:', data.type, data.details, 'Fatal:', data.fatal);
         if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              // For live transcode, manifest might still be getting appended with segments
-              if (data.details === 'manifestLoadError' || data.details === 'levelLoadError' || data.details === 'levelEmptyError') {
-                setTimeout(() => {
-                  try { hls.startLoad(); } catch {}
-                }, 1000);
-                return;
-              }
-              try { hls.startLoad(); } catch { handleVideoError(); }
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              try { hls.recoverMediaError(); } catch { handleVideoError(); }
-              break;
-            default:
-              handleVideoError();
-              break;
+          hlsFatalRetriesRef.current = (hlsFatalRetriesRef.current || 0) + 1;
+          if (hlsFatalRetriesRef.current <= 3) {
+            console.log(`[HLS RECOVERY ${hlsFatalRetriesRef.current}/3] Attempting recovery for: ${data.details}`);
+            switch (data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                if (data.details === 'manifestLoadError' || data.details === 'levelLoadError' || data.details === 'levelEmptyError') {
+                  setTimeout(() => {
+                    try { hls.startLoad(); } catch {}
+                  }, 1200);
+                  return;
+                }
+                try { hls.startLoad(); } catch { handleVideoError(); }
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                try { hls.recoverMediaError(); } catch { handleVideoError(); }
+                break;
+              default:
+                handleVideoError();
+                break;
+            }
+          } else {
+            console.error('[HLS FATAL] Max retries (3) exceeded for error:', data.details);
+            hls.destroy();
+            const errStr = `HLS playback error: ${data.details || data.type}`;
+            showOsd(`❌ ${errStr}`);
+            setError(`${errStr}. Click Desktop PotPlayer or select another server.`);
           }
         }
       });

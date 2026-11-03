@@ -1279,7 +1279,33 @@ app.use(['/transcode/hls', '/api/transcode/hls', '/out'], express.static(HLS_OUT
   }
 }));
 
-const activeHlsJobs = new Map(); // jobId -> { child, startTime, status, url }
+const activeHlsJobs = new Map(); // jobId -> { child, startTime, status, url, stderrLines, lastError }
+
+function isHlsJobReady(jobDir, playlistPath) {
+  if (!fs.existsSync(playlistPath)) return false;
+  try {
+    const text = fs.readFileSync(playlistPath, 'utf8');
+    if (!text.includes('#EXTINF')) return false;
+
+    // Check that there are at least 2 .ts segments and they are non-empty (> 20KB)
+    if (!fs.existsSync(jobDir)) return false;
+    const files = fs.readdirSync(jobDir);
+    const tsSegments = files.filter(f => f.endsWith('.ts'));
+    if (tsSegments.length < 2) return false;
+
+    let validCount = 0;
+    for (const seg of tsSegments) {
+      const segPath = path.join(jobDir, seg);
+      const st = fs.statSync(segPath);
+      if (st.size > 20000) {
+        validCount++;
+      }
+    }
+    return validCount >= 2;
+  } catch {
+    return false;
+  }
+}
 
 const transcodeHlsHandler = async (req, res) => {
   let rawUrl = (req.body?.url || req.query?.url || '').trim();
@@ -1340,39 +1366,52 @@ const transcodeHlsHandler = async (req, res) => {
   const playlistPath = path.join(jobDir, 'index.m3u8');
   const hlsUrl = `/api/transcode/hls/${jobId}/index.m3u8`;
 
-  // 1. Check existing cached HLS output
-  if (fs.existsSync(playlistPath)) {
+  // 1. Check existing cached HLS output (Must be truly ready with >= 2 valid segments)
+  if (isHlsJobReady(jobDir, playlistPath)) {
+    console.log(`[HLS CACHE HIT ${jobId}] Returning ready transcode for ${rawUrl.slice(0, 60)}...`);
+    return res.json({ success: true, hlsUrl, jobId, status: 'ready', ready: true, cached: true });
+  } else if (fs.existsSync(jobDir) && !activeHlsJobs.has(jobId)) {
+    // Stale or incomplete non-running directory, wipe it clean before restarting
     try {
-      const content = fs.readFileSync(playlistPath, 'utf8');
-      if (content.includes('.ts') || content.includes('#EXT-X-TARGETDURATION')) {
-        return res.json({ success: true, hlsUrl, jobId, status: 'ready', cached: true });
-      }
+      fs.rmSync(jobDir, { recursive: true, force: true });
     } catch {}
   }
 
   // 2. Check if already actively transcoding
   if (activeHlsJobs.has(jobId)) {
-    return res.json({ success: true, hlsUrl, jobId, status: 'transcoding' });
+    const job = activeHlsJobs.get(jobId);
+    if (job?.lastError) {
+      return res.status(500).json({ success: false, error: job.lastError, jobId });
+    }
+    const isReady = isHlsJobReady(jobDir, playlistPath);
+    return res.json({ success: true, hlsUrl, jobId, status: isReady ? 'ready' : 'transcoding', ready: isReady });
   }
 
   fs.mkdirSync(jobDir, { recursive: true });
 
-  const args = [
-    '-hide_banner',
-    '-loglevel', 'warning'
-  ];
+  const defaultUa = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+  const ua = customHeaders['User-Agent'] || customHeaders['user-agent'] || defaultUa;
 
   if (rawUrl.includes('fsldownload') || rawUrl.includes('movielinkbd')) {
     customHeaders['Referer'] = 'https://movielinkbd.com/';
   }
 
+  const args = [
+    '-hide_banner',
+    '-loglevel', 'warning',
+    '-reconnect', '1',
+    '-reconnect_at_eof', '1',
+    '-reconnect_streamed', '1',
+    '-reconnect_delay_max', '5',
+    '-user_agent', ua
+  ];
+
   const headersStr = Object.entries(customHeaders)
     .filter(([k]) => k.toLowerCase() !== 'user-agent')
     .map(([k, v]) => `${k}: ${v}`)
     .join('\r\n');
-  if (headersStr) args.push('-headers', headersStr + '\r\n');
-  if (customHeaders['User-Agent'] || customHeaders['user-agent']) {
-    args.push('-user_agent', customHeaders['User-Agent'] || customHeaders['user-agent']);
+  if (headersStr) {
+    args.push('-headers', headersStr + '\r\n');
   }
 
   args.push('-i', rawUrl);
@@ -1385,68 +1424,98 @@ const transcodeHlsHandler = async (req, res) => {
     args.push('-map', '0:a:0?');
   }
 
-  // Video encoding: libx264 veryfast crf 23 with downscaling 4K/HDR to 1080p for smooth browser playback
+  // Video encoding: libx264 veryfast crf 23 with downscaling to max 1080p for smooth browser playback
   args.push(
     '-c:v', 'libx264',
     '-preset', 'veryfast',
     '-crf', '23',
     '-pix_fmt', 'yuv420p',
-    '-force_key_frames', 'expr:gte(t,n_forced*2)',
+    '-force_key_frames', 'expr:gte(t,n_forced*4)',
     '-vf', 'scale=\'min(1920,iw)\':-2'
   );
 
-  // Audio: AAC stereo 192k universal
+  // Audio: AAC stereo 128k universal
   args.push(
     '-c:a', 'aac',
-    '-b:a', '192k',
+    '-b:a', '128k',
     '-ac', '2'
   );
 
-  // HLS segmentation - fast initial start (2-second segments)
-  const segDuration = String(process.env.TRANSCODE_SEGMENT_DURATION || 2);
+  // HLS segmentation: 4s segments, independent segments, event playlist
   args.push(
     '-f', 'hls',
-    '-hls_time', segDuration,
+    '-hls_time', '4',
     '-hls_list_size', '0',
+    '-hls_playlist_type', 'event',
     '-hls_flags', 'independent_segments',
-    '-hls_segment_filename', path.join(jobDir, 'seg_%04d.ts'),
+    '-hls_segment_filename', path.join(jobDir, 'seg_%05d.ts'),
     playlistPath
   );
+
+  console.log(`[HLS TRANSCODE START ${jobId}] Spawning ffmpeg for: ${rawUrl.slice(0, 80)}...`);
 
   let ffmpegProc;
   try {
     ffmpegProc = spawn('ffmpeg', args, { stdio: ['ignore', 'pipe', 'pipe'] });
-    ffmpegProc.stdout.on('data', () => {});
-    ffmpegProc.stderr.on('data', () => {});
   } catch (err) {
     return res.status(500).json({ error: 'Failed to start ffmpeg: ' + err.message });
   }
 
-  activeHlsJobs.set(jobId, { child: ffmpegProc, startTime: Date.now(), status: 'transcoding', url: rawUrl });
+  const stderrLines = [];
+  ffmpegProc.stderr.on('data', (chunk) => {
+    const text = chunk.toString();
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    for (const line of lines) {
+      stderrLines.push(line);
+      if (stderrLines.length > 40) stderrLines.shift();
+      if (line.includes('Error') || line.includes('failed') || line.includes('Invalid')) {
+        console.warn(`[FFMPEG HLS WARN ${jobId}]:`, line);
+      }
+    }
+  });
+
+  const jobObj = {
+    child: ffmpegProc,
+    startTime: Date.now(),
+    status: 'transcoding',
+    url: rawUrl,
+    stderrLines,
+    lastError: null
+  };
+  activeHlsJobs.set(jobId, jobObj);
 
   ffmpegProc.on('error', (err) => {
     console.error(`[FFMPEG HLS ERROR ${jobId}]:`, err.message);
+    jobObj.lastError = err.message;
+    jobObj.status = 'error';
     activeHlsJobs.delete(jobId);
   });
 
   ffmpegProc.on('close', (code) => {
-    activeHlsJobs.delete(jobId);
     console.log(`[FFMPEG HLS FINISHED ${jobId}] exit code:`, code);
+    if (code !== 0 && code !== null) {
+      const lastLine = stderrLines.slice(-3).join('; ') || `Process exited with code ${code}`;
+      jobObj.lastError = `ffmpeg exited with code ${code}: ${lastLine}`;
+      jobObj.status = 'error';
+    }
+    activeHlsJobs.delete(jobId);
   });
 
-  // Wait up to 6s for initial playlist to contain at least one playable segment
+  // Wait up to 15s for initial playlist to contain at least 2 complete playable segments
   const startWait = Date.now();
-  while (Date.now() - startWait < 6000) {
-    if (fs.existsSync(playlistPath)) {
-      try {
-        const text = fs.readFileSync(playlistPath, 'utf8');
-        if (text.includes('#EXTINF') || text.includes('.ts')) break;
-      } catch {}
+  while (Date.now() - startWait < 15000) {
+    if (jobObj.lastError) {
+      return res.status(500).json({ success: false, error: jobObj.lastError, jobId });
     }
-    await new Promise((r) => setTimeout(r, 200));
+    if (isHlsJobReady(jobDir, playlistPath)) {
+      console.log(`[HLS READY ${jobId}] 2+ segments generated in ${((Date.now() - startWait)/1000).toFixed(1)}s!`);
+      return res.json({ success: true, hlsUrl, jobId, status: 'ready', ready: true });
+    }
+    await new Promise((r) => setTimeout(r, 400));
   }
 
-  return res.json({ success: true, hlsUrl, jobId, status: 'transcoding' });
+  // If still transcoding and warming up, return transcoding status so frontend can poll
+  return res.json({ success: true, hlsUrl, jobId, status: 'transcoding', ready: false });
 };
 
 app.post('/transcode', transcodeHlsHandler);
@@ -1455,13 +1524,36 @@ app.post('/api/transcode/hls', transcodeHlsHandler);
 
 app.get('/api/transcode/status/:jobId', (req, res) => {
   const { jobId } = req.params;
-  const isRunning = activeHlsJobs.has(jobId);
-  const playlistPath = path.join(HLS_OUT_DIR, jobId, 'index.m3u8');
-  const exists = fs.existsSync(playlistPath);
+  const job = activeHlsJobs.get(jobId);
+  const jobDir = path.join(HLS_OUT_DIR, jobId);
+  const playlistPath = path.join(jobDir, 'index.m3u8');
+  const ready = isHlsJobReady(jobDir, playlistPath);
+  const isRunning = Boolean(job && job.child && !job.child.killed);
+
+  if (job?.lastError) {
+    return res.json({
+      success: false,
+      jobId,
+      error: job.lastError,
+      status: 'error',
+      ready: false
+    });
+  }
+
+  let segCount = 0;
+  try {
+    if (fs.existsSync(jobDir)) {
+      segCount = fs.readdirSync(jobDir).filter(f => f.endsWith('.ts')).length;
+    }
+  } catch {}
+
   res.json({
+    success: true,
     jobId,
     active: isRunning,
-    ready: exists,
+    ready,
+    segmentsCount: segCount,
+    status: ready ? 'ready' : (isRunning ? 'transcoding' : (segCount >= 2 ? 'ready' : 'idle')),
     hlsUrl: `/api/transcode/hls/${jobId}/index.m3u8`
   });
 });
