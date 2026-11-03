@@ -113,6 +113,10 @@ export default function Settings() {
   const [csSubmitting, setCsSubmitting] = useState(false);
   const [csMessage, setCsMessage] = useState({ type: '', text: '' });
   const [expandedRepoId, setExpandedRepoId] = useState(null);
+  const [activeTab, setActiveTab] = useState('import');
+  const [expandedAddonDesc, setExpandedAddonDesc] = useState(new Set());
+  const [csPluginSearch, setCsPluginSearch] = useState('');
+
 
   // ─── IPTV & Live TV State ───
   const [iptvPlaylists, setIptvPlaylists] = useState([]);
@@ -778,76 +782,125 @@ export default function Settings() {
     return false;
   };
 
+  const tabs = [
+    { id: 'import', label: 'Add & Import', icon: '📥' },
+    { id: 'providers', label: 'Providers & Resources', icon: '⚡', count: allSources.length },
+    { id: 'addons', label: 'Installed Addons', icon: '🍿', count: addons.length },
+    { id: 'livetv', label: 'Live TV', icon: '📺', count: iptvPlaylists.length },
+    { id: 'cloudstream', label: 'CloudStream', icon: '☁️', count: csRepos.length },
+    { id: 'tmdb', label: 'TMDB Settings', icon: '🔑' },
+    { id: 'catalogs', label: 'Home Catalog', icon: '📚', count: enabledSectionKeys.size },
+  ];
+
   return (
-    <div className="mx-auto max-w-4xl pb-16">
-
-      {/* Header */}
-      <div className="spatial-card mb-8 rounded-3xl p-6 sm:p-8 border border-white/15">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="rounded-full bg-blue-600/30 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-blue-300 border border-blue-400/40">
-            My-Movie-House
-          </span>
-          <span className="chip rounded-full px-2.5 py-0.5 text-xs text-white/70 font-semibold">
-            Engineered by Sakibur Rahman
-          </span>
+    <div className="mx-auto max-w-[1400px] px-3 sm:px-6 pb-16">
+      {/* Compact Header */}
+      <div className="spatial-card mb-5 rounded-2xl p-4 sm:p-5 border border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="rounded-full bg-blue-600/30 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-300 border border-blue-400/40">
+              My-Movie-House
+            </span>
+            <span className="chip rounded-full px-2 py-0.5 text-[10px] text-white/70 font-semibold">
+              Engineered by Sakibur Rahman
+            </span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-black text-white">Admin Management</h1>
+          <p className="mt-0.5 text-xs text-slate-300">
+            Configure Stremio addons, Live TV, CloudStream extensions, and Home catalog rows.
+          </p>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-black text-white">Addon Management</h1>
-        <p className="mt-2 text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
-          Install Stremio-compatible catalog and streaming addons — TMDB, Trakt.tv, Nuvio, and more.
-        </p>
-      </div>
-
-
-      {/* ─── VisionOS Quick Jump Bar ─── */}
-      <div className="sticky top-16 z-30 mb-8 flex items-center justify-between gap-2 rounded-2xl border border-white/10 bg-[#0f1422]/90 p-2 backdrop-blur-xl shadow-xl">
-        <div className="flex flex-wrap items-center gap-1.5 text-xs font-bold">
-          <a
-            href="#section-imports"
-            className="rounded-xl px-3.5 py-2 text-white/80 hover:text-white hover:bg-white/10 transition flex items-center gap-1.5"
-          >
-            <span>📥</span>
-            <span>1. All Imports & Add</span>
-          </a>
-          <a
-            href="#section-resources"
-            className="rounded-xl px-3.5 py-2 text-white/80 hover:text-white hover:bg-white/10 transition flex items-center gap-1.5"
-          >
-            <span>⚡</span>
-            <span>2. Resources ({addons.length + iptvPlaylists.length + csRepos.length})</span>
-          </a>
-          <a
-            href="#section-catalogs"
-            className="rounded-xl px-3.5 py-2 text-white/80 hover:text-white hover:bg-white/10 transition flex items-center gap-1.5"
-          >
-            <span>📚</span>
-            <span>3. Home Catalogs ({enabledSectionKeys.size})</span>
-          </a>
+        <div className="flex items-center gap-2">
+          <Link to="/" className="btn-glass rounded-xl px-3.5 py-2 text-xs font-semibold text-white/80 hover:text-white flex items-center gap-1.5">
+            <span>←</span> Back to Home
+          </Link>
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════════════════════ */}
-      {/*  STAGE 1: ALL IMPORTS & ADDS (সব Import ও Add অপশন উপরে)   */}
-      {/* ═══════════════════════════════════════════════════════════ */}
-      <div id="section-imports" className="mb-14 scroll-mt-24 space-y-8">
-        <div className="flex items-center gap-2.5 border-b border-white/10 pb-3">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-600/30 text-blue-300 font-bold border border-blue-400/30 text-lg">
-            📥
-          </span>
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black text-white">1. Add & Import Hub</h2>
-            <p className="text-xs text-slate-300">
-              All Addon, Live TV, CloudStream Repositories & API imports in one place.
-            </p>
+      {/* Two-Column Shell */}
+      <div className="flex flex-col md:flex-row gap-5 items-start">
+        {/* Left Sticky Sidebar (Horizontal scroll on mobile < 900px) */}
+        <aside className="w-full md:w-[220px] shrink-0 md:sticky md:top-20 z-20">
+          <div className="spatial-card rounded-2xl p-2 border border-white/10 bg-[#0f1422]/90 backdrop-blur-xl shadow-xl flex md:flex-col gap-1 overflow-x-auto md:overflow-x-visible no-scrollbar">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition whitespace-nowrap text-left ${
+                    isActive
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                      : 'text-white/70 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="text-sm">{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </span>
+                  {typeof tab.count === 'number' && (
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold ${
+                      isActive ? 'bg-white/20 text-white' : 'bg-white/10 text-white/60'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </aside>
 
-        {/* 1.1 ADD STREMIO ADDON (QUICK INSTALL PRESETS + CUSTOM MANIFEST) */}
-        <div className="space-y-6">
-          <div className="flex items-center gap-2">
-            <span className="h-4 w-1.5 rounded-full bg-violet-500 shadow-sm shadow-violet-500/50" />
-            <h3 className="text-base sm:text-lg font-bold text-white">Step 1.1: Add Stremio Addon (Presets & Custom)</h3>
-          </div>
-      {/* ══════════════════════════════════════════════ */}
+        {/* Right Content Area: ONE section visible at a time */}
+        <main className="flex-1 min-w-0 w-full space-y-6">
+          {activeTab === 'import' && (
+            <div className="space-y-6">
+              {/* Step 1 / 2 / 3 Navigation Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+                <div
+                  onClick={() => setActiveTab('addons')}
+                  className="spatial-card rounded-2xl p-3.5 border border-violet-500/30 bg-violet-950/15 cursor-pointer hover:border-violet-400 transition"
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-lg">🍿</span>
+                    <h3 className="text-sm font-bold text-white">1. Stremio Addons</h3>
+                  </div>
+                  <p className="text-[11px] text-white/60 leading-relaxed">
+                    Presets, CineMeta, Torrentio & custom manifests. ({addons.length} active)
+                  </p>
+                </div>
+
+                <div
+                  onClick={() => setActiveTab('livetv')}
+                  className="spatial-card rounded-2xl p-3.5 border border-red-500/30 bg-red-950/15 cursor-pointer hover:border-red-400 transition"
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-lg">📺</span>
+                    <h3 className="text-sm font-bold text-white">2. Live TV & IPTV</h3>
+                  </div>
+                  <p className="text-[11px] text-white/60 leading-relaxed">
+                    M3U / M3U8 links, files & Xtream Codes. ({iptvPlaylists.length} playlists)
+                  </p>
+                </div>
+
+                <div
+                  onClick={() => setActiveTab('cloudstream')}
+                  className="spatial-card rounded-2xl p-3.5 border border-emerald-500/30 bg-emerald-950/15 cursor-pointer hover:border-emerald-400 transition"
+                >
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <span className="text-lg">⚡</span>
+                    <h3 className="text-sm font-bold text-white">3. CloudStream & BDIX</h3>
+                  </div>
+                  <p className="text-[11px] text-white/60 leading-relaxed">
+                    Bangla FTP, DhakaFlix, ICC & Scrapers. ({csRepos.length} repos)
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Install Presets + Custom Addon Form in 2-Column Responsive Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                <div className="lg:col-span-7">
       <section className="mb-10">
         <div className="mb-4 flex items-center gap-2.5">
           <span className="h-4 w-1.5 rounded-full bg-violet-500 shadow-sm shadow-violet-500/50" />
@@ -1030,8 +1083,9 @@ export default function Settings() {
           );
         })}
       </section>
-      {/* ══════════════════════════════════════════════ */}
-      <form onSubmit={addAddon} className="spatial-card rounded-3xl p-6 sm:p-8 border border-white/15 mb-10">
+                </div>
+                <div className="lg:col-span-5 sticky top-20">
+      <form onSubmit={addAddon} className="spatial-card rounded-3xl p-4 sm:p-6 border border-white/15 mb-4">
         <div className="flex items-center gap-2.5 mb-5">
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-blue-600/30 text-blue-300 font-bold border border-blue-400/30">
             +
@@ -1083,16 +1137,11 @@ export default function Settings() {
           {submitting ? 'Verifying Manifest…' : 'Install Addon'}
         </button>
       </form>
-        </div>
+                </div>
+              </div>
 
-        {/* 1.2 ADD LIVE TV & IPTV (M3U / M3U8 / XTREAM) */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="h-4 w-1.5 rounded-full bg-red-500 shadow-sm shadow-red-500/50" />
-            <h3 className="text-base sm:text-lg font-bold text-white">Step 1.2: Add Live TV & IPTV Channels</h3>
-          </div>
-      {/* ══════════════════════════════════════════════ */}
-      <section className="spatial-card mb-10 rounded-3xl p-6 sm:p-8 border border-red-500/30 bg-gradient-to-br from-red-950/20 via-black/45 to-slate-950/45 shadow-2xl">
+              {/* Step 1.2 Live TV Importer */}
+      <section className="spatial-card mb-10 rounded-3xl p-4 sm:p-6 border border-red-500/30 bg-gradient-to-br from-red-950/20 via-black/45 to-slate-950/45 shadow-2xl">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div className="flex items-center gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-2xl bg-red-600/30 text-red-300 font-bold border border-red-500/40 text-xl shadow-lg">
@@ -1325,16 +1374,9 @@ export default function Settings() {
           )}
         </div>
         </section>
-        </div>
 
-        {/* 1.3 ADD CLOUDSTREAM & BDIX REPOSITORIES */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="h-4 w-1.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50" />
-            <h3 className="text-base sm:text-lg font-bold text-white">Step 1.3: Add CloudStream & BDIX Repository</h3>
-          </div>
-      {/* ══════════════════════════════════════════════ */}
-      <section className="spatial-card mb-10 rounded-3xl p-6 sm:p-8 border border-emerald-500/25 bg-gradient-to-br from-emerald-950/15 via-black/40 to-slate-950/40">
+              {/* Step 1.3 CloudStream Repo Importer */}
+      <section className="spatial-card mb-10 rounded-3xl p-4 sm:p-6 border border-emerald-500/25 bg-gradient-to-br from-emerald-950/15 via-black/40 to-slate-950/40">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div className="flex items-center gap-2.5">
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-400/30 text-lg">
@@ -1456,16 +1498,9 @@ export default function Settings() {
           )}
         </form>
         </section>
-        </div>
 
-        {/* 1.4 TMDB API KEY CONFIGURATION */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="h-4 w-1.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50" />
-            <h3 className="text-base sm:text-lg font-bold text-white">Step 1.4: TMDB API Key Configuration</h3>
-          </div>
-      {/* ══════════════════════════════════════════════ */}
-      <section className="spatial-card mb-8 rounded-3xl p-6 sm:p-8 border border-white/15">
+              {/* Step 1.4 TMDB API Config */}
+      <section className="spatial-card mb-8 rounded-3xl p-4 sm:p-6 border border-white/15">
         <div className="flex items-center gap-2.5 mb-2">
           <span className="grid h-8 w-8 place-items-center rounded-xl bg-blue-600/30 text-blue-300 font-bold border border-blue-400/30">
             🎬
@@ -1526,28 +1561,12 @@ export default function Settings() {
           </div>
         </form>
       </section>
-        </div>
-      </div>
+            </div>
+          )}
 
-      {/* ═══════════════════════════════════════════════════════════ */}
-      {/*  STAGE 2: RESOURCES & PROVIDERS (রিসোর্স ও ইনস্টলড ইঞ্জিন)   */}
-      {/* ═══════════════════════════════════════════════════════════ */}
-      <div id="section-resources" className="mb-14 scroll-mt-24 space-y-8">
-        <div className="flex items-center gap-2.5 border-b border-white/10 pb-3">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-600/30 text-emerald-300 font-bold border border-emerald-400/30 text-lg">
-            ⚡
-          </span>
-          <div>
-            <h2 className="text-xl sm:text-2xl font-black text-white">2. Active Resources & Providers</h2>
-            <p className="text-xs text-slate-300">
-              Real-time monitoring, live latency status, and management of all installed providers, addons, and playlists.
-            </p>
-          </div>
-        </div>
-
-        {/* 2.1 ALL SOURCES & PROVIDERS LIVE DASHBOARD */}
-      {/* ══════════════════════════════════════════════ */}
-      <section className="spatial-card mb-10 rounded-3xl p-6 sm:p-8 border border-blue-500/30 bg-gradient-to-br from-blue-950/20 via-black/50 to-slate-950/50 shadow-2xl">
+          {activeTab === 'providers' && (
+            <div>
+      <section className="spatial-card mb-10 rounded-3xl p-4 sm:p-6 border border-blue-500/30 bg-gradient-to-br from-blue-950/20 via-black/50 to-slate-950/50 shadow-2xl">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
           <div className="flex items-center gap-3">
@@ -1646,7 +1665,7 @@ export default function Settings() {
             <p className="mt-1 text-xs text-white/35">Try searching with a different keyword or switch filter tab.</p>
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 max-h-[560px] overflow-y-auto pr-1">
+          <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 max-h-[65vh] overflow-y-auto pr-1">
             {filteredSources.map((src) => {
               const isSourceActive = src.enabled;
               return (
@@ -1734,9 +1753,11 @@ export default function Settings() {
           </div>
         )}
       </section>
+            </div>
+          )}
 
-        {/* 2.2 INSTALLED STREMIO ADDONS LIST */}
-      {/* ══════════════════════════════════════════════ */}
+          {activeTab === 'addons' && (
+            <div className="space-y-6">
       <section>
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2.5">
@@ -1761,11 +1782,11 @@ export default function Settings() {
             <p className="text-sm font-semibold text-white/70">Loading installed addons…</p>
           </div>
         ) : (
-          <div className="space-y-3.5">
+          <div className="grid gap-3 sm:grid-cols-1 lg:grid-cols-2">
             {addons.map((addon) => (
               <article
                 key={addon.id}
-                className="spatial-card flex flex-col gap-4 rounded-2xl p-5 sm:flex-row sm:items-center sm:justify-between border border-white/10"
+                className="spatial-card flex flex-col justify-between rounded-2xl p-4 border border-white/10 gap-3"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2.5">
@@ -1796,7 +1817,20 @@ export default function Settings() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-2 break-all text-xs font-mono text-slate-300 bg-white/5 border border-white/10 rounded-lg p-2 max-w-xl">
+                  <p
+                    onClick={() => {
+                      setExpandedAddonDesc((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(addon.id)) next.delete(addon.id);
+                        else next.add(addon.id);
+                        return next;
+                      });
+                    }}
+                    className={`mt-2 break-all text-xs font-mono text-slate-300 bg-white/5 border border-white/10 rounded-lg p-2 max-w-xl cursor-pointer hover:border-white/20 transition ${
+                      expandedAddonDesc.has(addon.id) ? '' : 'line-clamp-2'
+                    }`}
+                    title="Click to expand/collapse full URL"
+                  >
                     {addon.url}
                   </p>
                 </div>
@@ -1828,9 +1862,66 @@ export default function Settings() {
           </div>
         )}
       </section>
+              <div className="mt-8">
+      <form onSubmit={addAddon} className="spatial-card rounded-3xl p-4 sm:p-6 border border-white/15 mb-4">
+        <div className="flex items-center gap-2.5 mb-5">
+          <span className="grid h-8 w-8 place-items-center rounded-xl bg-blue-600/30 text-blue-300 font-bold border border-blue-400/30">
+            +
+          </span>
+          <h2 className="text-lg sm:text-xl font-bold text-white">Install Custom Addon</h2>
+        </div>
 
-        {/* 2.3 ACTIVE LIVE TV PLAYLISTS */}
-        <section className="spatial-card mb-8 rounded-3xl p-6 sm:p-8 border border-red-500/30 bg-gradient-to-br from-red-950/20 via-black/45 to-slate-950/45 shadow-2xl">
+        <div className="space-y-4">
+          <div>
+            <label className="mb-2 block text-xs sm:text-sm font-semibold text-slate-200" htmlFor="addon-url">
+              Manifest URL <span className="text-blue-400">*</span>
+            </label>
+            <input
+              id="addon-url"
+              required
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://v3-cinemeta.strem.io/manifest.json"
+              className="w-full spatial-input rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-white/35"
+            />
+            <p className="mt-1.5 text-[11px] text-slate-400">Enter the HTTPS or HTTP link ending in /manifest.json</p>
+          </div>
+
+          <div>
+            <label className="mb-2 block text-xs sm:text-sm font-semibold text-slate-200" htmlFor="addon-name">
+              Custom Name <span className="text-xs text-white/40 font-normal">(optional)</span>
+            </label>
+            <input
+              id="addon-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. My Favorite Movies Addon"
+              className="w-full spatial-input rounded-xl px-4 py-3 text-xs sm:text-sm text-white placeholder-white/35"
+            />
+          </div>
+        </div>
+
+        {error && (
+          <div className="mt-4 rounded-xl bg-rose-950/40 p-3 border border-rose-500/30 text-rose-300 text-xs font-medium">
+            {error}
+          </div>
+        )}
+
+        <button
+          disabled={submitting}
+          className="btn-spatial-blue mt-6 rounded-xl px-7 py-3 text-xs sm:text-sm font-bold shadow-md disabled:cursor-wait disabled:opacity-60"
+        >
+          {submitting ? 'Verifying Manifest…' : 'Install Addon'}
+        </button>
+      </form>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'livetv' && (
+            <div className="space-y-6">
+        <section className="spatial-card mb-8 rounded-3xl p-4 sm:p-6 border border-red-500/30 bg-gradient-to-br from-red-950/20 via-black/45 to-slate-950/45 shadow-2xl">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5 border-b border-white/10 pb-4">
             <div className="flex items-center gap-3">
               <span className="grid h-10 w-10 place-items-center rounded-2xl bg-red-600/30 text-red-300 font-bold border border-red-500/40 text-xl shadow-lg">
@@ -1959,9 +2050,245 @@ export default function Settings() {
           )}
         </div>
       </section>
+      <section className="spatial-card mb-10 rounded-3xl p-4 sm:p-6 border border-red-500/30 bg-gradient-to-br from-red-950/20 via-black/45 to-slate-950/45 shadow-2xl">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+          <div className="flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-red-600/30 text-red-300 font-bold border border-red-500/40 text-xl shadow-lg">
+              📡
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg sm:text-xl font-black text-white">Live TV & IPTV Manager</h2>
+                <span className="rounded-full bg-red-500/20 px-2.5 py-0.5 text-[11px] font-bold text-red-300 border border-red-400/30">
+                  M3U · M3U8 · Xtream Codes
+                </span>
+              </div>
+              <p className="text-xs text-slate-300">
+                Add any playable IPTV playlist via direct M3U/M3U8 URL, uploaded file, or Xtream Codes credentials.
+              </p>
+            </div>
+          </div>
 
-        {/* 2.4 INSTALLED CLOUDSTREAM REPOSITORIES & EXTENSIONS */}
-        <section className="spatial-card mb-8 rounded-3xl p-6 sm:p-8 border border-emerald-500/25 bg-gradient-to-br from-emerald-950/15 via-black/40 to-slate-950/40 shadow-2xl">
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleRefreshIptvChannels}
+              disabled={iptvRefreshing}
+              className="btn-glass flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold text-white hover:bg-white/15 disabled:opacity-50"
+              title="Reload and verify channels from all active playlists"
+            >
+              <span className={iptvRefreshing ? 'animate-spin' : ''}>🔄</span>
+              <span>{iptvRefreshing ? 'Refreshing...' : 'Refresh Channels'}</span>
+            </button>
+            <a
+              href="/iptv"
+              className="btn-spatial-blue flex items-center gap-1.5 rounded-xl px-3.5 py-1.5 text-xs font-bold shadow-md shadow-blue-600/30"
+            >
+              <span>📺</span> Open Live TV Page
+            </a>
+          </div>
+        </div>
+
+        {/* ─── Mode Switcher Tabs ─── */}
+        <div className="flex flex-wrap items-center gap-1.5 mb-5 border-b border-white/10 pb-3">
+          {[
+            { id: 'url', label: '🔗 M3U / M3U8 Link', icon: '🌐' },
+            { id: 'file', label: '📁 Upload M3U File / Text', icon: '📄' },
+            { id: 'xtream', label: '🔑 Xtream Codes API', icon: '⚡' },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => {
+                setIptvTab(tab.id);
+                setIptvMessage({ type: '', text: '' });
+              }}
+              className={`rounded-xl px-3.5 py-2 text-xs font-bold transition flex items-center gap-1.5 ${
+                iptvTab === tab.id
+                  ? 'bg-red-600 text-white shadow-md shadow-red-600/40 border border-red-400/50'
+                  : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10'
+              }`}
+            >
+              <span>{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* ─── Form Content ─── */}
+        <div className="space-y-4">
+          {iptvTab === 'url' && (
+            <div>
+              <div className="grid gap-3 sm:grid-cols-2 mb-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-200 mb-1">
+                    Playlist Name (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={iptvName}
+                    onChange={(e) => setIptvName(e.target.value)}
+                    placeholder="e.g. Bangladesh & Global Live TV"
+                    className="w-full spatial-input rounded-xl px-4 py-2.5 text-xs text-white placeholder-white/35"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-200 mb-1">
+                    M3U / M3U8 Playlist URL *
+                  </label>
+                  <input
+                    type="url"
+                    value={iptvUrl}
+                    onChange={(e) => setIptvUrl(e.target.value)}
+                    placeholder="https://example.com/playlist.m3u or .m3u8"
+                    className="w-full spatial-input rounded-xl px-4 py-2.5 text-xs text-white placeholder-white/35 font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {iptvTab === 'file' && (
+            <div className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-200 mb-1">
+                    Playlist Name (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={iptvName}
+                    onChange={(e) => setIptvName(e.target.value)}
+                    placeholder="e.g. My Offline IPTV File"
+                    className="w-full spatial-input rounded-xl px-4 py-2.5 text-xs text-white placeholder-white/35"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-200 mb-1">
+                    Select .m3u / .m3u8 File
+                  </label>
+                  <input
+                    type="file"
+                    accept=".m3u,.m3u8,.txt"
+                    onChange={handleM3uFileUpload}
+                    className="w-full text-xs text-slate-300 file:mr-3 file:rounded-xl file:border-0 file:bg-blue-600/30 file:px-4 file:py-2.5 file:text-xs file:font-bold file:text-blue-300 hover:file:bg-blue-600 cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-200 mb-1">
+                  Or Paste Raw M3U Content Directly
+                </label>
+                <textarea
+                  rows={4}
+                  value={iptvRawContent}
+                  onChange={(e) => setIptvRawContent(e.target.value)}
+                  placeholder="#EXTM3U&#10;#EXTINF:-1 tvg-logo=&quot;...&quot; group-title=&quot;News&quot;, Channel 24&#10;http://.../live.m3u8"
+                  className="w-full spatial-input rounded-xl px-4 py-2 text-xs text-white placeholder-white/30 font-mono resize-y"
+                />
+              </div>
+            </div>
+          )}
+
+          {iptvTab === 'xtream' && (
+            <div className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-200 mb-1">
+                    Server URL (Host:Port) *
+                  </label>
+                  <input
+                    type="text"
+                    value={iptvServer}
+                    onChange={(e) => setIptvServer(e.target.value)}
+                    placeholder="e.g. http://iptvserver.net:8080"
+                    className="w-full spatial-input rounded-xl px-4 py-2.5 text-xs text-white placeholder-white/35 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-200 mb-1">
+                    Account Name (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={iptvName}
+                    onChange={(e) => setIptvName(e.target.value)}
+                    placeholder="e.g. My Xtream Subscription"
+                    className="w-full spatial-input rounded-xl px-4 py-2.5 text-xs text-white placeholder-white/35"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-200 mb-1">
+                    Username *
+                  </label>
+                  <input
+                    type="text"
+                    value={iptvUser}
+                    onChange={(e) => setIptvUser(e.target.value)}
+                    placeholder="Xtream username"
+                    className="w-full spatial-input rounded-xl px-4 py-2.5 text-xs text-white placeholder-white/35 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-200 mb-1">
+                    Password *
+                  </label>
+                  <input
+                    type="password"
+                    value={iptvPass}
+                    onChange={(e) => setIptvPass(e.target.value)}
+                    placeholder="Xtream password"
+                    className="w-full spatial-input rounded-xl px-4 py-2.5 text-xs text-white placeholder-white/35 font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <div className="flex items-center gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => handleAddIptv(null)}
+              disabled={iptvSubmitting}
+              className="btn-spatial-blue rounded-xl px-6 py-2.5 text-xs sm:text-sm font-bold shadow-lg shadow-blue-600/30 disabled:opacity-50 flex items-center gap-2"
+            >
+              {iptvSubmitting ? (
+                <>
+                  <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  <span>Connecting & Loading Streams...</span>
+                </>
+              ) : (
+                <>
+                  <span>+</span>
+                  <span>Add {iptvTab === 'xtream' ? 'Xtream Account' : 'IPTV Playlist'}</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Alert Message */}
+          {iptvMessage.text && (
+            <div className={`rounded-xl p-3 text-xs font-semibold border ${
+              iptvMessage.type === 'success'
+                ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40'
+                : 'bg-rose-950/60 text-rose-300 border-rose-500/40'
+            }`}>
+              {iptvMessage.text}
+            </div>
+          )}
+        </div>
+        </section>
+            </div>
+          )}
+
+          {activeTab === 'cloudstream' && (
+            <div className="space-y-6">
+        <section className="spatial-card mb-8 rounded-3xl p-4 sm:p-6 border border-emerald-500/25 bg-gradient-to-br from-emerald-950/15 via-black/40 to-slate-950/40 shadow-2xl">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6 border-b border-white/10 pb-4">
             <div className="flex items-center gap-2.5">
               <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-400/30 text-lg">
@@ -1996,7 +2323,7 @@ export default function Settings() {
             </div>
           </div>
         {/* Installed CloudStream Repos & Plugin Toggles */}
-        <div className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold uppercase tracking-wider text-white/80">
               Installed Repositories ({csRepos.length})
@@ -2093,8 +2420,19 @@ export default function Settings() {
                       </div>
                     </div>
 
-                    <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-3">
-                      {(repo.plugins || []).map((plugin) => {
+                    <div className="mb-2">
+                      <input
+                        type="text"
+                        value={csPluginSearch}
+                        onChange={(e) => setCsPluginSearch(e.target.value)}
+                        placeholder="Search extensions (e.g. Flix, ICC, Cine)..."
+                        className="spatial-input w-full rounded-xl px-3 py-1.5 text-xs text-white placeholder-white/30"
+                      />
+                    </div>
+                    <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 max-h-[60vh] overflow-y-auto pr-1">
+                      {(repo.plugins || [])
+                        .filter((p) => !csPluginSearch || (p.name && p.name.toLowerCase().includes(csPluginSearch.toLowerCase())))
+                        .map((plugin) => {
                         const pluginId = plugin.internalName || plugin.name;
                         const isPluginActive = plugin.enabled !== false;
                         const isBangla = plugin.language === 'bn' || (plugin.name && (plugin.name.toLowerCase().includes('dhaka') || plugin.name.toLowerCase().includes('icc') || plugin.name.toLowerCase().includes('emw')));
@@ -2170,25 +2508,200 @@ export default function Settings() {
           })}
         </div>
       </section>
-      </div>
+      <section className="spatial-card mb-10 rounded-3xl p-4 sm:p-6 border border-emerald-500/25 bg-gradient-to-br from-emerald-950/15 via-black/40 to-slate-950/40">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div className="flex items-center gap-2.5">
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-400/30 text-lg">
+              ⚡
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg sm:text-xl font-bold text-white">CloudStream & BDIX Extensions</h2>
+                <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-400/30">
+                  Direct Scraping & FTP
+                </span>
+              </div>
+              <p className="text-xs text-slate-300">
+                Install CloudStream .json repositories (like Redowan's BDIX repo) to stream directly from DhakaFlix, ICC FTP, MoviesFlix, EmwBD, and more.
+              </p>
+            </div>
+          </div>
 
-      {/* ═══════════════════════════════════════════════════════════ */}
-      {/*  STAGE 3: HOME CATALOG SECTIONS (ক্যাটালগ সাজানোর অপশন)     */}
-      {/* ═══════════════════════════════════════════════════════════ */}
-      <div id="section-catalogs" className="scroll-mt-24">
-        <div className="flex items-center gap-2.5 border-b border-white/10 pb-3 mb-6">
-          <span className="grid h-9 w-9 place-items-center rounded-xl bg-purple-600/30 text-purple-300 font-bold border border-purple-400/30 text-lg">
-            📚
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleToggleCsMaster}
+              className={`rounded-xl px-4 py-2 text-xs font-bold border transition-all flex items-center gap-2 ${
+                csMasterEnabled
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 shadow-lg shadow-emerald-500/10'
+                  : 'bg-rose-500/20 text-rose-300 border-rose-400/40'
+              }`}
+            >
+              <span className={`h-2.5 w-2.5 rounded-full ${csMasterEnabled ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`} />
+              <span>{csMasterEnabled ? 'CloudStream Engine: Active' : 'CloudStream Engine: Paused'}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Preset Quick Repos */}
+        <div className="mb-6 grid gap-3 sm:grid-cols-2">
+          {PRESET_CS_REPOS.map((preset) => {
+            const isInstalled = csRepos.some((r) => r.url === preset.url || r.rawUrl === preset.url);
+            return (
+              <div
+                key={preset.url}
+                className={`rounded-2xl border p-4 transition-all duration-200 ${
+                  isInstalled
+                    ? 'border-emerald-500/40 bg-emerald-950/20'
+                    : 'border-white/10 bg-white/[0.03] hover:border-white/20'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-white">{preset.name}</span>
+                      <span className="rounded-full bg-white/10 px-2 py-0.5 text-[9px] font-bold text-emerald-300 border border-white/15">
+                        {preset.badge}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-white/60 leading-relaxed">
+                      {preset.description}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-2.5">
+                  <span className="truncate text-[10px] font-mono text-white/40 max-w-[200px]">
+                    {preset.url}
+                  </span>
+                  {isInstalled ? (
+                    <span className="rounded-lg bg-emerald-500/20 border border-emerald-400/30 px-3 py-1 text-[11px] font-bold text-emerald-300">
+                      ✓ Installed
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={csSubmitting}
+                      onClick={() => handleAddCsRepo(preset.url)}
+                      className="rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 text-[11px] font-bold transition disabled:opacity-50"
+                    >
+                      {csSubmitting ? 'Installing...' : '+ 1-Click Install'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Add custom repo form */}
+        <form onSubmit={(e) => { e.preventDefault(); handleAddCsRepo(); }} className="space-y-3 mb-6">
+          <label className="block text-xs font-semibold text-slate-200">
+            Install Custom CloudStream Repository
+          </label>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="url"
+              value={csUrl}
+              onChange={(e) => setCsUrl(e.target.value)}
+              placeholder="https://raw.githubusercontent.com/.../repo.json or .../manifest.json"
+              className="flex-1 spatial-input rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/35 font-mono"
+            />
+            <button
+              type="submit"
+              disabled={csSubmitting || !csUrl.trim()}
+              className="btn-spatial-blue shrink-0 rounded-xl px-5 py-2.5 text-xs sm:text-sm font-bold shadow-md disabled:opacity-50 !bg-emerald-600 hover:!bg-emerald-500"
+            >
+              {csSubmitting ? 'Fetching Repo…' : 'Add Repository'}
+            </button>
+          </div>
+          <p className="text-[11px] text-white/50">
+            Supports official CloudStream repo URLs, GitHub links, and auto-strips accidental <code>/manifest.json</code> suffixes.
+          </p>
+
+          {csMessage.text && (
+            <div className={`rounded-xl p-3 text-xs font-semibold border ${
+              csMessage.type === 'success'
+                ? 'bg-emerald-950/50 text-emerald-300 border-emerald-500/40'
+                : 'bg-rose-950/50 text-rose-300 border-rose-500/40'
+            }`}>
+              {csMessage.text}
+            </div>
+          )}
+        </form>
+        </section>
+            </div>
+          )}
+
+          {activeTab === 'tmdb' && (
+            <div>
+      <section className="spatial-card mb-8 rounded-3xl p-4 sm:p-6 border border-white/15">
+        <div className="flex items-center gap-2.5 mb-2">
+          <span className="grid h-8 w-8 place-items-center rounded-xl bg-blue-600/30 text-blue-300 font-bold border border-blue-400/30">
+            🎬
           </span>
           <div>
-            <h2 className="text-xl sm:text-2xl font-black text-white">3. Home Catalog Sections Manager</h2>
+            <h2 className="text-lg sm:text-xl font-bold text-white">TMDB API Configuration</h2>
             <p className="text-xs text-slate-300">
-              Customize and order which sections and rows appear on the Home page.
+              Your TMDB API Key powers official movie/series catalogs, high-res posters, and streaming providers. Saved permanently on disk.
             </p>
           </div>
         </div>
-      {/* ══════════════════════════════════════════════ */}
-      <section className="mt-12">
+
+        <form onSubmit={handleSaveTmdbKey} className="mt-4 space-y-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-200 mb-1.5">
+              TMDB API Key (v3 auth)
+            </label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={inputTmdbKey}
+                onChange={(e) => setInputTmdbKey(e.target.value)}
+                placeholder="e.g. 1cf50e6248dc270629e802686245c2c8"
+                className="flex-1 spatial-input rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white placeholder-white/35 font-mono"
+              />
+              <button
+                type="submit"
+                disabled={savingTmdbKey || !inputTmdbKey.trim()}
+                className="btn-spatial-blue shrink-0 rounded-xl px-5 py-2.5 text-xs sm:text-sm font-bold shadow-md disabled:opacity-50"
+              >
+                {savingTmdbKey ? 'Verifying...' : 'Save & Verify Key'}
+              </button>
+            </div>
+          </div>
+
+          {tmdbKeyMessage.text && (
+            <div className={`rounded-xl p-3 text-xs font-semibold border ${
+              tmdbKeyMessage.type === 'success'
+                ? 'bg-emerald-950/50 text-emerald-300 border-emerald-500/40'
+                : 'bg-rose-950/50 text-rose-300 border-rose-500/40'
+            }`}>
+              {tmdbKeyMessage.text}
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center justify-between text-[11px] text-white/50 pt-1">
+            <span>
+              Status: <strong className="text-emerald-400 font-semibold">{currentTmdbKey ? 'Active (Saved in config.json)' : 'Default Key Active'}</strong>
+            </span>
+            <a
+              href="https://www.themoviedb.org/settings/api"
+              target="_blank"
+              rel="noreferrer"
+              className="text-blue-400 hover:underline"
+            >
+              Get Free TMDB API Key ↗
+            </a>
+          </div>
+        </form>
+      </section>
+            </div>
+          )}
+
+          {activeTab === 'catalogs' && (
+            <div>
+      <section className="mt-2">
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2.5">
@@ -2313,7 +2826,7 @@ export default function Settings() {
             }
 
             return (
-              <div className="space-y-4">
+              <div className="space-y-3 max-h-[65vh] overflow-y-auto pr-1">
                 {filteredGroups.map((group) => {
                   const isCollapsed = collapsedGroups.has(group.groupId);
                   const activeCount = group.catalogs.filter((c) =>
@@ -2372,7 +2885,7 @@ export default function Settings() {
                       {/* Accordion Body */}
                       {!isCollapsed && (
                         <div className="p-3.5 sm:p-4">
-                          <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                             {group.catalogs.map((cat) => {
                               const key = `${cat.addonId}:${cat.type}:${cat.id}`;
                               const isEnabled = enabledSectionKeys.has(key);
@@ -2434,6 +2947,9 @@ export default function Settings() {
           })()
         )}
       </section>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );
