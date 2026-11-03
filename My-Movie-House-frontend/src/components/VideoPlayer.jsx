@@ -78,6 +78,27 @@ export function isEmbedUrl(url) {
   );
 }
 
+// Identify fast browser-native H.264 / AVC streams (instant play on Intel UHD iGPU)
+export function isFastH264Stream(stream) {
+  if (!stream) return false;
+  const text = `${stream.name || ''} ${stream.title || ''} ${stream.description || ''} ${stream.codec || ''} ${stream.behaviorHints?.filename || ''} ${stream.url || ''}`.toLowerCase();
+  if (/hevc|h265|x265|10bit|hdr/i.test(text)) return false;
+  if (text.includes('.mkv')) return false;
+  return /h264|x264|avc|mp4/i.test(text) || text.includes('.mp4') || text.includes('.m3u8') || text.includes('/proxy/');
+}
+
+// Select best initial stream for weak/i3 CPU (skip 4K, prefer Fast H.264 1080p/720p)
+export function pickBestInitialStream(streams) {
+  if (!Array.isArray(streams) || streams.length === 0) return null;
+  const not4k = streams.filter((s) => {
+    const q = String(s.quality || s.name || s.title || '').toUpperCase();
+    return !/2160P|4K|UHD/.test(q);
+  });
+  const candidates = not4k.length > 0 ? not4k : streams;
+  const fastMatch = candidates.find((s) => isFastH264Stream(s));
+  return fastMatch || candidates[0];
+}
+
 // Detect whether the current browser environment can natively decode HEVC / H.265 video
 export function canBrowserPlayHevc() {
   if (typeof document === 'undefined') return false;
@@ -140,20 +161,57 @@ export default function VideoPlayer({
   const fileInputRef = useRef(null);
   const seekbarRef = useRef(null);
 
-  const [internalStream, setInternalStream] = useState(initialStream);
+  const [internalStream, setInternalStream] = useState(() => {
+    if (initialStream) {
+      const q = String(initialStream.quality || initialStream.name || '').toUpperCase();
+      if (!/2160P|4K|UHD/.test(q)) return initialStream;
+    }
+    return pickBestInitialStream(initialAllStreams) || initialStream;
+  });
   const [internalStreamsList, setInternalStreamsList] = useState(initialAllStreams);
   const [isScanning, setIsScanning] = useState(false);
 
   useEffect(() => {
-    if (initialStream) setInternalStream(initialStream);
-  }, [initialStream]);
+    if (initialStream) {
+      const q = String(initialStream.quality || initialStream.name || '').toUpperCase();
+      if (/2160P|4K|UHD/.test(q) && initialAllStreams?.length > 0) {
+        const best = pickBestInitialStream(initialAllStreams);
+        if (best) {
+          setInternalStream(best);
+          return;
+        }
+      }
+      setInternalStream(initialStream);
+    }
+  }, [initialStream, initialAllStreams]);
 
   useEffect(() => {
-    if (initialAllStreams && initialAllStreams.length > 0) setInternalStreamsList(initialAllStreams);
+    if (initialAllStreams && initialAllStreams.length > 0) {
+      setInternalStreamsList(initialAllStreams);
+      if (!internalStream) {
+        const best = pickBestInitialStream(initialAllStreams);
+        if (best) setInternalStream(best);
+      }
+    }
   }, [initialAllStreams]);
 
   const stream = internalStream;
   const allStreams = internalStreamsList;
+
+  const sortedStreams = useMemo(() => {
+    if (!Array.isArray(allStreams) || allStreams.length === 0) return [];
+    return [...allStreams].sort((a, b) => {
+      const a4k = /2160P|4K|UHD/i.test(String(a.quality || a.name || ''));
+      const b4k = /2160P|4K|UHD/i.test(String(b.quality || b.name || ''));
+      if (a4k !== b4k) return a4k ? 1 : -1;
+
+      const aFast = isFastH264Stream(a);
+      const bFast = isFastH264Stream(b);
+      if (aFast !== bFast) return aFast ? -1 : 1;
+
+      return 0;
+    });
+  }, [allStreams]);
 
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -309,6 +367,26 @@ export default function VideoPlayer({
   const failedUrlsRef = useRef(new Set());
   const stallTimerRef = useRef(null);
   const consecutiveFailuresRef = useRef(0);
+  const transcodeAbortControllerRef = useRef(null);
+  const currentTranscodeJobIdRef = useRef(null);
+  const directPlaySuccessRef = useRef(false);
+  const directPlayTimerRef = useRef(null);
+  const hlsDurationTimeoutRef = useRef(null);
+  const sessionFailedUrlsRef = useRef(new Set());
+  const autoFallbackAttemptsRef = useRef(0);
+
+  // Clean up any active ffmpeg transcode job on backend
+  const killCurrentTranscodeJob = useCallback(() => {
+    if (transcodeAbortControllerRef.current) {
+      try { transcodeAbortControllerRef.current.abort(); } catch {}
+      transcodeAbortControllerRef.current = null;
+    }
+    const jId = currentTranscodeJobIdRef.current;
+    if (jId) {
+      currentTranscodeJobIdRef.current = null;
+      fetch(`${API_BASE}/api/transcode/job/${jId}`, { method: 'DELETE' }).catch(() => {});
+    }
+  }, []);
 
   // Attempt to resolve direct .m3u8/.mp4 stream from embed URL (for PotPlayer and stream extraction)
   useEffect(() => {
@@ -386,110 +464,14 @@ export default function VideoPlayer({
     return effectiveUrl || raw;
   };
 
-  // Request background HLS transcode from backend with active segment polling
-  const requestHlsTranscode = useCallback(async (srcUrl, track = 0) => {
-    if (!srcUrl) return null;
-    setIsTranscoding(true);
-    setError('');
-    console.log('[PLAYER TRANSCODE START] Requesting HLS transcode for:', srcUrl);
-    showOsd('⚡ Transcoding HEVC/MKV to H.264 (HLS)... Initializing encoder...');
-    try {
-      let res = await fetch(`${API_BASE}/api/transcode`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: srcUrl, audioTrack: track })
-      }).catch(() => null);
-
-      if (!res || !res.ok) {
-        res = await fetch(`${API_BASE}/transcode`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: srcUrl, audioTrack: track })
-        });
-      }
-
-      if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        let errJson = null;
-        try { errJson = JSON.parse(text); } catch {}
-        const msg = errJson?.error || text || res.statusText;
-        throw new Error(msg);
-      }
-
-      const data = await res.json();
-      console.log('[PLAYER TRANSCODE RESPONSE]:', data);
-
-      if (!data.success) {
-        throw new Error(data.error || 'Transcode initialization failed');
-      }
-
-      // 1. If backend reports segments are already ready (cached or generated within initial window)
-      if (data.ready === true && data.hlsUrl) {
-        const fullHls = data.hlsUrl.startsWith('http') ? data.hlsUrl : `${API_BASE}${data.hlsUrl}`;
-        console.log('[PLAYER TRANSCODE READY] Starting HLS playback from:', fullHls);
-        setDirectUrl(fullHls);
-        setPlaybackMode('transcoded');
-        setIsTranscoding(false);
-        setMkvCodecWarning(false);
-        showOsd('⚡ Transcoded HLS stream active. Playing with seek support...');
-        return fullHls;
-      }
-
-      // 2. If backend is actively transcoding and waiting for initial 2 segments: poll status endpoint
-      const jobId = data.jobId;
-      console.log(`[PLAYER TRANSCODE POLL] Job ${jobId} warming up. Polling status until at least 2 segments are written...`);
-      showOsd('⚡ Encoding HLS stream... Waiting for segments (0/2)...');
-
-      let pollAttempts = 0;
-      const maxPolls = 60; // Up to 60s
-      while (pollAttempts < maxPolls) {
-        pollAttempts++;
-        await new Promise((r) => setTimeout(r, 1000));
-        try {
-          const stRes = await fetch(`${API_BASE}/api/transcode/status/${jobId}`);
-          if (!stRes.ok) continue;
-          const stData = await stRes.json();
-          console.log(`[PLAYER TRANSCODE POLL #${pollAttempts}]`, stData);
-
-          if (stData.error || stData.status === 'error') {
-            throw new Error(stData.error || 'ffmpeg process failed during transcode');
-          }
-
-          if (stData.ready === true && stData.hlsUrl) {
-            const fullHls = stData.hlsUrl.startsWith('http') ? stData.hlsUrl : `${API_BASE}${stData.hlsUrl}`;
-            console.log('[PLAYER TRANSCODE READY] 2+ segments ready! Starting HLS playback from:', fullHls);
-            setDirectUrl(fullHls);
-            setPlaybackMode('transcoded');
-            setIsTranscoding(false);
-            setMkvCodecWarning(false);
-            showOsd('⚡ Transcoded HLS stream active. Playing with seek support...');
-            return fullHls;
-          }
-
-          const segCount = stData.segmentsCount || 0;
-          showOsd(`⚡ Encoding segments: ${segCount}/2 generated...`);
-        } catch (pollErr) {
-          if (pollErr.message && !pollErr.message.includes('fetch')) {
-            throw pollErr;
-          }
-        }
-      }
-
-      throw new Error('Transcode timed out waiting for HLS segments after 60s.');
-    } catch (err) {
-      console.error('[PLAYER TRANSCODE ERROR]:', err.message);
-      setIsTranscoding(false);
-      showOsd(`❌ Transcoding error: ${err.message}`);
-      setError(`Transcoding error: ${err.message}. Click Retry Transcode or Open in PotPlayer.`);
-      return null;
-    }
-  }, [showOsd]);
-
   // Switch Stream Server & remember chosen quality
   const handleSwitchServer = useCallback((newStream, isAuto = false) => {
     if (!isAuto) {
       consecutiveFailuresRef.current = 0;
+      autoFallbackAttemptsRef.current = 0;
     }
+    killCurrentTranscodeJob();
+    directPlaySuccessRef.current = false;
     setInternalStream(newStream);
     setDirectUrl(null);
     setPlaybackMode(newStream?.url?.includes('/transcode/hls/') ? 'transcoded' : 'direct');
@@ -509,84 +491,221 @@ export default function VideoPlayer({
     }
     showOsd(`Switched to: ${info.serverName} (${info.resolution}${info.size ? ' • ' + info.size : ''})`);
     setShowServerMenu(false);
-  }, [onSelectStream, showOsd]);
+  }, [onSelectStream, showOsd, killCurrentTranscodeJob]);
 
-  const handleVideoError = useCallback(() => {
+  // Request background HLS transcode from backend with active segment polling
+  const requestHlsTranscode = useCallback(async (srcUrl, track = 0) => {
+    if (!srcUrl) return null;
+
+    if (directPlaySuccessRef.current) {
+      console.log('[PLAYER] Direct play already succeeded, skipping transcode request for:', srcUrl);
+      return null;
+    }
+
+    if (transcodeAbortControllerRef.current) {
+      try { transcodeAbortControllerRef.current.abort(); } catch {}
+    }
+    const abortController = new AbortController();
+    transcodeAbortControllerRef.current = abortController;
+
+    setIsTranscoding(true);
+    setError('');
+    console.log('[PLAYER] Transcode requested for:', srcUrl);
+    showOsd('⚡ Transcoding HEVC/MKV to H.264 (HLS)... Initializing encoder...');
+
+    try {
+      let res = await fetch(`${API_BASE}/api/transcode`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: srcUrl, audioTrack: track }),
+        signal: abortController.signal
+      }).catch((e) => {
+        if (e.name === 'AbortError') return null;
+        return null;
+      });
+
+      if (abortController.signal.aborted) return null;
+
+      if (!res || !res.ok) {
+        res = await fetch(`${API_BASE}/transcode`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: srcUrl, audioTrack: track }),
+          signal: abortController.signal
+        }).catch((e) => {
+          if (e.name === 'AbortError') return null;
+          return null;
+        });
+      }
+
+      if (abortController.signal.aborted) return null;
+
+      if (!res) {
+        throw new Error('Connection failed to backend transcode service.');
+      }
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data || data.success === false || data.status === 'error') {
+        const errMsg = data?.error || res.statusText || 'Transcode initialization failed';
+        console.error('[PLAYER] Transcode init failed:', errMsg);
+        setIsTranscoding(false);
+        setError(errMsg);
+        showOsd(`❌ ${errMsg}`);
+        sessionFailedUrlsRef.current.add(srcUrl);
+        handleVideoError(errMsg);
+        return null;
+      }
+
+      const jobId = data.jobId;
+      currentTranscodeJobIdRef.current = jobId;
+
+      // 1. If backend reports segments are already ready
+      if (data.ready === true && data.hlsUrl) {
+        const fullHls = data.hlsUrl.startsWith('http') ? data.hlsUrl : `${API_BASE}${data.hlsUrl}`;
+        console.log('[PLAYER] Transcode ready (immediate):', fullHls);
+        setDirectUrl(fullHls);
+        setPlaybackMode('transcoded');
+        setIsTranscoding(false);
+        setMkvCodecWarning(false);
+        return fullHls;
+      }
+
+      // 2. Poll until at least 2 segments are written
+      console.log(`[PLAYER] Polling job ${jobId} until segments are ready...`);
+      showOsd('⚡ Encoding HLS stream... Waiting for segments (0/2)...');
+
+      let pollAttempts = 0;
+      const maxPolls = 60;
+      while (pollAttempts < maxPolls) {
+        if (abortController.signal.aborted) return null;
+        pollAttempts++;
+        await new Promise((r) => setTimeout(r, 1000));
+        if (abortController.signal.aborted) return null;
+
+        try {
+          const stRes = await fetch(`${API_BASE}/api/transcode/status/${jobId}`, {
+            signal: abortController.signal
+          });
+          if (!stRes.ok) continue;
+          const stData = await stRes.json();
+
+          if (stData.error || stData.status === 'error' || stData.success === false) {
+            const errText = stData.error || 'Transcode process failed';
+            console.error('[PLAYER] Transcode poll error:', errText);
+            setIsTranscoding(false);
+            setError(errText);
+            showOsd(`❌ ${errText}`);
+            sessionFailedUrlsRef.current.add(srcUrl);
+            handleVideoError(errText);
+            return null;
+          }
+
+          if (stData.ready === true && stData.hlsUrl) {
+            const fullHls = stData.hlsUrl.startsWith('http') ? stData.hlsUrl : `${API_BASE}${stData.hlsUrl}`;
+            console.log('[PLAYER] Transcode ready (polled):', fullHls);
+            setDirectUrl(fullHls);
+            setPlaybackMode('transcoded');
+            setIsTranscoding(false);
+            setMkvCodecWarning(false);
+            return fullHls;
+          }
+
+          const segCount = stData.segmentsCount || 0;
+          showOsd(`⚡ Encoding segments: ${segCount}/2 generated...`);
+        } catch (pollErr) {
+          if (pollErr.name === 'AbortError') return null;
+          if (pollErr.message && !pollErr.message.includes('fetch')) {
+            throw pollErr;
+          }
+        }
+      }
+
+      throw new Error('Transcode timed out waiting for HLS segments after 60s.');
+    } catch (err) {
+      if (err.name === 'AbortError') return null;
+      console.error('[PLAYER TRANSCODE ERROR]:', err.message);
+      setIsTranscoding(false);
+      showOsd(`❌ ${err.message}`);
+      setError(err.message);
+      handleVideoError(err.message);
+      return null;
+    }
+  }, [showOsd]);
+
+  const handleVideoError = useCallback((specificReason = '') => {
     if (stallTimerRef.current) {
       clearTimeout(stallTimerRef.current);
       stallTimerRef.current = null;
     }
+    if (directPlayTimerRef.current) {
+      clearTimeout(directPlayTimerRef.current);
+      directPlayTimerRef.current = null;
+    }
+    if (hlsDurationTimeoutRef.current) {
+      clearTimeout(hlsDurationTimeoutRef.current);
+      hlsDurationTimeoutRef.current = null;
+    }
 
-    consecutiveFailuresRef.current = (consecutiveFailuresRef.current || 0) + 1;
-    if (consecutiveFailuresRef.current > 2) {
-      setIsTranscoding(false);
-      const errMsg = 'Playback stopped after 2 consecutive server failures.';
+    const currentSrc = stream?.url || effectiveUrl;
+    console.warn('[PLAYER] Video playback error for source:', currentSrc, 'Reason:', specificReason);
+
+    // 1. If direct/proxied stream failed (HEVC, unsupported video/audio codec in browser),
+    // RESCUE IT with HLS transcode once before failing!
+    if (!autoTranscodeAttemptedRef.current && currentSrc && (!directUrl || !directUrl.includes('/transcode/hls/'))) {
+      autoTranscodeAttemptedRef.current = true;
+      console.warn('[PLAYER] Direct play failed. Attempting HLS transcode rescue for:', currentSrc);
+      requestHlsTranscode(currentSrc, currentAudioTrack || 0);
+      return;
+    }
+
+    // 2. Mark current directUrl and streamUrl as permanently failed
+    if (directUrl) {
+      failedUrlsRef.current.add(directUrl);
+      sessionFailedUrlsRef.current.add(directUrl);
+      setDirectUrl(null);
+    }
+    if (currentSrc) {
+      failedUrlsRef.current.add(currentSrc);
+      sessionFailedUrlsRef.current.add(currentSrc);
+    }
+
+    setIsTranscoding(false);
+    killCurrentTranscodeJob();
+
+    // 3. Fallback counter check (max 3 auto-fallbacks)
+    autoFallbackAttemptsRef.current += 1;
+    if (autoFallbackAttemptsRef.current > 3) {
+      const errMsg = specificReason || 'Multiple stream servers failed to play.';
       showOsd(`❌ ${errMsg}`);
       setError(`${errMsg} Please select another server from the Server menu (Servers: ${allStreams.length}), use PlayDrive Player, or launch in Desktop PotPlayer.`);
       return;
     }
 
-    // 1. If this was a transcode stream that failed, check retry counter before failing or switching
-    if (directUrl && (directUrl.includes('/transcode/hls/') || directUrl.includes('/api/transcode'))) {
-      transcodeAttemptsRef.current = (transcodeAttemptsRef.current || 0) + 1;
-      console.warn(`[PLAYER ERROR] Transcode playback failed (attempt ${transcodeAttemptsRef.current}/2)`);
+    // 4. Auto-fallback to next server in the dropdown, skipping dead/unreachable servers
+    const isUnreachableHost = (url = '') => {
+      const u = url.toLowerCase();
+      return u.includes('circleftp.net') || u.includes('103.96.104.6') || u.includes('103.203.93.');
+    };
 
-      if (transcodeAttemptsRef.current >= 2) {
-        setIsTranscoding(false);
-        const errMsg = 'Transcoded HLS stream failed to play after 2 attempts.';
-        showOsd(`❌ ${errMsg}`);
-        setError(`${errMsg} Please try selecting another server from the Server menu or launch in Desktop PotPlayer.`);
-        return;
-      }
+    const candidateStreams = allStreams.filter((s) => {
+      if (!s?.url) return false;
+      if (failedUrlsRef.current.has(s.url) || sessionFailedUrlsRef.current.has(s.url)) return false;
+      return true;
+    });
 
-      failedUrlsRef.current.add(directUrl);
-      if (stream?.url) failedUrlsRef.current.add(stream.url);
-      setDirectUrl(null);
-      setIsTranscoding(false);
-      setPlaybackMode('direct');
-
-      const candidateStreams = allStreams.filter((s) => s?.url && !failedUrlsRef.current.has(s.url));
-      if (candidateStreams.length > 0) {
-        const nextStream = candidateStreams[0];
-        const nextInfo = parseStreamInfo(nextStream);
-        showOsd(`⚡ Transcode failed. Auto-switching to ${nextInfo.serverName} (${nextInfo.resolution})...`);
-        handleSwitchServer(nextStream, true);
-        return;
-      }
-      setError('All available streams failed to play. Please click Desktop PotPlayer or Open Original Link.');
-      return;
-    }
-
-    // 2. If direct/proxied stream failed (HEVC, unsupported video/audio codec in browser),
-    // RESCUE IT with HLS transcode once before failing!
-    const currentSrc = stream?.url || effectiveUrl;
-    if (!autoTranscodeAttemptedRef.current && currentSrc && (!directUrl || !directUrl.includes('/transcode/hls/'))) {
-      autoTranscodeAttemptedRef.current = true;
-      requestHlsTranscode(currentSrc, currentAudioTrack || 0);
-      return;
-    }
-
-    // 3. Mark current directUrl and streamUrl as permanently failed
-    if (directUrl) {
-      failedUrlsRef.current.add(directUrl);
-      setDirectUrl(null);
-    }
-    if (stream?.url) {
-      failedUrlsRef.current.add(stream.url);
-    }
-
-    // 4. Skip all failed streams and auto-switch to next working stream
-    const candidateStreams = allStreams.filter((s) => s?.url && !failedUrlsRef.current.has(s.url));
     if (candidateStreams.length > 0) {
-      const nextStream = candidateStreams[0];
+      const nextStream = candidateStreams.find((s) => !isUnreachableHost(s.url)) || candidateStreams[0];
       const nextInfo = parseStreamInfo(nextStream);
-      showOsd(`⚡ Stream failed. Auto-switching to ${nextInfo.serverName} (${nextInfo.resolution})...`);
+      const prevInfo = parseStreamInfo(stream);
+      const failReasonShort = specificReason ? specificReason.slice(0, 32) : 'stream failed';
+      console.log('[PLAYER] Server fallback to:', nextInfo.serverName, nextStream.url);
+      showOsd(`⚠️ Server ${prevInfo.serverName || 'stream'} failed (${failReasonShort}), trying next...`);
       handleSwitchServer(nextStream, true);
       return;
     }
 
-    setError('All available streams failed to play. Please select another server or click Retry.');
-  }, [directUrl, stream?.url, effectiveUrl, allStreams, currentAudioTrack, showOsd, handleSwitchServer, requestHlsTranscode]);
+    setError('All available stream servers failed to play. Please choose a different title or launch in Desktop PotPlayer.');
+  }, [directUrl, stream, effectiveUrl, allStreams, currentAudioTrack, showOsd, handleSwitchServer, requestHlsTranscode, killCurrentTranscodeJob]);
 
   const handleRetryPlayback = () => {
     failedUrlsRef.current.clear();
@@ -675,8 +794,12 @@ export default function VideoPlayer({
       hls.loadSource(streamUrl);
       hls.attachMedia(video);
 
+      let manifestParsed = false;
+      let firstFragLoaded = false;
+
       hls.on(Hls.Events.MANIFEST_PARSED, (_ev, data) => {
-        console.log('[HLS EVENT] Manifest parsed successfully! Levels:', data?.levels?.length);
+        manifestParsed = true;
+        console.log('[PLAYER] Transcode/HLS manifest parsed! Levels:', data?.levels?.length);
         video.play().then(() => setIsPlaying(true)).catch(() => {});
         // Load Audio Tracks
         if (hls.audioTracks && hls.audioTracks.length > 0) {
@@ -733,117 +856,105 @@ export default function VideoPlayer({
         }
       });
 
-      hls.on(Hls.Events.LEVEL_SWITCHED, (_ev, data) => {
-        if (typeof data.level === 'number') {
-          // If in manual mode, level matches currentLevel
-          if (hls.currentLevel !== -1) {
-            setCurrentQuality(hls.currentLevel);
-          }
-        }
-      });
-
-      hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, (_ev, data) => {
-        if (data.audioTracks && data.audioTracks.length > 0) {
-          const mappedTracks = data.audioTracks.map((t, idx) => ({
-            id: idx,
-            name: formatLanguageName(t.name || t.lang || `Track ${idx + 1}`),
-            lang: t.lang || ''
-          }));
-          setAudioTracks(mappedTracks);
-          setCurrentAudioTrack(hls.audioTrack);
-
-          try {
-            const savedLang = localStorage.getItem('mmh_preferred_audio_lang');
-            if (savedLang) {
-              const matchIdx = mappedTracks.findIndex(
-                (tr) => tr.name.toLowerCase() === savedLang.toLowerCase() || tr.lang.toLowerCase() === savedLang.toLowerCase()
-              );
-              if (matchIdx !== -1 && matchIdx !== hls.audioTrack) {
-                hls.audioTrack = matchIdx;
-                setCurrentAudioTrack(matchIdx);
-              }
-            }
-          } catch {}
-        }
-      });
-
-      hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, (_ev, data) => {
-        if (typeof data.id === 'number') {
-          setCurrentAudioTrack(data.id);
-        }
-      });
-
-      hls.on(Hls.Events.SUBTITLE_TRACKS_UPDATED, (_ev, data) => {
-        if (data.subtitleTracks && data.subtitleTracks.length > 0) {
-          setInternalSubtitles(data.subtitleTracks.map((t, idx) => ({
-            id: idx,
-            name: t.name || t.lang || `Subtitle ${idx + 1}`,
-            lang: t.lang || ''
-          })));
-        }
-      });
-
       hls.on(Hls.Events.FRAG_LOADED, (_ev, data) => {
-        console.log(`[HLS EVENT] Fragment/Segment #${data?.frag?.sn} loaded (${data?.frag?.duration}s)`);
+        console.log(`[PLAYER] HLS fragment #${data?.frag?.sn} loaded (${data?.frag?.duration}s)`);
         setIsBuffering(false);
+        firstFragLoaded = true;
+        // Task 2 Rule 5: Only show "Transcoded HLS stream active" after MANIFEST_PARSED + FRAG_LOADED + video.duration > 0
+        if (manifestParsed && video.duration && Number.isFinite(video.duration) && video.duration > 0) {
+          showOsd('⚡ Transcoded HLS stream active. Playing with seek support...');
+        }
       });
+
+      hlsDurationTimeoutRef.current = setTimeout(() => {
+        if (video && (video.currentTime === 0 || !video.duration || video.duration === 0)) {
+          console.error('[PLAYER] HLS stream stalled at 00:00 without valid duration after 15s.');
+          try { hls.destroy(); } catch {}
+          handleVideoError('HLS stream produced no valid video duration (00:00).');
+        }
+      }, 15000);
 
       hls.on(Hls.Events.ERROR, (_event, data) => {
-        console.warn('[HLS EVENT ERROR]:', data.type, data.details, 'Fatal:', data.fatal);
+        console.error('[PLAYER] HLS error:', data.type, data.details, 'Fatal:', data.fatal);
         if (data.fatal) {
           hlsFatalRetriesRef.current = (hlsFatalRetriesRef.current || 0) + 1;
-          if (hlsFatalRetriesRef.current <= 3) {
-            console.log(`[HLS RECOVERY ${hlsFatalRetriesRef.current}/3] Attempting recovery for: ${data.details}`);
+          if (hlsFatalRetriesRef.current <= 2) {
+            console.log(`[PLAYER] HLS recovery attempt ${hlsFatalRetriesRef.current}/2 for: ${data.details}`);
             switch (data.type) {
               case Hls.ErrorTypes.NETWORK_ERROR:
-                if (data.details === 'manifestLoadError' || data.details === 'levelLoadError' || data.details === 'levelEmptyError') {
-                  setTimeout(() => {
-                    try { hls.startLoad(); } catch {}
-                  }, 1200);
-                  return;
-                }
-                try { hls.startLoad(); } catch { handleVideoError(); }
+                try { hls.startLoad(); } catch { handleVideoError(`HLS Network Error: ${data.details}`); }
                 break;
               case Hls.ErrorTypes.MEDIA_ERROR:
-                try { hls.recoverMediaError(); } catch { handleVideoError(); }
+                try { hls.recoverMediaError(); } catch { handleVideoError(`HLS Media Error: ${data.details}`); }
                 break;
               default:
-                handleVideoError();
+                try { hls.destroy(); } catch {}
+                handleVideoError(`HLS Fatal Error: ${data.details}`);
                 break;
             }
           } else {
-            console.error('[HLS FATAL] Max retries (3) exceeded for error:', data.details);
-            hls.destroy();
-            const errStr = `HLS playback error: ${data.details || data.type}`;
-            showOsd(`❌ ${errStr}`);
-            setError(`${errStr}. Click Desktop PotPlayer or select another server.`);
+            console.error('[PLAYER] HLS max retries (2) exceeded for error:', data.details);
+            try { hls.destroy(); } catch {}
+            handleVideoError(`HLS playback error: ${data.details || data.type}`);
           }
         }
       });
     } else {
-      // Auto-convert MKV / HEVC to H.264 HLS if browser lacks native decoding
-      const codecString = `${stream?.language || ''} ${stream?.codec || ''} ${stream?.codecName || ''} ${stream?.quality || ''} ${stream?.name || ''} ${stream?.title || ''} ${stream?.serverName || ''} ${stream?.externalUrl || ''} ${decodeURIComponent(streamUrl || '')}`.toLowerCase();
-      const isHevcOrMkv = (
-        codecString.includes('hevc') ||
-        codecString.includes('h265') ||
-        codecString.includes('x265') ||
-        codecString.includes('10bit') ||
-        codecString.includes('hdr') ||
-        codecString.includes('.mkv') ||
-        /\.mkv(\?|$)/i.test(codecString)
-      );
-      if (isHevcOrMkv && (!canBrowserPlayHevc() || codecString.includes('.mkv')) && (!directUrl || (!directUrl.includes('/transcode/hls/') && !directUrl.includes('/api/transcode/hls/')))) {
-        requestHlsTranscode(streamUrl, 0);
-        return undefined;
-      }
-
+      // DIRECT PLAY FIRST (TASK 2 Rule 1):
+      // Try direct playback first. Do not auto-transcode based purely on filename/metadata!
       video.src = streamUrl;
-      if (isHls && !video.canPlayType('application/vnd.apple.mpegurl')) {
-        setError('HLS video is not natively supported in this browser.');
-      }
+      directPlaySuccessRef.current = false;
 
-      // Proactively probe stream via server-side ffprobe to discover audio tracks, duration, and detect HEVC
-      if (!isHls && !streamUrl.includes('/transcode/hls/') && !streamUrl.includes('/api/transcode/hls/') && !streamUrl.includes('/api/transcode/stream')) {
+      const onDirectCanPlay = () => {
+        console.log('[PLAYER] Direct play OK: canplay event fired for:', streamUrl);
+        video.play().then(() => setIsPlaying(true)).catch(() => {});
+      };
+
+      const onDirectPlaying = () => {
+        console.log('[PLAYER] Direct play OK: playing event fired for:', streamUrl);
+        directPlaySuccessRef.current = true;
+        setIsPlaying(true);
+        setIsBuffering(false);
+        setIsTranscoding(false);
+        killCurrentTranscodeJob();
+      };
+
+      const onDirectTimeUpdate = () => {
+        if (video.currentTime > 0.5 && video.videoWidth > 0) {
+          directPlaySuccessRef.current = true;
+          setIsTranscoding(false);
+          killCurrentTranscodeJob();
+        }
+        // Black screen with audio: videoWidth === 0 while audio is playing
+        if (video.currentTime > 1.5 && video.videoWidth === 0 && !video.paused) {
+          console.warn('[PLAYER] Direct play failed (reason): VideoWidth === 0 while audio is playing (unsupported HEVC)');
+          video.removeEventListener('timeupdate', onDirectTimeUpdate);
+          requestHlsTranscode(streamUrl, 0);
+        }
+      };
+
+      const onDirectError = (e) => {
+        if (directPlaySuccessRef.current) return;
+        console.warn('[PLAYER] Direct play failed (reason): Video error event fired', e);
+        if (directPlayTimerRef.current) clearTimeout(directPlayTimerRef.current);
+        requestHlsTranscode(streamUrl, 0);
+      };
+
+      video.addEventListener('canplay', onDirectCanPlay, { once: true });
+      video.addEventListener('playing', onDirectPlaying);
+      video.addEventListener('timeupdate', onDirectTimeUpdate);
+      video.addEventListener('error', onDirectError, { once: true });
+
+      // Wait 7s for canplay or playing event
+      directPlayTimerRef.current = setTimeout(() => {
+        if (!directPlaySuccessRef.current && (video.paused || video.currentTime === 0)) {
+          console.warn('[PLAYER] Direct play failed (reason): No playback within 7s timeout');
+          requestHlsTranscode(streamUrl, 0);
+        }
+      }, 7000);
+
+      // Proactively probe stream via server-side ffprobe for duration and audio tracks
+      if (!streamUrl.includes('/transcode/hls/') && !streamUrl.includes('/api/transcode/hls/') && !streamUrl.includes('/api/transcode/stream')) {
         const probeUrl = `${API_BASE}/api/media/probe?url=${encodeURIComponent(streamUrl)}`;
         fetch(probeUrl)
           .then((r) => r.json())
@@ -860,10 +971,6 @@ export default function VideoPlayer({
                   safe: tr.safe
                 }));
                 setAudioTracks(mapped);
-              }
-              // Auto-switch to HLS transcode if video is strictly confirmed as HEVC and browser cannot decode it
-              if ((data.isHevc === true || data.isMkv === true) && !canBrowserPlayHevc() && (!directUrl || (!directUrl.includes('/transcode/hls/') && !directUrl.includes('/api/transcode/hls/')))) {
-                requestHlsTranscode(streamUrl, 0);
               }
             }
           })
@@ -890,19 +997,30 @@ export default function VideoPlayer({
       };
 
       video.addEventListener('loadedmetadata', updateNativeAudioTracks, { once: true });
-      video.addEventListener('error', handleVideoError);
     }
 
     video.play().then(() => setIsPlaying(true)).catch(() => {});
 
     return () => {
-      video.removeEventListener('error', handleVideoError);
       if (stallTimerRef.current) {
         clearTimeout(stallTimerRef.current);
         stallTimerRef.current = null;
       }
-      hlsRef.current?.destroy();
-      hlsRef.current = null;
+      if (directPlayTimerRef.current) {
+        clearTimeout(directPlayTimerRef.current);
+        directPlayTimerRef.current = null;
+      }
+      if (hlsDurationTimeoutRef.current) {
+        clearTimeout(hlsDurationTimeoutRef.current);
+        hlsDurationTimeoutRef.current = null;
+      }
+      if (video) {
+        video.removeEventListener('error', handleVideoError);
+      }
+      if (hlsRef.current) {
+        try { hlsRef.current.destroy(); } catch {}
+        hlsRef.current = null;
+      }
     };
   }, [effectiveUrl, isEmbed, handleVideoError, showOsd]);
 
@@ -1947,9 +2065,10 @@ export default function VideoPlayer({
                   </div>
 
                   <div className="mt-1 space-y-1">
-                    {allStreams.map((s, idx) => {
+                    {sortedStreams.map((s, idx) => {
                       const info = parseStreamInfo(s);
                       const isCurrent = stream && s.url ? s.url === stream.url : idx === 0;
+                      const isFast = isFastH264Stream(s);
 
                       return (
                         <button
@@ -1962,10 +2081,15 @@ export default function VideoPlayer({
                           }`}
                         >
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-xs font-bold text-white truncate">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs font-bold text-white truncate max-w-[140px] sm:max-w-[200px]">
                                 {info.serverName}
                               </span>
+                              {isFast && (
+                                <span className="rounded bg-emerald-500/25 px-1.5 py-0.5 text-[9px] font-black text-emerald-300 border border-emerald-400/30">
+                                  ⚡ Fast
+                                </span>
+                              )}
                               <span className="rounded bg-blue-500/20 px-1.5 py-0.2 text-[9px] font-black text-blue-300 border border-blue-400/30">
                                 {info.resolution}
                               </span>
@@ -2096,9 +2220,16 @@ export default function VideoPlayer({
               setIsPlaying(true);
               setIsBuffering(false);
               consecutiveFailuresRef.current = 0;
+              directPlaySuccessRef.current = true;
+              setIsTranscoding(false);
+              killCurrentTranscodeJob();
               if (stallTimerRef.current) {
                 clearTimeout(stallTimerRef.current);
                 stallTimerRef.current = null;
+              }
+              if (directPlayTimerRef.current) {
+                clearTimeout(directPlayTimerRef.current);
+                directPlayTimerRef.current = null;
               }
             }}
             onLoadedMetadata={() => {
