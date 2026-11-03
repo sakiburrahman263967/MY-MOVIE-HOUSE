@@ -82,7 +82,7 @@
     "cloudstream-Film1K:movie:cs_Film1K_movies",
     "b43213ea-da8d-47a7-b8d7-c61c839a7697:movie:tpdb_catalog"
   ],
-  "updatedAt": "2026-11-03T09:19:14.349Z",
+  "updatedAt": "2026-11-03T09:55:57.366Z",
   "cloudstreamRepos": [
     {
       "id": "cs-repo-cxxx",
@@ -234,6 +234,24 @@
             "khalsatorrent-droid"
           ],
           "fileSize": 25983,
+          "enabled": true
+        },
+        {
+          "id": "BluMovies",
+          "name": "BluMovies",
+          "internalName": "BluMovies",
+          "description": "Adult parody movies (xxxparodyhd.net) as served by the Blu Movies app",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=xxxparodyhd.net&sz=%size%",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/BluMovies.cs3",
+          "version": 1,
+          "authors": [
+            "Phisher98"
+          ],
+          "fileSize": 19736,
           "enabled": true
         },
         {

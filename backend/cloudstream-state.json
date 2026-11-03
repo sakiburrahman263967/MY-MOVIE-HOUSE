@@ -153,6 +153,24 @@
           "enabled": true
         },
         {
+          "id": "BluMovies",
+          "name": "BluMovies",
+          "internalName": "BluMovies",
+          "description": "Adult parody movies (xxxparodyhd.net) as served by the Blu Movies app",
+          "language": "en",
+          "tvTypes": [
+            "NSFW"
+          ],
+          "iconUrl": "https://www.google.com/s2/favicons?domain=xxxparodyhd.net&sz=%size%",
+          "url": "https://raw.githubusercontent.com/phisher98/CXXX/builds/BluMovies.cs3",
+          "version": 1,
+          "authors": [
+            "Phisher98"
+          ],
+          "fileSize": 19736,
+          "enabled": true
+        },
+        {
           "id": "Cam4",
           "name": "Cam4",
           "internalName": "Cam4",
@@ -4728,5 +4746,5 @@
     }
   ],
   "cloudstreamMasterEnabled": true,
-  "updatedAt": "2026-11-03T09:19:15.850Z"
+  "updatedAt": "2026-11-03T09:55:58.313Z"
 }

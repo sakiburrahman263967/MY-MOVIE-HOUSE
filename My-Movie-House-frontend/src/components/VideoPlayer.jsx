@@ -54,6 +54,12 @@ export function isEmbedUrl(url) {
   return (
     lower.includes('/embed/') ||
     lower.includes('/embed') ||
+    lower.includes('playdrive.vip') ||
+    lower.includes('playdrive') ||
+    lower.includes('/e/') ||
+    lower.includes('uprising.best') ||
+    lower.includes('hdhub4u') ||
+    lower.includes('hubcloud') ||
     lower.includes('film1k.xyz/e/') ||
     lower.includes('film1k') ||
     lower.includes('/searcho/') ||
@@ -295,22 +301,24 @@ export default function VideoPlayer({
 
   const [error, setError] = useState('');
   const [directUrl, setDirectUrl] = useState(null);
+  const [resolvedDirectUrl, setResolvedDirectUrl] = useState(null);
+  const [usePlayDrivePlayer, setUsePlayDrivePlayer] = useState(false);
   const [isResolvingDirect, setIsResolvingDirect] = useState(false);
   const failedUrlsRef = useRef(new Set());
   const stallTimerRef = useRef(null);
 
-  // Attempt to resolve direct .m3u8/.mp4 stream from embed URL
+  // Attempt to resolve direct .m3u8/.mp4 stream from embed URL (for PotPlayer and stream extraction)
   useEffect(() => {
     let active = true;
-    setDirectUrl(null);
+    setResolvedDirectUrl(null);
 
     if (stream?.url && isEmbedUrl(stream.url)) {
       setIsResolvingDirect(true);
       api.resolveDirectStream(stream.url)
         .then((res) => {
           if (active && res?.success && res?.directUrl) {
-            setDirectUrl(res.directUrl);
-            showOsd('⚡ Direct Stream Extracted (PotPlayer Mode)');
+            setResolvedDirectUrl(res.directUrl);
+            showOsd('⚡ Direct Stream Extracted (Desktop PotPlayer ready)');
           }
         })
         .catch(() => {})
@@ -360,8 +368,20 @@ export default function VideoPlayer({
 
   const rawUrl = directUrl || stream?.url;
   const effectiveUrl = (rawUrl && rawUrl.startsWith('/api/')) ? `${API_BASE}${rawUrl}` : rawUrl;
-  const isEmbed = !directUrl && isEmbedUrl(stream?.url);
+  const isEmbed = (!directUrl && isEmbedUrl(stream?.url)) || usePlayDrivePlayer;
   const activeStreamInfo = parseStreamInfo(stream);
+
+  const getIframeSrc = () => {
+    const raw = stream?.url || effectiveUrl;
+    if (!raw) return '';
+    if (raw.includes('playdrive') || raw.includes('/e/')) {
+      return `${API_BASE}/api/player/playdrive?embed=${encodeURIComponent(raw)}`;
+    }
+    if (usePlayDrivePlayer) {
+      return `${API_BASE}/api/player/playdrive?url=${encodeURIComponent(raw)}&title=${encodeURIComponent(title || '')}`;
+    }
+    return effectiveUrl || raw;
+  };
 
   // Request background HLS transcode from backend
   const requestHlsTranscode = useCallback(async (srcUrl, track = 0) => {
@@ -1434,8 +1454,9 @@ export default function VideoPlayer({
 
   // Launch Desktop PotPlayer
   const launchDesktopPotPlayer = () => {
-    if (!stream?.url) return;
-    const potUrl = `potplayer://${encodeURIComponent(stream.url)}`;
+    const target = resolvedDirectUrl || directUrl || stream?.url;
+    if (!target) return;
+    const potUrl = `potplayer://${encodeURIComponent(target)}`;
     window.location.href = potUrl;
     showOsd('Opening in Desktop PotPlayer...');
   };
@@ -1882,6 +1903,22 @@ export default function VideoPlayer({
             </div>
           )}
 
+          {/* PlayDrive Player Mode Toggle */}
+          <button
+            onClick={() => {
+              setUsePlayDrivePlayer((prev) => !prev);
+              showOsd(!usePlayDrivePlayer ? '🎬 PlayDrive Web Player Active (Dialogue Boost)' : 'Switched to Built-in Player');
+            }}
+            title="Switch between PlayDrive Player (with Dialogue Boost & Stats for Nerds) and Built-in Player"
+            className={`hidden sm:flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+              usePlayDrivePlayer || (stream?.url && (stream.url.includes('playdrive') || stream.url.includes('/e/')))
+                ? 'bg-rose-600 hover:bg-rose-500 text-white border-rose-400 shadow-md shadow-rose-500/30'
+                : 'bg-white/10 hover:bg-white/20 text-white/90 border-white/15'
+            }`}
+          >
+            <span>🎬 PlayDrive Player</span>
+          </button>
+
           {/* Open in Desktop PotPlayer */}
           <button
             onClick={launchDesktopPotPlayer}
@@ -1937,10 +1974,10 @@ export default function VideoPlayer({
       >
         {isEmbed ? (
           <iframe
-            src={effectiveUrl || stream?.url}
+            src={getIframeSrc()}
             title={title}
             className="h-full w-full border-0 bg-black"
-            referrerPolicy="no-referrer"
+            referrerPolicy="no-referrer-when-downgrade"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
             allowFullScreen
           />
@@ -2157,6 +2194,16 @@ export default function VideoPlayer({
                   className="rounded-xl bg-cyan-600 px-4 py-2 text-xs font-bold text-white hover:bg-cyan-500 transition shadow-md flex items-center gap-1.5"
                 >
                   <span>⚡</span> Retry Transcode (HLS)
+                </button>
+                <button
+                  onClick={() => {
+                    setError('');
+                    setUsePlayDrivePlayer(true);
+                    showOsd('Switched to PlayDrive Player');
+                  }}
+                  className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white hover:bg-rose-500 transition shadow-md flex items-center gap-1.5"
+                >
+                  <span>🎬</span> PlayDrive Player
                 </button>
                 <button
                   onClick={() => window.open(stream?.url || effectiveUrl, '_blank')}

@@ -676,6 +676,35 @@ app.get('/api/resolve-direct-stream', async (req, res) => {
     const html = await fetchRes.text();
     let urls = extractVideoUrls(html);
 
+    // Look for PlayDrive window.__PA_PLAY__ configuration
+    const paMatch = html.match(/window\.__PA_PLAY__\s*=\s*(\{[\s\S]*?\});/);
+    if (paMatch) {
+      try {
+        const paData = JSON.parse(paMatch[1]);
+        if (Array.isArray(paData.streams) && paData.streams.length > 0) {
+          for (const s of paData.streams) {
+            if (s.m3u8_url) urls.push(s.m3u8_url);
+            if (s.video_url) urls.push(s.video_url);
+          }
+          if (urls.length > 0) {
+            const firstStream = paData.streams[0];
+            return res.json({
+              success: true,
+              directUrl: urls[0],
+              allUrls: urls,
+              playerType: 'playdrive',
+              title: paData.movie?.title,
+              languages: firstStream.languages,
+              qualities: firstStream.qualities,
+              thumbsVtt: firstStream.thumbs_vtt_url
+            });
+          }
+        }
+      } catch (e) {
+        console.error('[RESOLVE] Error parsing __PA_PLAY__:', e.message);
+      }
+    }
+
     // Look for PixelDrain or Direct download/stream links in page
     if (urls.length === 0) {
       const pdMatch = html.match(/https?:\/\/(?:www\.)?pixeldrain\.com\/u\/([a-zA-Z0-9_-]+)/i);
@@ -696,6 +725,94 @@ app.get('/api/resolve-direct-stream', async (req, res) => {
     return res.json({ success: false, message: 'No direct video stream could be extracted.' });
   } catch (err) {
     return res.json({ success: false, error: err.message });
+  }
+});
+
+// ─── PlayDrive VIP Dedicated Web Player Endpoint ───
+// Renders the exact PlayDrive player (Dialogue Boost, Loudness Normalization, Stats for Nerds, Multi-Audio Tracks)
+app.get(['/api/player/playdrive', '/playdrive'], async (req, res) => {
+  const embedUrl = typeof req.query.embed === 'string' ? req.query.embed.trim() : '';
+  const rawStreamUrl = typeof req.query.url === 'string' ? req.query.url.trim() : '';
+  const title = typeof req.query.title === 'string' ? req.query.title.trim() : 'Playing Video';
+  const poster = typeof req.query.poster === 'string' ? req.query.poster.trim() : '';
+  const lang = typeof req.query.lang === 'string' ? req.query.lang.trim() : 'Original Audio';
+
+  try {
+    let html = '';
+    const templatePath = path.join(__dirname, 'playdrive-template.html');
+
+    if (embedUrl) {
+      let targetEmbed = embedUrl;
+      if (!targetEmbed.startsWith('http')) {
+        targetEmbed = `https://playdrive.vip/e/${targetEmbed}`;
+      }
+      const pRes = await fetch(targetEmbed, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+          'Referer': targetEmbed
+        }
+      });
+      if (pRes.ok) {
+        html = await pRes.text();
+        // Rewrite asset paths
+        html = html.replace(/href="\/assets\//g, 'href="https://playdrive.vip/assets/');
+        html = html.replace(/src="\/assets\//g, 'src="https://playdrive.vip/assets/');
+        html = html.replace(/src="\/uploads\//g, 'src="https://playdrive.vip/uploads/');
+        html = html.replace(/href="\/uploads\//g, 'href="https://playdrive.vip/uploads/');
+        // Disable embed-guard blocking
+        html = html.replace(/window\.__PA_REQUIRE_REFERRER__\s*=\s*(true|false);/, 'window.__PA_REQUIRE_REFERRER__ = false;\nwindow.__PA_EMBED_GUARD_OK__ = true;');
+        html = html.replace(/<script defer src="[^"]*embed-guard\.js[^"]*"><\/script>/, '<!-- embed-guard disabled -->');
+      }
+    }
+
+    if (!html && fs.existsSync(templatePath)) {
+      html = fs.readFileSync(templatePath, 'utf8');
+      const targetStream = rawStreamUrl || 'https://uprising.best/range/UBBCMH2orAb_CkhSZ0949fU-J0fxxkGyj_04oeRbCC9IqoOFcaLmmNtPAiGe7T9oQe5lLEasuaNYPUZmflAhHcUxGc_lduO32W-1AFRAEP5ejwZDzrSJ2Q.js';
+
+      const customPlayConfig = {
+        ok: true,
+        movie: {
+          title: title,
+          overview: title,
+          poster_url: poster,
+          cover_url: poster,
+          runtime_minutes: 120,
+          type_slug: 'movie'
+        },
+        streams: [
+          {
+            id: 1,
+            m3u8_url: targetStream,
+            video_url: targetStream,
+            domain_name: 'local',
+            languages: [
+              { id: 1, code: 'und', name: lang }
+            ],
+            qualities: [
+              { id: 1, slug: 'auto', label: 'Auto (HD)', height: 1080 },
+              { id: 2, slug: '1080p', label: '1080p', height: 1080 },
+              { id: 3, slug: '720p', label: '720p', height: 720 },
+              { id: 4, slug: '480p', label: '480p', height: 480 }
+            ]
+          }
+        ]
+      };
+
+      html = html.replace('/*__PA_PLAY_JSON__*/', JSON.stringify(customPlayConfig));
+      html = html.replace(/<title>.*?<\/title>/, `<title>${title} — PlayDrive Player</title>`);
+    }
+
+    if (!html) {
+      return res.status(404).send('<h3>PlayDrive Player template not found</h3>');
+    }
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.removeHeader('X-Frame-Options');
+    return res.send(html);
+  } catch (err) {
+    console.error('[PLAYDRIVE ROUTE ERROR]:', err.message);
+    return res.status(500).send(`<h3>Error initializing PlayDrive Player: ${err.message}</h3>`);
   }
 });
 
