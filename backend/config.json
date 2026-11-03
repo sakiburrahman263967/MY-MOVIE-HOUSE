@@ -71,18 +71,21 @@
     "0763568f-74a1-434c-8130-fac180fd8036:movie:discover_all_movies",
     "0763568f-74a1-434c-8130-fac180fd8036:series:discover_all_series",
     "cloudstream-Zinkmovies:series:cs_Zinkmovies_series",
-    "cinemeta:movie:top",
-    "cinemeta:series:top",
-    "cinemeta:movie:year",
-    "cinemeta:series:year",
-    "cinemeta:movie:imdbRating",
-    "cinemeta:series:imdbRating",
-    "cinemeta:series:last-videos",
-    "cinemeta:series:calendar-videos",
-    "cloudstream-Film1K:movie:cs_Film1K_movies",
-    "b43213ea-da8d-47a7-b8d7-c61c839a7697:movie:tpdb_catalog"
+    "tmdb-builtin:movie:tmdb_trending_movies",
+    "tmdb-builtin:movie:tmdb_popular_movies",
+    "tmdb-builtin:movie:tmdb_toprated_movies",
+    "tmdb-builtin:movie:tmdb_upcoming_movies",
+    "tmdb-builtin:series:tmdb_trending_series",
+    "tmdb-builtin:series:tmdb_popular_series",
+    "tmdb-builtin:series:tmdb_toprated_series",
+    "tmdb-builtin:movie:tmdb_action_movies",
+    "tmdb-builtin:movie:tmdb_scifi_movies",
+    "tmdb-builtin:movie:tmdb_animation",
+    "tmdb-builtin:movie:tmdb_hindi_cinema",
+    "tmdb-builtin:series:tmdb_kdrama_series",
+    "tmdb-builtin:series:tmdb_anime_series"
   ],
-  "updatedAt": "2026-11-03T12:42:57.958Z",
+  "updatedAt": "2026-11-03T14:41:38.028Z",
   "cloudstreamRepos": [
     {
       "id": "cs-repo-cxxx",
@@ -1774,11 +1777,11 @@
           ],
           "iconUrl": "https://cinevood.garden/cinevood-logo.webp",
           "url": "https://raw.githubusercontent.com/NivinCNC/CNCVerse-Cloud-Stream-Extension/builds/CineVoodProvider.cs3",
-          "version": 6,
+          "version": 8,
           "authors": [
             "NivinCNC"
           ],
-          "fileSize": 120428,
+          "fileSize": 120374,
           "enabled": true
         },
         {

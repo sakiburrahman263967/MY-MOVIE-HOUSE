@@ -455,7 +455,7 @@ export default function VideoPlayer({
   const getIframeSrc = () => {
     const raw = stream?.url || effectiveUrl;
     if (!raw) return '';
-    if (raw.includes('playdrive') || raw.includes('/e/')) {
+    if (raw.includes('playdrive.vip') || (raw.includes('playdrive') && raw.includes('/e/'))) {
       return `${API_BASE}/api/player/playdrive?embed=${encodeURIComponent(raw)}`;
     }
     if (usePlayDrivePlayer) {

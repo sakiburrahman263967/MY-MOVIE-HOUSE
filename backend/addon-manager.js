@@ -802,13 +802,28 @@ export class AddonManager {
     }
   }
 
-  async scrapeFilm1kCatalog(page = 1, searchQuery = '') {
+  async scrapeFilm1kCatalog(page = 1, searchQuery = '', options = {}) {
     try {
       let targetUrl = 'https://www.film1k.com/';
-      if (searchQuery && searchQuery.trim()) {
-        targetUrl = `https://www.film1k.com/?s=${encodeURIComponent(searchQuery.trim())}`;
-      } else if (page > 1) {
-        targetUrl = `https://www.film1k.com/page/${page}/`;
+      const p = Math.max(1, parseInt(page, 10) || 1);
+      const q = (searchQuery || options.search || '').trim();
+      const country = (options.country || '').trim().toLowerCase();
+      const year = (options.year || '').trim().toLowerCase();
+      const classic = (options.classic || options.era || '').trim().toLowerCase();
+      const category = (options.category || options.genre || '').trim().toLowerCase();
+
+      if (q) {
+        targetUrl = p > 1 ? `https://www.film1k.com/page/${p}/?s=${encodeURIComponent(q)}` : `https://www.film1k.com/?s=${encodeURIComponent(q)}`;
+      } else if (country && country !== 'all') {
+        targetUrl = p > 1 ? `https://www.film1k.com/tag/${encodeURIComponent(country)}/page/${p}/` : `https://www.film1k.com/tag/${encodeURIComponent(country)}/`;
+      } else if (year && year !== 'all') {
+        targetUrl = p > 1 ? `https://www.film1k.com/tag/${encodeURIComponent(year)}/page/${p}/` : `https://www.film1k.com/tag/${encodeURIComponent(year)}/`;
+      } else if (classic && classic !== 'all') {
+        targetUrl = p > 1 ? `https://www.film1k.com/tag/${encodeURIComponent(classic)}/page/${p}/` : `https://www.film1k.com/tag/${encodeURIComponent(classic)}/`;
+      } else if (category && category !== 'all') {
+        targetUrl = p > 1 ? `https://www.film1k.com/category/${encodeURIComponent(category)}/page/${p}/` : `https://www.film1k.com/category/${encodeURIComponent(category)}/`;
+      } else if (p > 1) {
+        targetUrl = `https://www.film1k.com/page/${p}/`;
       }
 
       const res = await fetchWithTimeout(targetUrl, {
@@ -853,11 +868,24 @@ export class AddonManager {
     }
   }
 
-  async scrapeAzNudeCatalog(page = 1, searchQuery = '') {
+  async scrapeAzNudeCatalog(page = 1, searchQuery = '', options = {}) {
     try {
       let targetUrl = 'https://www.aznude.com/';
-      if (searchQuery && searchQuery.trim()) {
-        targetUrl = `https://www.aznude.com/search.html?q=${encodeURIComponent(searchQuery.trim())}`;
+      const p = Math.max(1, parseInt(page, 10) || 1);
+      const q = (searchQuery || options.search || '').trim();
+      const type = (options.type || options.section || 'recent').toLowerCase();
+      const letter = (options.letter || options.country || '').trim().toLowerCase();
+
+      if (q) {
+        targetUrl = `https://www.aznude.com/search.html?q=${encodeURIComponent(q)}`;
+      } else if (type === 'movies') {
+        targetUrl = `https://www.aznude.com/browse/movies/updated/${p}.html`;
+      } else if (type === 'trending') {
+        targetUrl = `https://www.aznude.com/browse/movies/trending/${p}.html`;
+      } else if (type === 'celebs' || type === 'actresses' || letter) {
+        targetUrl = `https://www.aznude.com/browse/celebs/${letter || 'updated'}/${p}.html`;
+      } else if (p > 1) {
+        targetUrl = `https://www.aznude.com/browse/videos/recent/${p}.html`;
       }
 
       const res = await fetchWithTimeout(targetUrl, {
@@ -868,35 +896,72 @@ export class AddonManager {
       }, 7000);
       if (!res.ok) return [];
       const html = await res.text();
-      const blocks = html.split('class="media-list-item');
       const items = [];
-      for (let i = 1; i < blocks.length; i++) {
-        const b = blocks[i];
-        const linkMatch = b.match(/href="([^"]+)"/)?.[1];
-        const posterMatch = b.match(/src="([^"]+)"/)?.[1] || b.match(/data-thumb="([^"]+)"/)?.[1];
-        const titleMatch = b.match(/alt="([^"]+)"/)?.[1] || b.match(/title="([^"]+)"/)?.[1];
-        if (linkMatch && titleMatch) {
-          const fullLink = linkMatch.startsWith('http') ? linkMatch : `https://www.aznude.com${linkMatch}`;
-          const fullPoster = posterMatch ? (posterMatch.startsWith('http') ? posterMatch : `https://www.aznude.com${posterMatch}`) : '';
-          const cleanTitle = titleMatch.replace(/\s+/g, ' ').trim();
-          const id = `cs:aznude:${encodeURIComponent(fullLink)}`;
-          const metaObj = {
-            id,
-            name: cleanTitle,
-            title: cleanTitle,
-            poster: fullPoster,
-            background: fullPoster,
-            description: cleanTitle,
-            type: 'movie',
-            href: fullLink,
-            addonId: 'cloudstream-AzNude',
-            addonName: 'AzNude',
-            genres: ['Adult', 'AzNude', 'Celebrity']
-          };
-          this.customMetaCache.set(id, metaObj);
-          items.push(metaObj);
+
+      // Check vertical-list items (used for movies, trending, celebs)
+      if (html.includes('vertical-list__item')) {
+        const blocks = html.split('class="vertical-list__item"');
+        for (let i = 1; i < blocks.length; i++) {
+          const b = blocks[i];
+          const linkMatch = b.match(/href="([^"]+)"/)?.[1];
+          const posterMatch = b.match(/src="([^"]+)"/)?.[1];
+          const titleMatch = b.match(/class="vertical-list__title">([^<]+)<\/div>/)?.[1] || b.match(/alt="([^"]+)"/)?.[1];
+          if (linkMatch && (titleMatch || posterMatch)) {
+            const fullLink = linkMatch.startsWith('http') ? linkMatch : `https://www.aznude.com${linkMatch}`;
+            const fullPoster = posterMatch ? (posterMatch.startsWith('http') ? posterMatch : `https://www.aznude.com${posterMatch}`) : '';
+            const cleanTitle = (titleMatch || 'AZNude Movie').replace(/\s+/g, ' ').trim();
+            const id = `cs:aznude:${encodeURIComponent(fullLink)}`;
+            const metaObj = {
+              id,
+              name: cleanTitle,
+              title: cleanTitle,
+              poster: fullPoster,
+              background: fullPoster,
+              description: cleanTitle,
+              type: 'movie',
+              href: fullLink,
+              addonId: 'cloudstream-AzNude',
+              addonName: 'AzNude',
+              genres: ['Adult', 'AzNude', 'Celebrity']
+            };
+            this.customMetaCache.set(id, metaObj);
+            items.push(metaObj);
+          }
         }
       }
+
+      // Check media-list items (used on homepage & search)
+      if (items.length === 0 && html.includes('media-list-item')) {
+        const blocks = html.split('class="media-list-item');
+        for (let i = 1; i < blocks.length; i++) {
+          const b = blocks[i];
+          const linkMatch = b.match(/href="([^"]+)"/)?.[1];
+          const posterMatch = b.match(/src="([^"]+)"/)?.[1] || b.match(/data-thumb="([^"]+)"/)?.[1];
+          const titleMatch = b.match(/alt="([^"]+)"/)?.[1] || b.match(/title="([^"]+)"/)?.[1];
+          if (linkMatch && titleMatch) {
+            const fullLink = linkMatch.startsWith('http') ? linkMatch : `https://www.aznude.com${linkMatch}`;
+            const fullPoster = posterMatch ? (posterMatch.startsWith('http') ? posterMatch : `https://www.aznude.com${posterMatch}`) : '';
+            const cleanTitle = titleMatch.replace(/\s+/g, ' ').trim();
+            const id = `cs:aznude:${encodeURIComponent(fullLink)}`;
+            const metaObj = {
+              id,
+              name: cleanTitle,
+              title: cleanTitle,
+              poster: fullPoster,
+              background: fullPoster,
+              description: cleanTitle,
+              type: 'movie',
+              href: fullLink,
+              addonId: 'cloudstream-AzNude',
+              addonName: 'AzNude',
+              genres: ['Adult', 'AzNude', 'Celebrity']
+            };
+            this.customMetaCache.set(id, metaObj);
+            items.push(metaObj);
+          }
+        }
+      }
+
       this._persistCustomMeta();
       return items;
     } catch (err) {
@@ -1022,10 +1087,12 @@ export class AddonManager {
     // If adult provider, fetch REAL items directly from the provider scrapers!
     if (isAdult) {
       if (pName.includes('film1k')) {
-        const f1kItems = await this.scrapeFilm1kCatalog(page, extra.search);
+        const pageNum = extra.page ? parseInt(extra.page, 10) : (extra.skip ? Math.floor(extra.skip / 20) + 1 : page);
+        const f1kItems = await this.scrapeFilm1kCatalog(pageNum, extra.search, extra);
         if (f1kItems.length > 0) return f1kItems;
       } else if (pName.includes('aznude')) {
-        const azItems = await this.scrapeAzNudeCatalog(page, extra.search);
+        const pageNum = extra.page ? parseInt(extra.page, 10) : (extra.skip ? Math.floor(extra.skip / 20) + 1 : page);
+        const azItems = await this.scrapeAzNudeCatalog(pageNum, extra.search, extra);
         if (azItems.length > 0) return azItems;
       } else if (pName.includes('xvideos')) {
         const xvItems = await this.scrapeXvideosCatalog(page, extra.search);
@@ -1287,9 +1354,13 @@ export class AddonManager {
     let fallbackTitle = 'Adult Video';
     let fallbackPoster = '';
     try {
-      const parts = id.split(':');
-      if (parts.length >= 3) {
-        const decoded = Buffer.from(parts[2], 'base64url').toString('utf8');
+      const rawPayload = id.replace(/^cs:[^:]+:/, '');
+      let decoded = '';
+      try { decoded = decodeURIComponent(rawPayload); } catch {}
+      if (!decoded.startsWith('http')) {
+        try { decoded = Buffer.from(rawPayload, 'base64url').toString('utf8'); } catch {}
+      }
+      if (decoded) {
         const slug = decoded.split('/').filter(Boolean).pop() || '';
         if (slug) {
           fallbackTitle = slug.replace(/[-_]/g, ' ').replace(/\.html?/i, '').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -1491,14 +1562,38 @@ export class AddonManager {
           const html = await res.text();
           const iframeMatch = html.match(/<iframe[^>]*data-litespeed-src=["']([^"']+)["']/i) || html.match(/<iframe[^>]*src=["']([^"']+)["']/i);
           if (iframeMatch) {
+            const embedUrl = iframeMatch[1];
             streams.push({
               addonId: 'cloudstream-Film1K',
               addonName: '[CloudStream] Film1K',
               name: '[Film1K] Full HD ⚡ Embed Stream',
               title: `${cached?.name || 'Film1K Movie'}\n⚡ Film1K Fast Video Stream\n💾 Full HD`,
-              url: iframeMatch[1],
+              url: embedUrl,
               behaviorHints: { notWebReady: false }
             });
+
+            // Extract code if film1k.xyz to also offer direct mirror embed
+            const codeMatch = embedUrl.match(/\/e\/([a-zA-Z0-9]+)/);
+            if (codeMatch && codeMatch[1]) {
+              try {
+                const detRes = await fetchWithTimeout(`https://film1k.xyz/api/videos/${codeMatch[1]}/embed/details`, {
+                  headers: { 'User-Agent': 'Mozilla/5.0', 'Referer': embedUrl }
+                }, 4000);
+                if (detRes.ok) {
+                  const det = await detRes.json();
+                  if (det.embed_frame_url) {
+                    streams.push({
+                      addonId: 'cloudstream-Film1K',
+                      addonName: '[CloudStream] Film1K Mirror',
+                      name: '[Film1K] Mirror ⚡ Embed',
+                      title: `${cached?.name || 'Film1K Movie'}\n⚡ Film1K Fast Mirror Stream\n💾 Full HD`,
+                      url: det.embed_frame_url,
+                      behaviorHints: { notWebReady: false }
+                    });
+                  }
+                }
+              } catch {}
+            }
           }
         } catch (err) {
           console.warn('Film1K stream extraction error:', err.message);

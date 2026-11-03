@@ -109,11 +109,18 @@ app.get('/api/catalogs', async (_req, res, next) => {
 
 app.get('/api/catalog/:addonId/:type/:catalogId', async (req, res, next) => {
   try {
-    const { genre, skip, search } = req.query;
+    const { genre, skip, search, page, country, classic, year, category, section, letter } = req.query;
     res.json(await addonManager.getCatalog(req.params.addonId, req.params.type, req.params.catalogId, {
       ...(genre ? { genre } : {}),
       ...(skip ? { skip } : {}),
-      ...(search ? { search } : {})
+      ...(search ? { search } : {}),
+      ...(page ? { page } : {}),
+      ...(country ? { country } : {}),
+      ...(classic ? { classic } : {}),
+      ...(year ? { year } : {}),
+      ...(category ? { category } : {}),
+      ...(section ? { section } : {}),
+      ...(letter ? { letter } : {})
     }));
   } catch (error) {
     next(error);
