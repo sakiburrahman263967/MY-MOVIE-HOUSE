@@ -352,8 +352,6 @@ function isPrivateOrBlockedHost(hostname) {
   }
   return false;
 }
-  return false;
-}
 
 // Stream Proxy for streams requiring custom headers (Referer, Origin, Cookie) or cross-origin playback
 // Opaque provider tokens (MovieBox-TUI port) are resolved server-side here:
