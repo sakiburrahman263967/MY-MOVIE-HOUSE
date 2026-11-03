@@ -34,7 +34,7 @@ start "MY-MOVIE-HOUSE - BDIX ADDONS" /min cmd /k "cd /d "%~dp0bdix-stremio-addon
 echo [STARTING] Backend on http://localhost:3001
 start "MY-MOVIE-HOUSE - BACKEND" cmd /k "cd /d "%~dp0backend" && node server.js"
 
-timeout /t 3 >nul
+ping 127.0.0.1 -n 3 >nul
 
 echo [STARTING] Frontend on http://localhost:5173
 start "MY-MOVIE-HOUSE - FRONTEND" cmd /k "cd /d "%~dp0My-Movie-House-frontend" && npm run dev"
@@ -47,5 +47,5 @@ echo   Frontend: http://localhost:5173
 echo ========================================
 echo.
 echo Ei launcher window bondho korte paren.
-timeout /t 5 >nul
+ping 127.0.0.1 -n 5 >nul
 exit
