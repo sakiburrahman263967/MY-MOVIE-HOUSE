@@ -38,6 +38,8 @@ export default function Home() {
   const [searchParams, setSearchParams] = useSearchParams();
   const currentCategory = searchParams.get('cat') || 'all';
   const [showAllAdult, setShowAllAdult] = useState(false);
+  const [selectedSiteForSeeMore, setSelectedSiteForSeeMore] = useState(null);
+  const [selectedSiteCategoryTab, setSelectedSiteCategoryTab] = useState('all');
 
   const [allCatalogs, setAllCatalogs] = useState([]);
   const [sliderItems, setSliderItems] = useState([]);
@@ -152,6 +154,35 @@ export default function Home() {
 
     return [...regularMovies, ...regularSeries, ...cloudstreamMix].slice(0, 12);
   }, [allCatalogs, currentCategory, showAllAdult]);
+
+  const siteCatalogs = useMemo(() => {
+    if (!selectedSiteForSeeMore) return [];
+    const targetAddonId = (selectedSiteForSeeMore.addonId || '').toLowerCase();
+    const targetAddonName = (selectedSiteForSeeMore.addonName || '').toLowerCase();
+    const targetGroupName = (selectedSiteForSeeMore.groupName || '').toLowerCase();
+    const targetRepo = (selectedSiteForSeeMore.repoName || '').toLowerCase();
+
+    const matches = allCatalogs.filter((c) => {
+      const cAddonId = (c.addonId || '').toLowerCase();
+      const cAddonName = (c.addonName || '').toLowerCase();
+      const cGroupName = (c.groupName || '').toLowerCase();
+      const cRepo = (c.repoName || '').toLowerCase();
+
+      if (cAddonId && targetAddonId && cAddonId === targetAddonId) return true;
+      if (cAddonName && targetAddonName && cAddonName === targetAddonName) return true;
+      if (cGroupName && targetGroupName && cGroupName === targetGroupName) return true;
+      if (cRepo && targetRepo && cRepo === targetRepo) return true;
+
+      if (isAdultCat(selectedSiteForSeeMore) && isAdultCat(c)) {
+        if (targetAddonId.includes('film1k') && cAddonId.includes('film1k')) return true;
+        if (targetAddonId.includes('aznude') && cAddonId.includes('aznude')) return true;
+      }
+      return false;
+    });
+
+    if (matches.length > 0) return matches;
+    return [selectedSiteForSeeMore];
+  }, [selectedSiteForSeeMore, allCatalogs]);
 
   const prevSlide = useCallback(() => {
     setCurrentIndex((prev) => (prev - 1 + sliderItems.length) % sliderItems.length);
@@ -497,7 +528,14 @@ export default function Home() {
 
       {/* Catalog Content Rows */}
       {displayedCatalogs.map((catalog) => (
-        <ContentRow key={`${catalog.addonId}-${catalog.type}-${catalog.id}`} catalog={catalog} />
+        <ContentRow
+          key={`${catalog.addonId}-${catalog.type}-${catalog.id}`}
+          catalog={catalog}
+          onSeeMoreSite={(cat) => {
+            setSelectedSiteForSeeMore(cat);
+            setSelectedSiteCategoryTab('all');
+          }}
+        />
       ))}
 
       {!loading && !error && displayedCatalogs.length === 0 && (
@@ -509,6 +547,89 @@ export default function Home() {
           <Link to="/settings" className="btn-spatial-blue mt-4 inline-block rounded-xl px-4 py-1.5 text-xs font-bold">
             Open Addons Settings
           </Link>
+        </div>
+      )}
+
+      {/* 🌟 Comprehensive Site Homepage & Multi-Category Explorer Modal 🌟 */}
+      {selectedSiteForSeeMore && (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/85 backdrop-blur-xl animate-fadeIn"
+          onClick={() => setSelectedSiteForSeeMore(null)}
+        >
+          <div
+            className="relative w-full max-w-6xl max-h-[90vh] rounded-3xl bg-[#0b1329] border border-blue-500/40 p-4 sm:p-6 shadow-2xl flex flex-col text-left overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10 shrink-0">
+              <div className="flex items-center gap-3">
+                <span className="h-3.5 w-3.5 rounded-full bg-blue-400 shadow-lg shadow-blue-400/50 animate-pulse" />
+                <div>
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-black text-white flex items-center gap-2 flex-wrap">
+                    <span>{selectedSiteForSeeMore.addonName || selectedSiteForSeeMore.name}</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30 font-mono font-normal">
+                      {siteCatalogs.length} Categories / Sections Found
+                    </span>
+                  </h2>
+                  <p className="text-xs text-white/50 mt-0.5">
+                    Viewing all categories, genres, and sections available from this provider
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSiteForSeeMore(null)}
+                  className="grid h-9 w-9 place-items-center rounded-xl bg-white/10 text-white hover:bg-rose-600 hover:text-white transition font-bold text-base shadow cursor-pointer"
+                  title="Close (Esc)"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Category Filter Pills */}
+            {siteCatalogs.length > 1 && (
+              <div className="flex items-center gap-2 py-3 overflow-x-auto shrink-0 border-b border-white/5 scrollbar-thin">
+                <button
+                  type="button"
+                  onClick={() => setSelectedSiteCategoryTab('all')}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                    selectedSiteCategoryTab === 'all'
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'bg-white/5 text-white/70 hover:bg-white/10'
+                  }`}
+                >
+                  All Sections (Homepage View)
+                </button>
+                {siteCatalogs.map((cat) => (
+                  <button
+                    key={`tab-${cat.addonId}-${cat.id}`}
+                    type="button"
+                    onClick={() => setSelectedSiteCategoryTab(cat.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                      selectedSiteCategoryTab === cat.id
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'bg-white/5 text-white/70 hover:bg-white/10'
+                    }`}
+                  >
+                    {cat.name} ({cat.type})
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Multi-Section Content Area */}
+            <div className="flex-1 overflow-y-auto py-4 pr-1 space-y-6">
+              {(selectedSiteCategoryTab === 'all'
+                ? siteCatalogs
+                : siteCatalogs.filter((c) => c.id === selectedSiteCategoryTab)
+              ).map((cat) => (
+                <ContentRow key={`modal-cat-${cat.addonId}-${cat.type}-${cat.id}`} catalog={cat} />
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -342,42 +342,16 @@ const ALLOWED_BDIX_IPS = new Set([
 function isPrivateOrBlockedHost(hostname) {
   if (!hostname) return true;
   const h = hostname.toLowerCase().trim();
-  // Allow explicitly configured BDIX FTP servers and subnets
-  if (ALLOWED_BDIX_IPS.has(h)) return false;
-  if (
-    h.startsWith('172.16.50.') ||
-    h.startsWith('103.203.93.') ||
-    h.startsWith('103.96.104.') ||
-    h.startsWith('172.19.') ||
-    h.startsWith('10.10.') ||
-    h.includes('discoveryftp.net') ||
-    h.includes('roarzone.net') ||
-    h.includes('circleftp.net') ||
-    h.includes('ctgmovies.com')
-  ) {
-    return false;
-  }
 
+  // Only block loopback and cloud metadata - ALLOW all local/BDIX FTP subnets (10.x, 172.16-31.x, 192.168.x)
   if (h === 'localhost' || h.endsWith('.localhost') || h === '127.0.0.1' || h === '::1' || h === '0.0.0.0') {
     return true;
   }
   if (h === '169.254.169.254' || h.startsWith('169.254.')) {
     return true;
   }
-  const ipv4Match = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
-  if (ipv4Match) {
-    const a = parseInt(ipv4Match[1], 10);
-    const b = parseInt(ipv4Match[2], 10);
-    if (a === 10) return true;
-    if (a === 127) return true;
-    if (a === 169 && b === 254) return true;
-    if (a === 172 && b >= 16 && b <= 31) return true;
-    if (a === 192 && b === 168) return true;
-    if (a === 0) return true;
-  }
-  if (h.startsWith('fe80:') || h.startsWith('fc') || h.startsWith('fd') || h === '::') {
-    return true;
-  }
+  return false;
+}
   return false;
 }
 
@@ -386,11 +360,8 @@ function isPrivateOrBlockedHost(hostname) {
 // `?url=<uuid>` looks up the real signed upstream URL + headers from the
 // in-memory store, so nothing sensitive reaches the browser or logs.
 const streamProxyHandler = async (req, res) => {
-  const configuredOrigin = process.env.FRONTEND_ORIGIN || process.env.ALLOWED_ORIGIN || 'http://localhost:5173';
   const reqOrigin = req.headers.origin;
-  const allowOrigin = (reqOrigin && (reqOrigin === configuredOrigin || configuredOrigin === '*'))
-    ? reqOrigin
-    : configuredOrigin;
+  const allowOrigin = reqOrigin || '*';
 
   res.setHeader('Access-Control-Allow-Origin', allowOrigin);
   res.setHeader('Vary', 'Origin');
@@ -1252,7 +1223,7 @@ const transcodeHlsHandler = async (req, res) => {
   const jobId = crypto.createHash('md5').update(cacheKey).digest('hex').slice(0, 16);
   const jobDir = path.join(HLS_OUT_DIR, jobId);
   const playlistPath = path.join(jobDir, 'index.m3u8');
-  const hlsUrl = `/transcode/hls/${jobId}/index.m3u8`;
+  const hlsUrl = `/api/transcode/hls/${jobId}/index.m3u8`;
 
   // 1. Check existing cached HLS output
   if (fs.existsSync(playlistPath)) {
@@ -1305,6 +1276,7 @@ const transcodeHlsHandler = async (req, res) => {
     '-preset', 'veryfast',
     '-crf', '23',
     '-pix_fmt', 'yuv420p',
+    '-force_key_frames', 'expr:gte(t,n_forced*2)',
     '-vf', 'scale=\'min(1920,iw)\':-2'
   );
 
@@ -1315,8 +1287,8 @@ const transcodeHlsHandler = async (req, res) => {
     '-ac', '2'
   );
 
-  // HLS segmentation
-  const segDuration = String(process.env.TRANSCODE_SEGMENT_DURATION || 4);
+  // HLS segmentation - fast initial start (2-second segments)
+  const segDuration = String(process.env.TRANSCODE_SEGMENT_DURATION || 2);
   args.push(
     '-f', 'hls',
     '-hls_time', segDuration,
@@ -1347,13 +1319,13 @@ const transcodeHlsHandler = async (req, res) => {
     console.log(`[FFMPEG HLS FINISHED ${jobId}] exit code:`, code);
   });
 
-  // Wait up to 3.5s for initial playlist to be written
+  // Wait up to 6s for initial playlist to contain at least one playable segment
   const startWait = Date.now();
-  while (Date.now() - startWait < 3500) {
+  while (Date.now() - startWait < 6000) {
     if (fs.existsSync(playlistPath)) {
       try {
         const text = fs.readFileSync(playlistPath, 'utf8');
-        if (text.length > 20) break;
+        if (text.includes('#EXTINF') || text.includes('.ts')) break;
       } catch {}
     }
     await new Promise((r) => setTimeout(r, 200));
@@ -1375,7 +1347,7 @@ app.get('/api/transcode/status/:jobId', (req, res) => {
     jobId,
     active: isRunning,
     ready: exists,
-    hlsUrl: `/transcode/hls/${jobId}/index.m3u8`
+    hlsUrl: `/api/transcode/hls/${jobId}/index.m3u8`
   });
 });
 

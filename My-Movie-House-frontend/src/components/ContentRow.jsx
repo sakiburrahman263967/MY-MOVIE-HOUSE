@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api } from '../api.js';
 import MovieCard from './MovieCard.jsx';
 
-export default function ContentRow({ catalog }) {
+export default function ContentRow({ catalog, onSeeMoreSite }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -47,20 +47,31 @@ export default function ContentRow({ catalog }) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className="chip rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-white/70">
-            {catalog.addonName}
-          </span>
+          {/* Site / Addon Badge - Clickable to view all categories of this site */}
+          <button
+            type="button"
+            onClick={() => onSeeMoreSite && onSeeMoreSite(catalog)}
+            title={`Click to view all categories and sections from ${catalog.addonName}`}
+            className="chip rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-white/80 hover:text-white bg-white/10 hover:bg-blue-600/40 border border-white/10 hover:border-blue-400/50 transition cursor-pointer flex items-center gap-1 shadow-sm"
+          >
+            <span>{catalog.addonName}</span>
+            <span className="text-[10px] text-blue-300 font-mono hidden sm:inline">All Categories ↗</span>
+          </button>
 
-          {/* See More Toggle Button */}
-          {items.length > 4 && (
-            <button
-              onClick={() => setIsExpanded((prev) => !prev)}
-              className="flex items-center gap-1 rounded-full bg-blue-600/20 hover:bg-blue-600 border border-blue-500/30 hover:border-blue-400 px-3 py-1 text-xs font-bold text-blue-300 hover:text-white transition shadow-sm"
-              title={isExpanded ? 'Collapse to single row' : 'See all titles in a full grid'}
-            >
-              <span>{isExpanded ? 'Show Less ↑' : 'See More →'}</span>
-            </button>
-          )}
+          {/* See More Button: opens all categories of this site */}
+          <button
+            onClick={() => {
+              if (onSeeMoreSite) {
+                onSeeMoreSite(catalog);
+              } else {
+                setIsExpanded((prev) => !prev);
+              }
+            }}
+            className="flex items-center gap-1 rounded-full bg-blue-600/20 hover:bg-blue-600 border border-blue-500/30 hover:border-blue-400 px-3 py-1 text-xs font-bold text-blue-300 hover:text-white transition shadow-sm cursor-pointer"
+            title={`View all categories and sections from ${catalog.addonName}`}
+          >
+            <span>See More →</span>
+          </button>
 
           {!isExpanded && (
             <>

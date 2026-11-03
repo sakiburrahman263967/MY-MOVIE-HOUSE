@@ -54,6 +54,8 @@ export function isEmbedUrl(url) {
   return (
     lower.includes('/embed/') ||
     lower.includes('/embed') ||
+    lower.includes('film1k.xyz/e/') ||
+    lower.includes('film1k') ||
     lower.includes('/searcho/') ||
     lower.includes('autoembed.') ||
     lower.includes('multiembed.') ||
@@ -387,7 +389,13 @@ export default function VideoPlayer({
         throw new Error(`HTTP ${res.status}: ${text || res.statusText}`);
       }
 
-      const data = await res.json();
+      const rawText = await res.text().catch(() => '');
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        throw new Error(rawText ? `Invalid server response: ${rawText.slice(0, 80)}` : 'Empty response from transcode server');
+      }
       if (data.success && data.hlsUrl) {
         const fullHls = data.hlsUrl.startsWith('http') ? data.hlsUrl : `${API_BASE}${data.hlsUrl}`;
         setDirectUrl(fullHls);
@@ -558,7 +566,13 @@ export default function VideoPlayer({
     if (isHls && Hls.isSupported()) {
       const hls = new Hls({
         capLevelToPlayerSize: true,
-        autoStartLoad: true
+        autoStartLoad: true,
+        levelLoadingMaxRetry: 10,
+        levelLoadingRetryDelay: 1000,
+        manifestLoadingMaxRetry: 8,
+        manifestLoadingRetryDelay: 1000,
+        fragLoadingMaxRetry: 8,
+        fragLoadingRetryDelay: 1000
       });
       hlsRef.current = hls;
       hls.loadSource(streamUrl);
@@ -673,7 +687,24 @@ export default function VideoPlayer({
 
       hls.on(Hls.Events.ERROR, (_event, data) => {
         if (data.fatal) {
-          handleVideoError();
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              // For live transcode, manifest might still be getting appended with segments
+              if (data.details === 'manifestLoadError' || data.details === 'levelLoadError' || data.details === 'levelEmptyError') {
+                setTimeout(() => {
+                  try { hls.startLoad(); } catch {}
+                }, 1000);
+                return;
+              }
+              try { hls.startLoad(); } catch { handleVideoError(); }
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              try { hls.recoverMediaError(); } catch { handleVideoError(); }
+              break;
+            default:
+              handleVideoError();
+              break;
+          }
         }
       });
     } else {
@@ -797,9 +828,18 @@ export default function VideoPlayer({
         audioCtxRef.current = new AudioCtx();
       }
       const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
 
       const source = ctx.createMediaElementSource(video);
       audioSourceNodeRef.current = source;
+
+      // Ensure channel downmix doesn't crash multi-channel 5.1/7.1 audio
+      try {
+        source.channelCountMode = 'clamped-max';
+        source.channelCount = 2;
+      } catch {}
 
       // Gain Node (Volume Boost up to 200%)
       const gain = ctx.createGain();
@@ -813,12 +853,14 @@ export default function VideoPlayer({
       bass.gain.value = 0;
       bassFilterRef.current = bass;
 
-      // 8D Stereo Panner Node
+      // 8D Stereo Panner Node (only safely for stereo/mono)
       let panner = null;
       if (typeof ctx.createStereoPanner === 'function') {
-        panner = ctx.createStereoPanner();
-        panner.pan.value = 0;
-        pannerNodeRef.current = panner;
+        try {
+          panner = ctx.createStereoPanner();
+          panner.pan.value = 0;
+          pannerNodeRef.current = panner;
+        } catch {}
       }
 
       // Hall Delay / Reverb Node
@@ -838,23 +880,21 @@ export default function VideoPlayer({
       delayFeedback.connect(delay);
       delay.connect(delayWetGain);
 
-      // Connect graph: source -> bass -> (panner or passthrough) -> gain -> destination
-      // And delay branch connects only when delayWetGain is above 0 (Hall mode)
+      // Connect graph safely: source -> bass -> (panner or passthrough) -> gain -> destination
+      source.connect(bass);
       if (panner) {
-        source.connect(bass);
         bass.connect(panner);
         panner.connect(gain);
-        bass.connect(delay);
-        delayWetGain.connect(gain);
       } else {
-        source.connect(bass);
         bass.connect(gain);
-        bass.connect(delay);
-        delayWetGain.connect(gain);
       }
+      bass.connect(delay);
+      delayWetGain.connect(gain);
       gain.connect(ctx.destination);
     } catch (err) {
       console.warn('[WebAudio] Initialization bypassed:', err.message);
+      audioSourceNodeRef.current = null;
+      gainNodeRef.current = null;
     }
   };
 
@@ -872,7 +912,9 @@ export default function VideoPlayer({
     }
 
     if (gainNodeRef.current && audioSourceNodeRef.current) {
-      gainNodeRef.current.gain.value = isMuted ? 0 : volume;
+      try {
+        gainNodeRef.current.gain.value = isMuted ? 0 : volume;
+      } catch {}
       video.muted = isMuted;
       video.volume = 1.0;
     } else {

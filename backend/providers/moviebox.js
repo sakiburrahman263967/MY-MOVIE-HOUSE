@@ -1139,7 +1139,8 @@ function finalizeCandidates(candidates) {
     language: entry.audioLang ? `${entry.audioLang} • ${entry.codec || 'HEVC'}` : (entry.codec || 'HEVC'),
     codec: entry.codec || 'hevc',
     codecName: entry.codec || 'hevc',
-    addonName: 'MovieBox',
+    addonId: 'moviebox-tui',
+    addonName: 'MovieBox Sources',
     serverName: entry.audioLang ? `MovieBox (${entry.audioLang})` : 'MovieBox',
     behaviorHints: entry.notWebReady ? { notWebReady: true } : undefined,
     _resourceId: entry.resourceId || undefined,
@@ -1226,7 +1227,8 @@ export async function getMovieBoxSubtitles({ subjectId, season = 0, episode = 0,
         url: `/api/proxy/stream.vtt?url=${encodeURIComponent(issueStreamToken(url, { 'Referer': STREAM_REFERER, 'User-Agent': userAgent }))}`,
         lang: langName.toLowerCase().slice(0, 8),
         name: langName,
-        addonName: 'MovieBox',
+        addonId: 'moviebox-tui',
+    addonName: 'MovieBox Sources',
       });
     }
   }

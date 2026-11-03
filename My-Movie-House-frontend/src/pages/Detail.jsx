@@ -119,7 +119,8 @@ export default function Detail() {
             addonName: chunk.addonName,
             status: chunk.status,
             latency: chunk.latency,
-            count: chunk.count || 0
+            count: chunk.count || (Array.isArray(chunk.streams) ? chunk.streams.length : 0),
+            streams: Array.isArray(chunk.streams) ? chunk.streams : []
           }];
         });
 
@@ -170,7 +171,12 @@ export default function Detail() {
               const key = s.url || s.externalUrl;
               if (key) {
                 const existing = map.get(key) || {};
-                map.set(key, { ...existing, ...s });
+                map.set(key, {
+                  ...existing,
+                  ...s,
+                  addonId: s.addonId || existing.addonId,
+                  addonName: s.addonName || existing.addonName
+                });
               }
             }
             const combined = Array.from(map.values());
@@ -306,7 +312,7 @@ export default function Detail() {
       {/* Backdrop Banner with Spatial Vignette */}
       <div className="relative -mt-6 -mx-4 sm:-mx-6 md:-mx-8 h-[40vh] min-h-[280px] overflow-hidden md:h-[48vh]">
         {meta.background && (
-          <img src={meta.background} alt="" className="h-full w-full object-cover object-center" />
+          <img src={meta.background} alt="" referrerPolicy="no-referrer" className="h-full w-full object-cover object-center" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0e1322] via-[#0e1322]/60 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#0e1322]/90 via-transparent to-[#0e1322]/90" />
@@ -320,6 +326,7 @@ export default function Detail() {
               <img
                 src={meta.poster}
                 alt={title}
+                referrerPolicy="no-referrer"
                 className="w-full rounded-xl object-cover shadow-lg"
               />
             </div>
@@ -923,7 +930,7 @@ export default function Detail() {
             {/* Stream List */}
             <div className="flex-1 overflow-y-auto py-4 pr-1 space-y-2">
               {(() => {
-                const modalStreams = availableStreams.filter((st) => {
+                let modalStreams = availableStreams.filter((st) => {
                   const targetId = (selectedAddonForModal.addonId || '').toLowerCase();
                   const targetName = (selectedAddonForModal.addonName || '').toLowerCase();
                   const streamAddonId = (st.addonId || '').toLowerCase();
@@ -966,6 +973,10 @@ export default function Detail() {
                   }
                   return false;
                 });
+
+                if (modalStreams.length === 0 && Array.isArray(selectedAddonForModal.streams) && selectedAddonForModal.streams.length > 0) {
+                  modalStreams = selectedAddonForModal.streams;
+                }
 
                 if (modalStreams.length === 0) {
                   return (

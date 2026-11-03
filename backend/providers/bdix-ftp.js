@@ -891,8 +891,14 @@ export async function getBdixFtpStreams({ type, id, meta, deadline }) {
     const directUrl = st.url;
     const isAlreadyProxied = directUrl.includes('/api/proxy') || directUrl.includes('/proxy') || directUrl.startsWith('/api/');
     const proxiedUrl = isAlreadyProxied ? directUrl : `/api/proxy/stream?url=${encodeURIComponent(directUrl)}`;
+    const isMkv = directUrl.toLowerCase().includes('.mkv');
+    const isHevc = /hevc|h265|x265|10bit/i.test(st.name || '') || /hevc|h265|x265|10bit/i.test(directUrl);
     return {
       ...st,
+      addonId: 'bdix-ftp',
+      addonName: 'BDIX Fast FTP Servers',
+      codec: isHevc ? 'hevc' : (isMkv ? 'mkv' : (st.codec || undefined)),
+      codecName: isHevc ? 'hevc' : (isMkv ? 'mkv' : (st.codecName || undefined)),
       url: proxiedUrl,
       externalUrl: st.externalUrl || directUrl
     };
